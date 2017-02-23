@@ -1,0 +1,82 @@
+<resources>
+    <string name="app_name">My Application</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_search">Search</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="search_label">Search</string>
+    <string name="title_activity_login">Sign in</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password (optional)</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+    <string name="username">USERNAME</string>
+
+    <string name="staff_menu_title">Staff</string>
+    <string name="unread_menu_title">Unread</string>
+    <string name="private_menu_title">Private</string>
+
+    <string-array name="user_list">
+        <item>Stroke	Hemmen, T.</item>
+        <item>Stroke	Huisa-Garate, B.</item>
+        <item>Stroke	Modir, R.</item>
+        <item>Stroke	Agrawal, K.</item>
+        <item>Stroke	Meyer, B.</item>
+        <item>Stroke	Meyer, D.</item>
+        <item>Epilepsy	Shih, J.</item>
+        <item>NCC	Gonzalez, C.</item>
+        <item>Headache	Ansari, H.</item>
+        <item>NCC	Labuzetta, J.</item>
+        <item>General	Khoromi, S.</item>
+        <item>IOM	Gertsch, J.</item>
+        <item>Movement	Nahab, F.</item>
+        <item>General	Siavoshi, S.</item>
+        <item>Memory	Yuan, S.</item>
+        <item>General	Ellis, R.</item>
+        <item>IOM	Shtrahman, M.</item>
+        <item>MS	Kinkel, R.</item>
+        <item>General	Haas, R.</item>
+        <item>Oncology	Kesari, S.</item>
+        <item>Muscular	Askim, K.</item>
+        <item>General	Sheean, G.</item>
+        <item>NCC	Karanjia, N.</item>
+        <item>General	Alexander, J.</item>
+        <item>General	Tuszynski, M.</item>
+        <item>Muscular	Jablecki, C.</item>
+        <item>Muscular	Ravits, J.</item>
+        <item>Epilepsy	Tecoma, E.</item>
+        <item>Epilepsy	Iragui-Madoz, V.</item>
+        <item>General	Lipton, S.</item>
+        <item>Memory	Brewer, J.</item>
+        <item>Movement	Song, D.</item>
+        <item>Muscular	Konersman, C.</item>
+        <item>Memory	Rafii, M.</item>
+        <item>General	Viirre, E.</item>
+        <item>MS	Corey-Bloom, J.</item>
+        <item>General	Delaney, P.</item>
+        <item>General	Bui, J.</item>
+        <item>General	Evans, S.</item>
+        <item>Memory	Galasko, D.</item>
+        <item>Epilepsy	Lee, D.</item>
+        <item>Movement	Litvan, I.</item>
+        <item>Muscular	Mandeville, R.</item>
+        <item>Movement	Lessig, S.</item>
+        <item>Epilepsy	Kansal, L.</item>
+        <item>Oncology	Piccioni, D.</item>
+    </string-array>
+
+</resources>

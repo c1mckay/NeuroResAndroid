@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="staff_menu" type="id"/>
+    <item name="root_menu" type="id"/>
+    <item name="search" type="id"/>
+    <item name="unread_menu" type="id"/>
+    <item name="private_menu" type="id"/>
+
+</resources>
