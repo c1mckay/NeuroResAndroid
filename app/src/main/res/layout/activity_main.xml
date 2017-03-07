@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
@@ -13,6 +14,37 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:orientation="vertical"
+            android:background="@color/colorPrimary"
+            android:weightSum="10">
+
+            <include
+                layout="@layout/custom_nav_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <ExpandableListView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:id="@+id/nav_view"
+                android:layout_gravity="start"
+                android:choiceMode="singleChoice"
+                android:dividerHeight="0dp"
+                android:childDivider="@android:color/transparent"
+                android:layout_weight="8">
+
+            </ExpandableListView>
+
+        </LinearLayout>
+
+
+
+<!--
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
@@ -21,6 +53,7 @@
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/activity_main_drawer" />
+        -->
 
 
 </android.support.v4.widget.DrawerLayout>

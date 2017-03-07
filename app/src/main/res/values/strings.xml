@@ -30,6 +30,12 @@
     <string name="unread_menu_title">Unread</string>
     <string name="private_menu_title">Private</string>
 
+    <string-array name="sub_menus">
+        <item>Unread</item>
+        <item>Private</item>
+        <item>Staff</item>
+    </string-array>
+
     <string-array name="user_list">
         <item>Stroke	Hemmen, T.</item>
         <item>Stroke	Huisa-Garate, B.</item>

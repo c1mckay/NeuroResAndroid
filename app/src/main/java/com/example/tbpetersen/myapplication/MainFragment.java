@@ -81,7 +81,7 @@ public class MainFragment extends Fragment {
             messageAdapter.notifyItemInserted(messageList.size() - 1);
             recyclerView.scrollToPosition(messageList.size() - 1);
         }else{
-            loadMessages();
+            //loadMessages();
         }
     }
 

@@ -49,10 +49,9 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position,
                                     long id) {
-                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+                //InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                //imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
 
-                Random r = new Random();
                 Intent intent = new Intent(SearchActivity.this, MainActivity.class);
                 String message = listView.getItemAtPosition(position).toString();
                 intent.putExtra("USERNAME", message);
@@ -72,8 +71,8 @@ public class SearchActivity extends AppCompatActivity {
         SearchView searchView = (SearchView) menu.findItem(R.id.action_search_search_activity).getActionView();
         searchView.setIconifiedByDefault(true);
         searchView.setFocusable(true);
-        searchView.setIconified(false);
-        searchView.requestFocusFromTouch();
+        searchView.setIconified(true);
+        //searchView.requestFocusFromTouch();
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
 

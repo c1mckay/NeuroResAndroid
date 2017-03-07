@@ -2,6 +2,7 @@ package com.example.tbpetersen.myapplication;
 
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
         public MyViewHolder(View view){
             super(view);
+
             owner = (TextView) view.findViewById(R.id.owner);
             messageText = (TextView) view.findViewById(R.id.messageText);
             time = (TextView) view.findViewById(R.id.time);
@@ -50,21 +52,70 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        int layoutId;
+
+        if(messageList.size() == 1){
+            layoutId = R.layout.message_list_row;
+        }else{
+            Message currentMessage = messageList.get(messageList.size()-1);
+            Message previousMessage = messageList.get(messageList.size()-2);
+
+            if(currentMessage.getOwner().equals(previousMessage.getOwner())){
+                layoutId = R.layout.message_list_row_only_message;
+            }else{
+                layoutId = R.layout.message_list_row;
+            }
+        }
+
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.message_list_row, parent, false);
+                .inflate(layoutId, parent, false);
 
         return new MyViewHolder(itemView);
     }
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
+
+        int numOfMessages = messageList.size();
         Message message = messageList.get(position);
-        holder.owner.setText(message.getOwner());
-        holder.messageText.setText(message.getMessageText());
 
-        String timeString = getTimeString(message);
+        if(holder.owner != null){
+            if(numOfMessages < 2){
+                holder.owner.setText(message.getOwner());
+                holder.messageText.setText(message.getMessageText());
 
-        holder.time.setText(timeString);
+                String timeString = getTimeString(message);
+                holder.time.setText(timeString);
+            }else{
+                Message lastMessage = messageList.get(numOfMessages - 2);
+
+                // Do not show name if you sent the last message
+                if(message.getOwner().equals(lastMessage.getOwner())){
+                    holder.owner.setText("");
+                }else{
+                    holder.owner.setText(message.getOwner());
+                }
+                holder.messageText.setText(message.getMessageText());
+                String timeString = "";
+                if(numOfMessages > 1){
+                    long mostRecentMessageTime = lastMessage.getTime();
+                    if( System.currentTimeMillis() - mostRecentMessageTime > (1000 * 60 * 5)){
+                        timeString = getTimeString(message);
+                    }
+                }else{
+                    timeString = getTimeString(message);
+                }
+
+                holder.time.setText(timeString);
+            }
+        }else{
+            holder.messageText.setText(message.getMessageText());
+        }
+
+
+
+
+
     }
 
     @Override
@@ -82,14 +133,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
         Date date = new Date(message.getTime());
         DateFormat format;
         if(today.get(Calendar.DAY_OF_MONTH) == currentTime.get(Calendar.DAY_OF_MONTH)){
-            format = new SimpleDateFormat("HH:mm a");
+            format = new SimpleDateFormat("hh:mm a");
             String timeString = format.format(date);
             if(timeString.charAt(0) == '0'){
                 timeString = timeString.substring(1);
                 return timeString;
             }
         }else if(today.get(Calendar.YEAR) == currentTime.get(Calendar.YEAR)){
-            format = new SimpleDateFormat("MMM dd, HH:mm a");
+            format = new SimpleDateFormat("MMM dd, hh:mm a");
             String timeString = format.format(date);
             if(timeString.charAt(8) == '0'){
                 timeString = timeString.substring(0,8) + timeString.substring(9);

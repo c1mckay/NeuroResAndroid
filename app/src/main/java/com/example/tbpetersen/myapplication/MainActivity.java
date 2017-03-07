@@ -14,6 +14,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.SubMenu;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -24,43 +25,46 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ExpandableListView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, ExpandableListView.OnChildClickListener{
 
-    NavigationView navigationView = null;
     Toolbar toolbar = null;
-    private List<Message> messageList = new ArrayList<Message>();
-    private RecyclerView recyclerView;
-    private MessageAdapter messageAdapter;
+    private NavDrawerAdapter navDrawerAdapter;
+    private ExpandableListView drawerListView;
     private EditText messageEditText;
     private MainFragment currentFragment;
     private int SEARCH_USER_REQUEST = 1;
-    private int FAKE_ID = 22;
 
-    private int currentID;
+    private boolean needToChangeFragment = false;
 
-    private String newFragmentUser = "";
-    private boolean changeFragment = false;
+    private HashMap<Long,User> currentConversations;
+    public User selectedUser;
 
-    private SubMenu subMenuPrivate;
-    private SubMenu subMenuUnread;
-    private SubMenu subMenuStaff;
-
-    private MenuItem selectedItem = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Initialize
+        currentConversations = new HashMap<Long, User>();
 
         // Set the fragment
         currentFragment = new MainFragment();
@@ -74,14 +78,16 @@ public class MainActivity extends AppCompatActivity
 
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        drawerListView = (ExpandableListView) findViewById(R.id.nav_view);
+        navDrawerAdapter = new NavDrawerAdapter(this);
+        drawerListView.setAdapter(navDrawerAdapter);
+        drawerListView.setOnChildClickListener(this);
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
-
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
 
         messageEditText = (EditText) findViewById(R.id.message_edit_text);
 
@@ -89,11 +95,14 @@ public class MainActivity extends AppCompatActivity
         messageSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentFragment.addMessage("Trevor",messageEditText.getText().toString());
-                messageEditText.setText("");
-                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
-                messageEditText.clearFocus();
+                String newMessage = messageEditText.getText().toString();
+                if(! newMessage.equals("")){
+                    currentFragment.addMessage("Trevor", messageEditText.getText().toString());
+                    messageEditText.setText("");
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                    messageEditText.clearFocus();
+                }
             }
         });
     }
@@ -110,46 +119,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        Menu navMenu = navigationView.getMenu();
-        getMenuInflater().inflate(R.menu.activity_main_drawer, navMenu);
         getMenuInflater().inflate(R.menu.main, menu);
-
-        setupNavigationMenu(navMenu);
-
         return true;
-    }
-
-    public void setupNavigationMenu(Menu menu){
-        navigationView.setItemIconTintList(null);
-        SubMenu root = menu.addSubMenu(Menu.NONE, R.id.root_menu, 0, "");
-        menu.setGroupCheckable(R.id.root_menu, false, true);
-
-        MenuItem searchbar = menu.add(R.id.root_menu, R.id.search, 0, R.string.search_label);
-        searchbar.setIcon(R.drawable.ic_zoom_in_black_24dp);
-
-        subMenuUnread = menu.addSubMenu(R.id.root_menu, R.id.unread_menu, 0, R.string.unread_menu_title);
-        subMenuStaff = menu.addSubMenu(R.id.root_menu, R.id.staff_menu, 1, R.string.staff_menu_title);
-        subMenuPrivate = menu.addSubMenu(R.id.root_menu, R.id.private_menu, 2, R.string.private_menu_title);
-
-        menu.setGroupCheckable(R.id.staff_menu, false, true);
-        menu.setGroupCheckable(R.id.unread_menu, false, true);
-        menu.setGroupCheckable(R.id.private_menu, false, true);
-
-        MenuItem item1 = subMenuStaff.add(R.id.staff_menu, 123, 0, "User 1");
-        item1.setIcon(R.drawable.online);
-        MenuItem item2 = subMenuStaff.add(R.id.staff_menu, 456, 0, "User 2");
-        item2.setIcon(R.drawable.offline);
-        MenuItem item3 = subMenuPrivate.add(R.id.private_menu, 789, 0, "User 3");
-        item3.setIcon(R.drawable.offline);
-        MenuItem item4 = subMenuUnread.add(R.id.private_menu, 111, 0, "User 4");
-        item4.setIcon(R.drawable.notify);
-
-
-        item1.setCheckable(true);
-        item2.setCheckable(true);
-        item3.setCheckable(true);
-        item4.setCheckable(true);
     }
 
     @Override
@@ -170,11 +141,11 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+        if(1==1) return true;
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         if(id != R.id.search){
-            deselectCurrent();
-            selectedItem = item;
+            //selectedItem = item;
         }
 
 
@@ -230,9 +201,19 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == SEARCH_USER_REQUEST && resultCode == Activity.RESULT_OK){
-            changeFragment = true;
-            newFragmentUser = data.getStringExtra("USERNAME");
-            currentID = data.getIntExtra("ID", -1);
+            String searchedUsername = data.getStringExtra("USERNAME");
+            long searchedID = data.getIntExtra("ID", -1);
+
+            if(currentConversations.get(searchedID) == null){
+                selectedUser = new User(searchedID, searchedUsername);
+                currentConversations.put(selectedUser.id, selectedUser);
+            }else{
+                if(selectedUser != null){
+                    selectedUser.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                selectedUser = currentConversations.get(searchedID);
+            }
+            needToChangeFragment = true;
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -247,36 +228,54 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
-        if(changeFragment){
-            MenuItem menuItem = navigationView.getMenu().findItem(currentID);
-            if(menuItem == null) {
-                deselectCurrent();
-                loadMessages(newFragmentUser);
-                MenuItem newlyAdded = subMenuPrivate.add(R.id.private_menu, currentID, Menu.FIRST, newFragmentUser);
-                newlyAdded.setIcon(R.drawable.online);
-                newlyAdded.setCheckable(true);
-                newlyAdded.setChecked(true);
-                selectedItem = newlyAdded;
+        if(needToChangeFragment){
+            if(selectedUser.v == null) {
+                addConversation(selectedUser);
             }else{
-                selectItem(menuItem);
+                selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
             }
-            changeFragment = false;
-            newFragmentUser = "";
+            changeFragment();
+            needToChangeFragment = false;
         }
         super.onResume();
     }
 
-    private void deselectCurrent(){
-        if(selectedItem != null) {
-            selectedItem.setChecked(false);
-        }
+    public void searchOnClick(View view) {
+        Intent startSearch = new Intent(MainActivity.this, SearchActivity.class);
+        startActivityForResult(startSearch, SEARCH_USER_REQUEST);
     }
 
-    private void selectItem(MenuItem item){
-        deselectCurrent();
-        selectedItem = item;
-        item.setChecked(true);
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+        for(User u : currentConversations.values()){
+            if(u.v == v){
+                selectedUser.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                selectedUser = u;
+                selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
+                break;
+            }
+        }
+
+        changeFragment();
+        return true;
+    }
+
+    private void addConversation(User newUser){
+        navDrawerAdapter.addConversation(0, newUser);
+        drawerListView.expandGroup(0);
+    }
+
+    private void changeFragment(){
         currentFragment = new MainFragment();
-        loadMessages(item.getTitle().toString());
+        currentFragment.addUser(selectedUser.name);
+        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+        fragmentTransaction.commit();
+        currentFragment.queueMessage(selectedUser.name, "This is the old message");
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+        recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
     }
 }
