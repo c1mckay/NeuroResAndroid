@@ -7,6 +7,13 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="nav_drawer_group_text_size">15sp</dimen>
-    <dimen name="nav_drawer_row_text_size">20sp</dimen>
+    <dimen name="nav_drawer_row_department_text_size">20sp</dimen>
+    <dimen name="nav_drawer_row_user_text_size">15sp</dimen>
+    <dimen name="nav_drawer_department_margin_left">50sp</dimen>
+    <dimen name="nav_drawer_user_margin_left">60sp</dimen>
+    <dimen name="nav_drawer_user_height">35sp</dimen>
+
+
+
 
 </resources>

@@ -14,4 +14,10 @@ public class User {
         this.name = name;
         this.id = id;
     }
+
+    User(long id, String name, View v){
+        this.name = name;
+        this.id = id;
+        this.v = v;
+    }
 }

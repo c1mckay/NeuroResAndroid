@@ -19,11 +19,16 @@ import java.util.ArrayList;
  */
 public class MainFragment extends Fragment {
 
+    // View that holds all the messages
     RecyclerView recyclerView;
+    // List that holds all the messages
     ArrayList<Message> messageList;
+    // Adapter that links the messageList and recyclerview
     MessageAdapter messageAdapter;
 
+    //Username of the owner of these messages
     private String username = null;
+    // Used to temporarily store a message when the view has not yet been made
     private String message = null;
 
     public MainFragment() {
@@ -37,7 +42,7 @@ public class MainFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_main, container, false);
         recyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
 
-
+        /* Initialize */
         messageList = new ArrayList<Message>();
         messageAdapter = new MessageAdapter(messageList);
 
@@ -46,8 +51,9 @@ public class MainFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(messageAdapter);
-
+        // Display any messages that are waiting to be displayed
         displayMessage();
+        // Scroll to the bottom of the list
         recyclerView.scrollToPosition(messageList.size() - 1);
 
         return v;
@@ -64,17 +70,30 @@ public class MainFragment extends Fragment {
         //messageAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Queue up a message when the view has not yet been created to display them yet
+     * @param username the owner of the message
+     * @param message the message text
+     */
     public void queueMessage(String username, String message){
         this.username = username;
         this.message = message;
     }
 
+    /**
+     * Add a message to be displayed
+     * @param username the owner of the message
+     * @param message the message text
+     */
     public void addMessage(String username, String message){
         this.username = username;
         this.message = message;
         displayMessage();
     }
 
+    /**
+     * Display the messages
+     */
     private void displayMessage(){
         if(username != null && message != null){
             messageList.add(new Message(username, message, System.currentTimeMillis()));
@@ -85,6 +104,10 @@ public class MainFragment extends Fragment {
         }
     }
 
+    /**
+     * Set the user of these messages
+     * @param user the name of the user
+     */
     public void addUser(String user){
         this.username = user;
     }

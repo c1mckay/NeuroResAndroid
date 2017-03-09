@@ -20,8 +20,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="start"
             android:orientation="vertical"
-            android:background="@color/colorPrimary"
-            android:weightSum="10">
+            android:background="@color/colorPrimary">
 
             <include
                 layout="@layout/custom_nav_header"
@@ -30,14 +29,11 @@
 
             <ExpandableListView
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="match_parent"
                 android:id="@+id/nav_view"
                 android:layout_gravity="start"
-                android:choiceMode="singleChoice"
                 android:dividerHeight="0dp"
-                android:childDivider="@android:color/transparent"
-                android:layout_weight="8">
-
+                android:childDivider="@android:color/transparent">
             </ExpandableListView>
 
         </LinearLayout>

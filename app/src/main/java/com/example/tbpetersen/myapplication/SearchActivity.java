@@ -3,6 +3,7 @@ package com.example.tbpetersen.myapplication;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,9 +50,6 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position,
                                     long id) {
-                //InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                //imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
-
                 Intent intent = new Intent(SearchActivity.this, MainActivity.class);
                 String message = listView.getItemAtPosition(position).toString();
                 intent.putExtra("USERNAME", message);

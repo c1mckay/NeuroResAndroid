@@ -18,9 +18,19 @@ import java.util.List;
  * Created by tbpetersen on 2/14/2017.
  */
 
+/**
+ * Message adapter for the recycler view
+ */
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHolder>{
+    // List to hold messages
     private List<Message> messageList;
+    /* The minimum amount of minutes that must pass until timestamps are shown again */
+    private static int MIN_MINUTES = 5;
 
+    /**
+     * Single argument ctor
+     * @param messageList the list that the messages will be stored in
+     */
     public MessageAdapter(List<Message> messageList){
         this.messageList = messageList;
     }
@@ -38,13 +48,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view){
-                    /*
-                    Message currentMessage = messageList.get(getAdapterPosition());
-                    Snackbar snackbar = Snackbar.make(view, currentMessage.getOwner(), Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                    messageList.remove(getAdapterPosition());
-                    notifyItemRemoved(getAdapterPosition());
-                    */
+                // Do stuff when the message is clicked on
                 }
             });
         }
@@ -54,12 +58,36 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         int layoutId;
 
+        /* There are two layouts that may be used to display messages. The
+           standard layout (message_list_row) has name, time and message. The
+           other layout has on only message text (message_list_row_only_message).
+
+
+           message_list_row :
+
+           /////////////////////////////////
+           //   name                 time //
+           //                             //
+           //   message text here         //
+           /////////////////////////////////
+
+           message_list_row_only_message :
+
+            /////////////////////////////////
+           //   message text here         //
+           /////////////////////////////////
+
+         */
+
+        // The first message between user always used message_list_row
         if(messageList.size() == 1){
             layoutId = R.layout.message_list_row;
         }else{
             Message currentMessage = messageList.get(messageList.size()-1);
             Message previousMessage = messageList.get(messageList.size()-2);
 
+            // Use message_list_row_only_message if the previous message
+            // was from this user, otherwise use message_list_row
             if(currentMessage.getOwner().equals(previousMessage.getOwner())){
                 layoutId = R.layout.message_list_row_only_message;
             }else{
@@ -79,13 +107,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
         int numOfMessages = messageList.size();
         Message message = messageList.get(position);
 
+        // Check if message_list_row is the layout that was used
         if(holder.owner != null){
+            // Always have the time shown on the first message
             if(numOfMessages < 2){
                 holder.owner.setText(message.getOwner());
                 holder.messageText.setText(message.getMessageText());
 
                 String timeString = getTimeString(message);
                 holder.time.setText(timeString);
+            // Decide what information will be displayed
             }else{
                 Message lastMessage = messageList.get(numOfMessages - 2);
 
@@ -97,9 +128,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
                 }
                 holder.messageText.setText(message.getMessageText());
                 String timeString = "";
+                // Only show the time the last message was sent longer than MIN_MINUTES ago
                 if(numOfMessages > 1){
                     long mostRecentMessageTime = lastMessage.getTime();
-                    if( System.currentTimeMillis() - mostRecentMessageTime > (1000 * 60 * 5)){
+                    if( System.currentTimeMillis() - mostRecentMessageTime > (1000 * 60 * MIN_MINUTES)){
                         timeString = getTimeString(message);
                     }
                 }else{
@@ -108,6 +140,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
                 holder.time.setText(timeString);
             }
+         // message_list_row_only_message is the layout
         }else{
             holder.messageText.setText(message.getMessageText());
         }
@@ -123,23 +156,38 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
         return messageList.size();
     }
 
+    /**
+     * Get the formatted time for this message. Three formats:
+     * Message was sent same day: Hour of day(2:23 pm)
+     * Message was sent same month: Month, day and time(Feb 2, 2:23 pm)
+     * Message was sent same different month: Month, day and year(Feb 2, 2017)
+     *
+     * @param message the message to format the time for
+     * @return the formatted time string
+     */
     private String getTimeString(Message message){
-        Calendar today = Calendar.getInstance();
+        Calendar messageTime = Calendar.getInstance();
         Calendar currentTime = Calendar.getInstance();
 
-        today.setTimeInMillis(message.getTime());
+        messageTime.setTimeInMillis(message.getTime());
         currentTime.setTimeInMillis(System.currentTimeMillis());
 
         Date date = new Date(message.getTime());
         DateFormat format;
-        if(today.get(Calendar.DAY_OF_MONTH) == currentTime.get(Calendar.DAY_OF_MONTH)){
+        boolean sameDay = messageTime.get(Calendar.DAY_OF_YEAR) == currentTime.get(Calendar.DAY_OF_YEAR) &&
+                          messageTime.get(Calendar.YEAR) == currentTime.get(Calendar.YEAR);
+
+        boolean sameMonth = messageTime.get(Calendar.MONTH) == currentTime.get(Calendar.MONTH) &&
+                messageTime.get(Calendar.YEAR) == currentTime.get(Calendar.YEAR);
+
+        if(sameDay){
             format = new SimpleDateFormat("hh:mm a");
             String timeString = format.format(date);
             if(timeString.charAt(0) == '0'){
                 timeString = timeString.substring(1);
                 return timeString;
             }
-        }else if(today.get(Calendar.YEAR) == currentTime.get(Calendar.YEAR)){
+        }else if(sameMonth){
             format = new SimpleDateFormat("MMM dd, hh:mm a");
             String timeString = format.format(date);
             if(timeString.charAt(8) == '0'){
