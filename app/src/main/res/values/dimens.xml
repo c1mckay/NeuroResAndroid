@@ -9,9 +9,9 @@
     <dimen name="nav_drawer_group_text_size">10sp</dimen>
     <dimen name="nav_drawer_row_department_text_size">19sp</dimen>
     <dimen name="nav_drawer_row_user_text_size">15sp</dimen>
-    <dimen name="nav_drawer_department_margin_left">50sp</dimen>
-    <dimen name="nav_drawer_user_margin_left">60sp</dimen>
-    <dimen name="nav_drawer_user_height">35sp</dimen>
+    <dimen name="nav_drawer_department_margin_left">20sp</dimen>
+    <dimen name="nav_drawer_user_margin_left">22sp</dimen>
+    <dimen name="nav_drawer_user_height">30sp</dimen>
 
 
 

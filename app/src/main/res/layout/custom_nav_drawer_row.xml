@@ -7,12 +7,14 @@
     android:layout_gravity="start"
     android:background="@color/colorPrimary"
     android:weightSum="10"
-    android:onClick="userClickedOn">
+    android:onClick="userClickedOn"
+    android:paddingTop="3dp"
+    android:paddingBottom="3dp">
 
     <ImageView
         android:id="@+id/nav_row_status_image_view"
-        android:layout_width="15sp"
-        android:layout_height="15sp"
+        android:layout_width="10sp"
+        android:layout_height="10sp"
         android:src="@drawable/online"
         android:layout_weight="1"
         android:layout_gravity="center"
@@ -27,8 +29,8 @@
         android:textColor="@color/white"
         android:textSize="@dimen/nav_drawer_row_user_text_size"
         android:gravity="center_vertical"
-        android:layout_marginStart="15dp"
-        android:layout_marginLeft="15dp"/>
+        android:layout_marginStart="1dp"
+        android:layout_marginLeft="1dp"/>
 
     <TextView
         android:id="@+id/nav_row_notification_image_view"

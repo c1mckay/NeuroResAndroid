@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -118,7 +119,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
             if(convertView == null || convertView.getTag() instanceof Long){
 
                 LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                LinearLayout outer = (LinearLayout) inflater.inflate(R.layout.inner_list, parent, false);
+                RelativeLayout outer = (RelativeLayout) inflater.inflate(R.layout.inner_list, parent, false);
                 TextView departmentTextView = (TextView) outer.findViewById(R.id.department_text_view);
                 departmentTextView.setText(departmentTitles[childPosition]);
 
