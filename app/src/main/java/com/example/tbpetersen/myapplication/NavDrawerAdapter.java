@@ -3,6 +3,7 @@ package com.example.tbpetersen.myapplication;
 import android.animation.Animator;
 import android.animation.TimeInterpolator;
 import android.content.Context;
+import android.graphics.Paint;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -99,11 +100,11 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
         if(convertView == null) {
             LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View group = inflater.inflate(android.R.layout.simple_expandable_list_item_1, parent, false);
+            View group = inflater.inflate(R.layout.menu_header, parent, false);
             TextView textView = (TextView) group.findViewById(android.R.id.text1);
             textView.setText(groupTitles[groupPosition]);
-            textView.setTextColor(activity.getResources().getColor(R.color.white));
-            textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size));
+            //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
+            textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
             return group;
         }else{
             return convertView;

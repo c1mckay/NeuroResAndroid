@@ -32,8 +32,8 @@
 
     <string-array name="sub_menus">
         <item>Unread</item>
-        <item>Private</item>
         <item>Staff</item>
+        <item>Private</item>
     </string-array>
 
     <string-array name="departments">
