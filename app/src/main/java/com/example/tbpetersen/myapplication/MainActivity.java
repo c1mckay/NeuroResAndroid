@@ -45,6 +45,11 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener{
 
+    public static final int UNREAD_MENU_GROUP = 0;
+    public static final int STAFF_MENU_GROUP = 1;
+    public static final int PRIVATE_MENU_GROUP = 2;
+
+
     Toolbar toolbar = null;
     //  This adapter controls the Navigation Drawer's views and data
     private NavDrawerAdapter navDrawerAdapter;
@@ -63,7 +68,7 @@ public class MainActivity extends AppCompatActivity
     private boolean needToChangeFragment = false;
 
     /* Contains all the users that that there are converstaions with */
-    private HashMap<Long,User> currentConversations;
+    public HashMap<Long,User> currentConversations;
     /* The currently selected user */
     public User selectedUser;
 
@@ -83,7 +88,7 @@ public class MainActivity extends AppCompatActivity
 
         // Set the fragment
         currentFragment = new MainFragment();
-        currentFragment.addUser("User1");
+        currentFragment.addUser("Demo");
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
@@ -100,6 +105,34 @@ public class MainActivity extends AppCompatActivity
         // Setup the adapter used to populate the list navigation drawer
         navDrawerAdapter = new NavDrawerAdapter(this);
         drawerListView.setAdapter(navDrawerAdapter);
+
+        // Expand the list on start
+        for (int i = 0; i < navDrawerAdapter.getGroupCount(); i++){
+            drawerListView.expandGroup(i);
+        }
+
+        //Hardcode in private message users
+        String[] hardCodedPrivate = getResources().getStringArray(R.array.private_hardcode);
+        String[] hardCodedDepartments = getResources().getStringArray(R.array.departments);
+        for(int i = 0; i < hardCodedPrivate.length; i++){
+            long id = 500 + i;
+            addConversation(PRIVATE_MENU_GROUP, new User(this, id, hardCodedPrivate[i]));
+        }
+
+        //Hardcode in departments
+        for(int i = 0; i < hardCodedDepartments.length; i++){
+            addDepartment(hardCodedDepartments[i]);
+        }
+
+        addUserToDepartment("Stroke", new User(this, 49L, hardCodedPrivate[1]));
+        addUserToDepartment("Stroke", new User(this, 50L, hardCodedPrivate[2]));
+        addUserToDepartment("Stroke", new User(this, 51L, hardCodedPrivate[3]));
+        addUserToDepartment("Stroke", new User(this, 52L, hardCodedPrivate[4]));
+
+
+
+
+        addConversation(UNREAD_MENU_GROUP, new User(this, 63L, hardCodedPrivate[7]));
 
         // Set up the drawer and its listeners
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -181,7 +214,7 @@ public class MainActivity extends AppCompatActivity
 
             /* Set selectedUser */
             if(currentConversations.get(searchedID) == null){
-                selectedUser = new User(searchedID, searchedUsername);
+                selectedUser = new User(this, searchedID, searchedUsername);
                 currentConversations.put(selectedUser.id, selectedUser);
             }else{
                 selectedUser = currentConversations.get(searchedID);
@@ -198,7 +231,7 @@ public class MainActivity extends AppCompatActivity
         if(needToChangeFragment){
             if(selectedUser.v == null) {
                 // Add a view to the navigation bar for the new user
-                addConversation(selectedUser);
+                addConversation(PRIVATE_MENU_GROUP, selectedUser);
             }else{
                 // Highlight the view that is already in the nav bar
                 selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
@@ -251,9 +284,11 @@ public class MainActivity extends AppCompatActivity
      * Add a view to the navigation drawer for the newUser
      * @param newUser the user to have a view added for
      */
-    private void addConversation(User newUser){
-        navDrawerAdapter.addConversation(0, newUser);
-        drawerListView.expandGroup(0);
+    private void addConversation(int groupPosition, User newUser){
+        navDrawerAdapter.addConversation(groupPosition, newUser);
+        drawerListView.expandGroup(groupPosition);
+
+        currentConversations.put(newUser.id, newUser);
     }
 
     /**
@@ -307,6 +342,10 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void populateNavDrawer(){
+
+    }
+
 
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
@@ -328,5 +367,15 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onDrawerStateChanged(int newState) {
 
+    }
+
+    private void addDepartment(String name){
+        navDrawerAdapter.addDepartment(name);
+        drawerListView.expandGroup(STAFF_MENU_GROUP);
+    }
+
+    private void addUserToDepartment(String departmentName, User newUser){
+        navDrawerAdapter.addUserToDepartment(departmentName,newUser);
+        currentConversations.put(newUser.id, newUser);
     }
 }

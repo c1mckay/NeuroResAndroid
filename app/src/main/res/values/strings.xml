@@ -44,52 +44,65 @@
     </string-array>
 
     <string-array name="user_list">
-        <item>Stroke	Hemmen, T.</item>
-        <item>Stroke	Huisa-Garate, B.</item>
-        <item>Stroke	Modir, R.</item>
-        <item>Stroke	Agrawal, K.</item>
-        <item>Stroke	Meyer, B.</item>
-        <item>Stroke	Meyer, D.</item>
-        <item>Epilepsy	Shih, J.</item>
-        <item>NCC	Gonzalez, C.</item>
-        <item>Headache	Ansari, H.</item>
-        <item>NCC	Labuzetta, J.</item>
-        <item>General	Khoromi, S.</item>
-        <item>IOM	Gertsch, J.</item>
-        <item>Movement	Nahab, F.</item>
-        <item>General	Siavoshi, S.</item>
-        <item>Memory	Yuan, S.</item>
-        <item>General	Ellis, R.</item>
-        <item>IOM	Shtrahman, M.</item>
-        <item>MS	Kinkel, R.</item>
-        <item>General	Haas, R.</item>
-        <item>Oncology	Kesari, S.</item>
-        <item>Muscular	Askim, K.</item>
-        <item>General	Sheean, G.</item>
-        <item>NCC	Karanjia, N.</item>
-        <item>General	Alexander, J.</item>
-        <item>General	Tuszynski, M.</item>
-        <item>Muscular	Jablecki, C.</item>
-        <item>Muscular	Ravits, J.</item>
-        <item>Epilepsy	Tecoma, E.</item>
-        <item>Epilepsy	Iragui-Madoz, V.</item>
-        <item>General	Lipton, S.</item>
-        <item>Memory	Brewer, J.</item>
-        <item>Movement	Song, D.</item>
-        <item>Muscular	Konersman, C.</item>
-        <item>Memory	Rafii, M.</item>
-        <item>General	Viirre, E.</item>
-        <item>MS	Corey-Bloom, J.</item>
-        <item>General	Delaney, P.</item>
-        <item>General	Bui, J.</item>
-        <item>General	Evans, S.</item>
-        <item>Memory	Galasko, D.</item>
-        <item>Epilepsy	Lee, D.</item>
-        <item>Movement	Litvan, I.</item>
-        <item>Muscular	Mandeville, R.</item>
-        <item>Movement	Lessig, S.</item>
-        <item>Epilepsy	Kansal, L.</item>
-        <item>Oncology	Piccioni, D.</item>
+        <item>Hemmen, T. (Stroke)</item>
+        <item>Huisa-Garate, B. (Stroke)</item>
+        <item>Modir, R. (Stroke)</item>
+        <item>Agrawal, K. (Stroke)</item>
+        <item>Meyer, B. (Stroke)</item>
+        <item>Meyer, D. (Stroke)</item>
+        <item>Shih, J. (Epilepsy)</item>
+        <item>Gonzalez, C. (NCC)</item>
+        <item>Ansari, H. (Headache)</item>
+        <item>Labuzetta, J. (NCC)</item>
+        <item>Khoromi, S. (General)</item>
+        <item>Gertsch, J. (IOM)</item>
+        <item>Nahab, F. (Movement)</item>
+        <item>Siavoshi, S. (General)</item>
+        <item>Yuan, S. (Memory)</item>
+        <item>Ellis, R. (General)</item>
+        <item>Shtrahman, M. (IOM)</item>
+        <item>Kinkel, R. (MS)</item>
+        <item>Haas, R. (General)</item>
+        <item>Kesari, S. (Oncology)</item>
+        <item>Askim, K. (Muscular)</item>
+        <item>Sheean, G. (General)</item>
+        <item>Karanjia, N. (NCC)</item>
+        <item>Alexander, J. (General)</item>
+        <item>Tuszynski, M. (General)</item>
+        <item>Jablecki, C. (Muscular)</item>
+        <item>Ravits, J. (Muscular)</item>
+        <item>Tecoma, E. (Epilepsy)</item>
+        <item>Iragui-Madoz, V. (Epilepsy)</item>
+        <item>Lipton, S. (General)</item>
+        <item>Brewer, J. (Memory)</item>
+        <item>Song, D. (Movement)</item>
+        <item>Konersman, C. (Muscular)</item>
+        <item>Rafii, M. (Memory)</item>
+        <item>Viirre, E. (General)</item>
+        <item>Corey-Bloom, J. (MS)</item>
+        <item>Delaney, P. (General)</item>
+        <item>Bui, J. (General)</item>
+        <item>Evans, S. (General)</item>
+        <item>Galasko, D. (Memory)</item>
+        <item>Lee, D. (Epilepsy)</item>
+        <item>Litvan, I. (Movement)</item>
+        <item>Mandeville, R. (Muscular)</item>
+        <item>Lessig, S. (Movement)</item>
+        <item>Kansal, L. (Epilepsy)</item>
+        <item>Piccioni, D. (Oncology)</item>
     </string-array>
+
+    <string-array name="private_hardcode">
+        <item>Hemmen, T.</item>
+        <item>Huisa-Garate, B.</item>
+        <item>Modir, R.</item>
+        <item>Agrawal, K.</item>
+        <item>Meyer, B.</item>
+        <item>Meyer, D.</item>
+        <item>Shih, J.</item>
+        <item>Gonzalez, C.</item>
+        <item>Ansari, H.</item>
+        <item>Labuzetta, J.</item>
+        <item>Khoromi, S.</item>    </string-array>
 
 </resources>

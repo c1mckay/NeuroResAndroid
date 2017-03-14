@@ -24,61 +24,68 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by tbpetersen on 2/23/2017.
  */
 
 public class NavDrawerAdapter extends BaseExpandableListAdapter {
-    List<List<String>> submenus;
 
-    List<String> unreadMenu;
-    List<String> privateMenu;
-    List<String> staffMenu;
+    private static final int UNREAD_GROUP = 0;
+    private static final int STAFF_GROUP = 1;
+    private static final int PRIVATE_GROUP = 2;
 
-    String[] groupTitles;
-    String[] departmentTitles;
+    private static final int NUM_OF_SUBMENUS = 3;
+
+
+    private List<NavDrawerItem> unreadMenu;
+    private List<NavDrawerItem> privateMenu;
+    private List<NavDrawerInnerGroup> staffMenu;
 
     private MainActivity activity;
-    public View previouslySelected;
 
     NavDrawerAdapter(MainActivity activity){
+
         this.activity = activity;
-        unreadMenu = new ArrayList<String>();
-        privateMenu = new ArrayList<String>();
-        staffMenu = new ArrayList<String>();
+        unreadMenu = new ArrayList<NavDrawerItem>();
+        privateMenu = new ArrayList<NavDrawerItem>();
+        staffMenu = new ArrayList<NavDrawerInnerGroup>();
 
-        groupTitles = activity.getResources().getStringArray(R.array.sub_menus);
-        departmentTitles = activity.getResources().getStringArray(R.array.departments);
-
-        submenus = new ArrayList<List<String>>();
-
-        submenus.add(unreadMenu);
-        submenus.add(privateMenu);
-        submenus.add(staffMenu);
     }
 
     @Override
     public int getGroupCount() {
-        return submenus.size();
+        return NUM_OF_SUBMENUS;
     }
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        if(groupPosition == 1){
-            return departmentTitles.length;
+        List group = getGroup(groupPosition);
+        return group.size();
+    }
+
+    @Override
+    public List getGroup(int groupPosition) {
+        List group = null;
+        switch(groupPosition){
+            case UNREAD_GROUP:
+                group = unreadMenu;
+                break;
+            case PRIVATE_GROUP:
+                group = privateMenu;
+                break;
+            case STAFF_GROUP:
+                group = staffMenu;
+                break;
         }
-        return submenus.get(groupPosition).size();
+        return group;
     }
 
     @Override
-    public Object getGroup(int groupPosition) {
-        return submenus.get(groupPosition);
-    }
+    public NavDrawerItem getChild(int groupPosition, int childPosition) {
+        return (NavDrawerItem) getGroup(groupPosition).get(childPosition);
 
-    @Override
-    public Object getChild(int groupPosition, int childPosition) {
-        return submenus.get(groupPosition).get(childPosition);
     }
 
     @Override
@@ -101,72 +108,82 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
         if(convertView == null) {
             LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View group = inflater.inflate(R.layout.menu_header, parent, false);
-            TextView textView = (TextView) group.findViewById(android.R.id.text1);
-            textView.setText(groupTitles[groupPosition]);
-            //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
-            textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
-            return group;
-        }else{
-            return convertView;
+            convertView = inflater.inflate(R.layout.menu_header, parent, false);
         }
+        TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
+        textView.setText(getGroupTitle(groupPosition));
+        //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
+        textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+
+        return convertView;
     }
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-        if (groupPosition == 1) {
+        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View child = null;
 
-            if(convertView == null || convertView.getTag() instanceof Long){
+        switch (groupPosition){
 
-                LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                RelativeLayout outer = (RelativeLayout) inflater.inflate(R.layout.inner_list, parent, false);
-                TextView departmentTextView = (TextView) outer.findViewById(R.id.department_text_view);
-                departmentTextView.setText(departmentTitles[childPosition]);
+            case UNREAD_GROUP:
+            case PRIVATE_GROUP:
+                child = inflater.inflate(R.layout.custom_nav_drawer_row, parent, false);
+                TextView userTextView = (TextView) child.findViewById(R.id.nav_row_text_view);
 
-                LinearLayout inner = (LinearLayout) outer.findViewById(R.id.inner_layout);
+                if(groupPosition == UNREAD_GROUP){
+                    TextView notificationImageView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
+                    notificationImageView.setVisibility(View.VISIBLE);
+                }
+
+                User user = (User) getChild(groupPosition,childPosition);
+                user.v = child;
+
+                userTextView.setText(user.name);
+                child.setTag(user.id);
+
+                if(activity.selectedUser != null && activity.selectedUser.id == user.id){
+                    activity.selectedUser.deselect();
+                    user.select();
+                }else{
+                    user.deselect();
+                }
+
+                break;
+
+            case STAFF_GROUP:
+                child = inflater.inflate(R.layout.inner_list, parent, false);
+                TextView departmentTextView = (TextView) child.findViewById(R.id.department_text_view);
+
+                NavDrawerInnerGroup innerGroup = (NavDrawerInnerGroup) getChild(groupPosition, childPosition);
+                departmentTextView.setText(innerGroup.name);
+
+                List<User> users = innerGroup.getChildren();
+                LinearLayout userHolder = (LinearLayout) child.findViewById(R.id.inner_layout);
+                for(User u : users){
+                    String name = u.name;
+                    Long id = u.id;
+
+                    View userView = inflater.inflate(R.layout.custom_nav_drawer_row, userHolder, false);
+                    userHolder.addView(userView);
+                    userTextView = (TextView) userView.findViewById(R.id.nav_row_text_view);
+                    userTextView.setText(name);
+                    userView.setTag(id);
+
+                    u.v = userView;
+
+                    if(activity.selectedUser != null && activity.selectedUser.id == u.id){
+                        activity.selectedUser.deselect();
+                        u.select();
+                    }else{
+                        u.deselect();
+                    }
+                }
 
 
-                LinearLayout child1 = (LinearLayout) inflater.inflate(R.layout.custom_nav_drawer_row, inner, false);
-                LinearLayout child2 = (LinearLayout) inflater.inflate(R.layout.custom_nav_drawer_row, inner, false);
-
-                TextView firstChild = (TextView) child1.findViewById(R.id.nav_row_text_view);
-                TextView secondChild = (TextView) child2.findViewById(R.id.nav_row_text_view);
-
-                firstChild.setText("Trevor Petersen");
-                secondChild.setText("Charles McKay");
-
-                child1.setTag(123L);
-                child2.setTag(456L);
-
-                inner.addView(child1);
-                inner.addView(child2);
-
-                User first = new User(123, firstChild.getText().toString(), child1);
-                User second = new User(456, secondChild.getText().toString(), child2);
-
-                activity.addUserToHashTable(first);
-                activity.addUserToHashTable(second);
-
-                outer.setTag("Department");
-                return outer;
-            }else{
-                return convertView;
-            }
-        }else{
-            if(convertView == null || convertView.getTag() instanceof String){
-                LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                LinearLayout user = (LinearLayout) inflater.inflate(R.layout.custom_nav_drawer_row, parent, false);
-                TextView userNameTextView = (TextView) user.findViewById(R.id.nav_row_text_view);
-                userNameTextView.setText(activity.selectedUser.name);
-                user.setTag(activity.selectedUser.id);
-                user.setBackgroundColor(activity.getResources().getColor(R.color.selected));
-                activity.selectedUser.v = user;
-                return user;
-            }else{
-                return convertView;
-            }
+                break;
 
         }
+        return child;
     }
 
     @Override
@@ -174,12 +191,62 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         return true ;
     }
 
+    public String getGroupTitle(int groupPosition){
+        String title = "";
+        switch(groupPosition){
+            case UNREAD_GROUP:
+                title = "Unread";
+                break;
+            case PRIVATE_GROUP:
+                title = "Private";
+                break;
+            case STAFF_GROUP:
+                title = "Staff";
+                break;
+        }
+        return title;
+    }
+
     public void addConversation(int groupPosition, User newUser){
-        List group = submenus.get(groupPosition);
-        group.add(newUser.name);
+        List group = null;
+
+        switch(groupPosition){
+            case UNREAD_GROUP:
+                group = unreadMenu;
+                group.add(newUser);
+                break;
+            case PRIVATE_GROUP:
+                group = privateMenu;
+                group.add(newUser);
+
+                break;
+        }
+
         notifyDataSetChanged();
     }
 
+    public void addDepartment(String name){
+        NavDrawerInnerGroup newGroup = new NavDrawerInnerGroup(activity, name);
+        staffMenu.add(newGroup);
+        notifyDataSetChanged();
+    }
 
+    public void addUserToDepartment(String departmentName, User newUser){
+        NavDrawerInnerGroup depart = null;
+        for(NavDrawerInnerGroup g: staffMenu){
+            if(g.name.equals(departmentName)){
+                depart = g;
+                break;
+            }
+        }
+
+        if(depart == null){
+            //This should not happen
+            return;
+        }
+
+        depart.addChild(newUser);
+        notifyDataSetChanged();
+    }
 
 }

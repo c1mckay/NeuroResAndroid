@@ -95,6 +95,10 @@ public class MainFragment extends Fragment {
      * Display the messages
      */
     private void displayMessage(){
+        if(username.equals("Demo")){
+            displayDemoMessage();
+            return;
+        }
         if(username != null && message != null){
             messageList.add(new Message(username, message, System.currentTimeMillis()));
             messageAdapter.notifyItemInserted(messageList.size() - 1);
@@ -110,6 +114,30 @@ public class MainFragment extends Fragment {
      */
     public void addUser(String user){
         this.username = user;
+    }
+
+    public void displayDemoMessage(){
+        String dp = "dpiccioni";
+        String nk = "nkaranjia";
+        long t = System.currentTimeMillis();
+        messageList.add(new Message(dp, "Hello",t ));
+        messageList.add(new Message(nk, "This is a chat example with an incredibly long message.", t));
+        messageList.add(new Message(dp, "Back to me.", t));
+        messageList.add(new Message(nk, "I will demonstrate overflowing with two messages.", t));
+        messageList.add(new Message(nk, "This is the second message I submitted.", t));
+        messageList.add(new Message(nk, "More concept.", t));
+        messageList.add(new Message(dp, "Interesting. I can also play with borders to see how that looks like.", t));
+        messageList.add(new Message(nk, "Thoughts?", t));
+
+        messageList.add(new Message(dp, "Hello",t ));
+        messageList.add(new Message(nk, "This is a chat example with an incredibly long message.", t));
+        messageList.add(new Message(dp, "Back to me.", t));
+        messageList.add(new Message(nk, "I will demonstrate overflowing with two messages.", t));
+        messageList.add(new Message(nk, "This is the second message I submitted.", t));
+        messageList.add(new Message(nk, "More concept.", t));
+        messageList.add(new Message(dp, "Interesting. I can also play with borders to see how that looks like.", t));
+        messageList.add(new Message(nk, "Thoughts?", t));
+        messageAdapter.notifyDataSetChanged();
     }
 
 }

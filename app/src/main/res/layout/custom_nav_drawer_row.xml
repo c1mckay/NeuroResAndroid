@@ -33,7 +33,7 @@
         android:layout_marginLeft="1dp"/>
 
     <TextView
-        android:id="@+id/nav_row_notification_image_view"
+        android:id="@+id/nav_row_notification_text_view"
         android:layout_width="15dp"
         android:layout_height="15dp"
         android:text="9+"
@@ -41,6 +41,7 @@
         android:layout_weight="1"
         android:layout_gravity="center"
         android:layout_marginEnd="15sp"
-        android:layout_marginRight="15sp"/>
+        android:layout_marginRight="15sp"
+        android:visibility="invisible"/>
 
 </LinearLayout>

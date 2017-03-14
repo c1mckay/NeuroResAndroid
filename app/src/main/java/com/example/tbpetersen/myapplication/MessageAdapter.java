@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.text.DateFormat;
@@ -37,6 +38,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
         public TextView owner, messageText, time;
+        public LinearLayout userAndTimeLayout;
 
         public MyViewHolder(View view){
             super(view);
@@ -44,6 +46,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             owner = (TextView) view.findViewById(R.id.owner);
             messageText = (TextView) view.findViewById(R.id.messageText);
             time = (TextView) view.findViewById(R.id.time);
+            userAndTimeLayout = (LinearLayout) view.findViewById(R.id.owner_and_time_layout);
 
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
@@ -56,47 +59,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        int layoutId;
-
-        /* There are two layouts that may be used to display messages. The
-           standard layout (message_list_row) has name, time and message. The
-           other layout has on only message text (message_list_row_only_message).
-
-
-           message_list_row :
-
-           /////////////////////////////////
-           //   name                 time //
-           //                             //
-           //   message text here         //
-           /////////////////////////////////
-
-           message_list_row_only_message :
-
-            /////////////////////////////////
-           //   message text here         //
-           /////////////////////////////////
-
-         */
-
-        // The first message between user always used message_list_row
-        if(messageList.size() == 1){
-            layoutId = R.layout.message_list_row;
-        }else{
-            Message currentMessage = messageList.get(messageList.size()-1);
-            Message previousMessage = messageList.get(messageList.size()-2);
-
-            // Use message_list_row_only_message if the previous message
-            // was from this user, otherwise use message_list_row
-            if(currentMessage.getOwner().equals(previousMessage.getOwner())){
-                layoutId = R.layout.message_list_row_only_message;
-            }else{
-                layoutId = R.layout.message_list_row;
-            }
-        }
 
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(layoutId, parent, false);
+                .inflate(R.layout.message_list_row, parent, false);
 
         return new MyViewHolder(itemView);
     }
@@ -110,7 +75,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
         // Check if message_list_row is the layout that was used
         if(holder.owner != null){
             // Always have the time shown on the first message
-            if(numOfMessages < 2){
+            if(position == 0){
                 holder.owner.setText(message.getOwner());
                 holder.messageText.setText(message.getMessageText());
 
@@ -118,11 +83,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
                 holder.time.setText(timeString);
             // Decide what information will be displayed
             }else{
-                Message lastMessage = messageList.get(numOfMessages - 2);
+                Message lastMessage = messageList.get(position - 1);
 
-                // Do not show name if you sent the last message
+                // Do not show name or time if you sent the last message
                 if(message.getOwner().equals(lastMessage.getOwner())){
                     holder.owner.setText("");
+                    holder.userAndTimeLayout.setVisibility(View.GONE);
                 }else{
                     holder.owner.setText(message.getOwner());
                 }
