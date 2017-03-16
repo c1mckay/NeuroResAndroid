@@ -69,7 +69,9 @@
         android:layout_width="match_parent"
         android:id="@+id/email_layout"
         android:layout_above="@id/password_layout"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:imeOptions="actionNext"
+        >
 
         <AutoCompleteTextView
             android:id="@+id/email"

@@ -29,6 +29,8 @@
     <string name="staff_menu_title">Staff</string>
     <string name="unread_menu_title">Unread</string>
     <string name="private_menu_title">Private</string>
+    <string name="signing_in">Signing In</string>
+    <string name="log_in">Log in</string>
 
     <string-array name="sub_menus">
         <item>Unread</item>

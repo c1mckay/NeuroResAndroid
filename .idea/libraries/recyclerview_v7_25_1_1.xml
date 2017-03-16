@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="recyclerview-v7-25.1.1">
     <ANNOTATIONS>
-      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/25.1.1/annotations.zip!/" />
+      <root url="jar://$USER_HOME$/.android/build-cache/054b1e9c646332694bc9a76564fa8526cde0f60a/output/annotations.zip!/" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$USER_HOME$/.android/build-cache/58564dd0f10c960e56525b95cca8c1fc38309bdf/output/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.android/build-cache/58564dd0f10c960e56525b95cca8c1fc38309bdf/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/054b1e9c646332694bc9a76564fa8526cde0f60a/output/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.android/build-cache/054b1e9c646332694bc9a76564fa8526cde0f60a/output/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

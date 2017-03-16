@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -79,6 +80,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //setContentView(R.layout.loading_screen);
+
         setContentView(R.layout.activity_main);
 
         /*Initialize */
@@ -158,6 +161,8 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+        loadData();
     }
 
     @Override
@@ -346,6 +351,38 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    private void addDepartment(String name){
+        navDrawerAdapter.addDepartment(name);
+        drawerListView.expandGroup(STAFF_MENU_GROUP);
+    }
+
+    private void addUserToDepartment(String departmentName, User newUser){
+        navDrawerAdapter.addUserToDepartment(departmentName,newUser);
+        currentConversations.put(newUser.id, newUser);
+    }
+
+    private void loadData(){
+        hideMainElements();
+        // Load data from server
+        onLoadComplete();
+    }
+
+    private void hideMainElements(){
+        getSupportActionBar().hide();
+        findViewById(R.id.main_recycler_view_holder).setVisibility(View.GONE);
+        findViewById(R.id.message_edit_text).setVisibility(View.GONE);
+        findViewById(R.id.message_send_button).setVisibility(View.GONE);
+        ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+    }
+
+    private void onLoadComplete(){
+        getSupportActionBar().show();
+        findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
+        findViewById(R.id.message_edit_text).setVisibility(View.VISIBLE);
+        findViewById(R.id.message_send_button).setVisibility(View.VISIBLE);
+        ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+        findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
+    }
 
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
@@ -367,15 +404,5 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onDrawerStateChanged(int newState) {
 
-    }
-
-    private void addDepartment(String name){
-        navDrawerAdapter.addDepartment(name);
-        drawerListView.expandGroup(STAFF_MENU_GROUP);
-    }
-
-    private void addUserToDepartment(String departmentName, User newUser){
-        navDrawerAdapter.addUserToDepartment(departmentName,newUser);
-        currentConversations.put(newUser.id, newUser);
     }
 }

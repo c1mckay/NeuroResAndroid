@@ -27,6 +27,7 @@ import static android.provider.AlarmClock.EXTRA_MESSAGE;
 public class SearchActivity extends AppCompatActivity {
 
     ArrayAdapter<String> searchAdapter;
+    ContactSearchAdapter contactSearchAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,12 +40,13 @@ public class SearchActivity extends AppCompatActivity {
         ArrayList<String> userArrayList = new ArrayList<String>();
         userArrayList.addAll(Arrays.asList(getResources().getStringArray(R.array.user_list)));
 
-        searchAdapter = new ArrayAdapter<>(
-                SearchActivity.this,
+
+         contactSearchAdapter = new ContactSearchAdapter(SearchActivity.this,
                 android.R.layout.simple_list_item_1,
                 userArrayList);
 
-        listView.setAdapter(searchAdapter);
+        listView.setAdapter(contactSearchAdapter);
+
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -70,7 +72,6 @@ public class SearchActivity extends AppCompatActivity {
         searchView.setIconifiedByDefault(true);
         searchView.setFocusable(true);
         searchView.setIconified(true);
-        //searchView.requestFocusFromTouch();
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
 
@@ -81,7 +82,7 @@ public class SearchActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                searchAdapter.getFilter().filter(newText);
+                contactSearchAdapter.filterData(newText);
                 return false;
             }
         });

@@ -8,6 +8,7 @@
     tools:context="com.example.tbpetersen.myapplication.MainActivity">
 
     <LinearLayout
+        android:id="@+id/main_recycler_view_holder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -70,7 +71,11 @@
 
     </LinearLayout>
 
-
+    <ImageView
+        android:id="@+id/loading_logo_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/logo"/>
 
 
 
