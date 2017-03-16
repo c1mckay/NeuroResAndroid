@@ -3,6 +3,7 @@ package com.example.tbpetersen.myapplication;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by tbpetersen on 2/14/2017.
@@ -24,29 +26,35 @@ import java.util.List;
  */
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHolder>{
     // List to hold messages
-    private List<Message> messageList;
+    private MessageList messageList;
     /* The minimum amount of minutes that must pass until timestamps are shown again */
     private static int MIN_MINUTES = 5;
+    Random r;
 
     /**
      * Single argument ctor
      * @param messageList the list that the messages will be stored in
      */
-    public MessageAdapter(List<Message> messageList){
+    public MessageAdapter(MessageList messageList){
         this.messageList = messageList;
+        r = new Random();
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
         public TextView owner, messageText, time;
-        public LinearLayout userAndTimeLayout;
+        public LinearLayout userAndTimeLayout, singleMessageContainer;
+        public View leftView, rightView;
 
         public MyViewHolder(View view){
             super(view);
 
             owner = (TextView) view.findViewById(R.id.owner);
             messageText = (TextView) view.findViewById(R.id.messageText);
+            leftView = view.findViewById(R.id.message_left_space);
+            rightView = view.findViewById(R.id.message_right_space);
             time = (TextView) view.findViewById(R.id.time);
             userAndTimeLayout = (LinearLayout) view.findViewById(R.id.owner_and_time_layout);
+            singleMessageContainer = (LinearLayout) view.findViewById(R.id.message_container);
 
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
@@ -111,10 +119,26 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             holder.messageText.setText(message.getMessageText());
         }
 
+        boolean currentUserSaidThis = r.nextBoolean();
+        holder.singleMessageContainer.setGravity(currentUserSaidThis ? Gravity.LEFT : Gravity.RIGHT);
+        holder.messageText.setBackgroundResource(currentUserSaidThis ? R.drawable.balloon_incoming_normal : R.drawable.balloon_outgoing_normal);
 
+        int paddingTop = holder.messageText.getPaddingTop();
+        int paddingBottom = holder.messageText.getPaddingBottom();
+        int paddingRight = holder.messageText.getPaddingRight();
+        int paddingLeft = holder.messageText.getPaddingLeft();
 
-
-
+        int switcher;
+        if(!currentUserSaidThis) {
+            holder.userAndTimeLayout.setVisibility(View.GONE);
+            holder.rightView.setVisibility(View.GONE);
+        }else {
+            switcher = paddingRight;
+            paddingRight = paddingLeft;
+            paddingLeft = switcher;
+            holder.leftView.setVisibility(View.GONE);
+        }
+        holder.messageText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
     }
 
     @Override

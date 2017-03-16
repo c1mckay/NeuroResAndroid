@@ -22,7 +22,7 @@ public class MainFragment extends Fragment {
     // View that holds all the messages
     RecyclerView recyclerView;
     // List that holds all the messages
-    ArrayList<Message> messageList;
+    MessageList messageList;
     // Adapter that links the messageList and recyclerview
     MessageAdapter messageAdapter;
 
@@ -43,7 +43,7 @@ public class MainFragment extends Fragment {
         recyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
 
         /* Initialize */
-        messageList = new ArrayList<Message>();
+        messageList = new MessageList();
         messageAdapter = new MessageAdapter(messageList);
 
 
@@ -60,11 +60,11 @@ public class MainFragment extends Fragment {
     }
 
     private void loadMessages(){
-        messageList.add(new Message(username, "Hello this is a very long line of text and I dont know how the message will look\nLine 2", 1487269703028L));
-        messageList.add(new Message(username, "Hello3", 1475269703028L));
-        messageList.add(new Message(username, "Hello5", 1487169703028L));
+        messageList.add(username, "Hello this is a very long line of text and I dont know how the message will look\nLine 2", 1487269703028L);
+        messageList.add(username, "Hello3", 1475269703028L);
+        messageList.add(username, "Hello5", 1487169703028L);
         for(int i = 0; i < 8; i++){
-            messageList.add(new Message(username, "First", 1487269703028L));
+            messageList.add(username, "First", 1487269703028L);
         }
         messageAdapter.notifyItemRangeInserted(0, messageList.size() - 1);
         //messageAdapter.notifyDataSetChanged();
@@ -95,17 +95,17 @@ public class MainFragment extends Fragment {
      * Display the messages
      */
     private void displayMessage(){
-        if(username.equals("Demo")){
+        if(username == null || username.equals("Demo")){
             displayDemoMessage();
             return;
         }
         if(username != null && message != null){
-            messageList.add(new Message(username, message, System.currentTimeMillis()));
+            messageList.add(username, message, System.currentTimeMillis());
             messageAdapter.notifyItemInserted(messageList.size() - 1);
             recyclerView.scrollToPosition(messageList.size() - 1);
-        }else{
+        }//else{
             //loadMessages();
-        }
+        //}
     }
 
     /**
@@ -120,23 +120,23 @@ public class MainFragment extends Fragment {
         String dp = "dpiccioni";
         String nk = "nkaranjia";
         long t = System.currentTimeMillis();
-        messageList.add(new Message(dp, "Hello",t ));
-        messageList.add(new Message(nk, "This is a chat example with an incredibly long message.", t));
-        messageList.add(new Message(dp, "Back to me.", t));
-        messageList.add(new Message(nk, "I will demonstrate overflowing with two messages.", t));
-        messageList.add(new Message(nk, "This is the second message I submitted.", t));
-        messageList.add(new Message(nk, "More concept.", t));
-        messageList.add(new Message(dp, "Interesting. I can also play with borders to see how that looks like.", t));
-        messageList.add(new Message(nk, "Thoughts?", t));
+        messageList.add(dp, "Hello",t );
+        messageList.add(nk, "This is a chat example with an incredibly long message.", t);
+        messageList.add(dp, "Back to me.", t);
+        messageList.add(nk, "I will demonstrate overflowing with two messages.", t);
+        messageList.add(nk, "This is the second message I submitted.", t);
+        messageList.add(nk, "More concept.", t);
+        messageList.add(dp, "Interesting. I can also play with borders to see how that looks like.", t);
+        messageList.add(nk, "Thoughts?", t);
 
-        messageList.add(new Message(dp, "Hello",t ));
-        messageList.add(new Message(nk, "This is a chat example with an incredibly long message.", t));
-        messageList.add(new Message(dp, "Back to me.", t));
-        messageList.add(new Message(nk, "I will demonstrate overflowing with two messages.", t));
-        messageList.add(new Message(nk, "This is the second message I submitted.", t));
-        messageList.add(new Message(nk, "More concept.", t));
-        messageList.add(new Message(dp, "Interesting. I can also play with borders to see how that looks like.", t));
-        messageList.add(new Message(nk, "Thoughts?", t));
+        messageList.add(dp, "Hello",t );
+        messageList.add(nk, "This is a chat example with an incredibly long message.", t);
+        messageList.add(dp, "Back to me.", t);
+        messageList.add(nk, "I will demonstrate overflowing with two messages.", t);
+        messageList.add(nk, "This is the second message I submitted.", t);
+        messageList.add(nk, "More concept.", t);
+        messageList.add(dp, "Interesting. I can also play with borders to see how that looks like.", t);
+        messageList.add(nk, "Thoughts?", t);
         messageAdapter.notifyDataSetChanged();
     }
 

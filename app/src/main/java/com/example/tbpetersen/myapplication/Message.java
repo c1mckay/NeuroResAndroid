@@ -49,4 +49,8 @@ public class Message {
     public void setTime(long time) {
         this.time = time;
     }
+
+    public void appendText(String text){
+        messageText += ("\n" + text);
+    }
 }
