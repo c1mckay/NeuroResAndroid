@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.gradle\*.*
 /local.properties
 /.idea/workspace.xml
 /.idea/libraries
@@ -9,6 +10,4 @@
 .externalNativeBuild
 .idea/workspace.xml
 app/app.iml
-.gradle/3.3/taskArtifacts/fileHashes.bin
-.gradle/3.3/taskArtifacts/taskArtifacts.bin
-.gradle/3.3/tasks/_app_compileDebugJavaWithJavac/localClassSetAnalysis/localClassSetAnalysis.lock
+local.properties
