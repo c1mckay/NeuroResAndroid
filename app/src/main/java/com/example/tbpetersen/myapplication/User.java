@@ -9,6 +9,7 @@ import android.view.View;
 
 public class User extends NavDrawerItem{
     public long id;
+    public String userType;
     public View v;
 
     private Context context;
@@ -16,6 +17,13 @@ public class User extends NavDrawerItem{
         this.context = context;
         this.name = name;
         this.id = id;
+    }
+
+    User(Context context, long id, String name, String userType){
+        this.context = context;
+        this.name = name;
+        this.id = id;
+        this.userType = userType;
     }
 
     User(Context context, long id, String name, View v){

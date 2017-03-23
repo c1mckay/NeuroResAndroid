@@ -36,12 +36,16 @@ import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener{
@@ -73,14 +77,24 @@ public class MainActivity extends AppCompatActivity
     /* The currently selected user */
     public User selectedUser;
 
-    /**
-     * Runs when the app is launched
-     * @param savedInstanceState
-     */
+    public User loggedInUser;
+
+    SessionWrapper sessionWrapper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.loading_screen);
+
+        // Check for the login Token
+        Intent intent = getIntent();
+        if(intent.hasExtra("LoginToken")){
+            String loginToken = intent.getStringExtra("LoginToken");
+            sessionWrapper = new SessionWrapper(this,loginToken);
+
+            Log.v("tag", loginToken);
+        }else{
+            // Do something because there is no login token
+        }
 
         setContentView(R.layout.activity_main);
 
@@ -114,28 +128,8 @@ public class MainActivity extends AppCompatActivity
             drawerListView.expandGroup(i);
         }
 
-        //Hardcode in private message users
-        String[] hardCodedPrivate = getResources().getStringArray(R.array.private_hardcode);
-        String[] hardCodedDepartments = getResources().getStringArray(R.array.departments);
-        for(int i = 0; i < hardCodedPrivate.length; i++){
-            long id = 500 + i;
-            addConversation(PRIVATE_MENU_GROUP, new User(this, id, hardCodedPrivate[i]));
-        }
-
-        //Hardcode in departments
-        for(int i = 0; i < hardCodedDepartments.length; i++){
-            addDepartment(hardCodedDepartments[i]);
-        }
-
-        addUserToDepartment("Stroke", new User(this, 49L, hardCodedPrivate[1]));
-        addUserToDepartment("Stroke", new User(this, 50L, hardCodedPrivate[2]));
-        addUserToDepartment("Stroke", new User(this, 51L, hardCodedPrivate[3]));
-        addUserToDepartment("Stroke", new User(this, 52L, hardCodedPrivate[4]));
 
 
-
-
-        addConversation(UNREAD_MENU_GROUP, new User(this, 63L, hardCodedPrivate[7]));
 
         // Set up the drawer and its listeners
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -204,7 +198,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
         // If the returning activity was the search activity
         if(requestCode == SEARCH_USER_REQUEST && resultCode == Activity.RESULT_OK){
             // Get the username and id of the newly searched user
@@ -347,9 +340,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void populateNavDrawer(){
-
-    }
 
     private void addDepartment(String name){
         navDrawerAdapter.addDepartment(name);
@@ -364,7 +354,75 @@ public class MainActivity extends AppCompatActivity
     private void loadData(){
         hideMainElements();
         // Load data from server
+        sessionWrapper.updateUsers(); // loggedInUser is set in onUsersLoaded
+        // sessionWrapper.updateConversations is called at the end of onUsersLoaded
+        //(currentConversations needs to be populated before the call is made to updateConversations)
+
+        /* How to add to unread section */
+        //addConversation(UNREAD_MENU_GROUP, new User(this, 63L, hardCodedPrivate[7]));
+
+
         onLoadComplete();
+    }
+
+    public void onUsersLoaded(List<User> users){
+        String username = getIntent().getStringExtra("username");
+        for(User u : users){
+            if(u.name.equals(username)){
+                loggedInUser = u;
+                TextView nameInSettingsView = (TextView) findViewById(R.id.username_in_settings_text_view);
+                nameInSettingsView.setText(loggedInUser.name);
+            }
+        }
+        if(users != null) {
+            populateStaff(users);
+        }else{
+            Log.v("tag", "Users is null");
+        }
+
+        sessionWrapper.updateConversations();
+    }
+
+    public void onConversationsLoaded(List<Conversation> conversations){
+
+        if(conversations != null) {
+            populatePrivate(conversations);
+        }else{
+            Log.v("tag", "Users is null");
+        }
+    }
+
+    public void populateStaff(List<User> users){
+        TreeSet<String> departments = new TreeSet<String>();
+        for(User u : users){
+            departments.add(u.userType);
+        }
+
+        String curr = departments.first();
+        while(curr != null){
+            addDepartment(curr);
+            curr = departments.higher(curr);
+        }
+
+        for(User u : users){
+            if(u != loggedInUser){
+                currentConversations.put(u.id, u);
+                addUserToDepartment(u.userType, u);
+            }
+        }
+
+    }
+
+    public void populatePrivate(List<Conversation> conversations){
+        for(Conversation c : conversations){
+            if(c.users.get(0) == null){
+                Log.v("tag", "User is null");
+            }
+        }
+        for(Conversation c : conversations){
+            currentConversations.put(c.users.get(0).id,c.users.get(0) );
+            addConversation(PRIVATE_MENU_GROUP, c.users.get(0));
+        }
     }
 
     private void hideMainElements(){

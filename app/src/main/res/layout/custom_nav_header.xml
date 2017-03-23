@@ -17,7 +17,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Mark Tuszynski"
             android:layout_weight="9"
             android:textSize="30sp"
             android:textColor="@color/white"
