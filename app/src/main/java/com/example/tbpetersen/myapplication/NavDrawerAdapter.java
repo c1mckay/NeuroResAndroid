@@ -135,17 +135,17 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     notificationImageView.setVisibility(View.VISIBLE);
                 }
 
-                User user = (User) getChild(groupPosition,childPosition);
-                user.v = child;
+                Conversation convo = (Conversation) getChild(groupPosition,childPosition);
+                convo.v = child;
 
-                userTextView.setText(user.name);
-                child.setTag(user.id);
+                userTextView.setText(convo.getName());
+                child.setTag(R.id.CONVERSATION, convo.getID());
 
-                if(activity.selectedUser != null && activity.selectedUser.id == user.id){
-                    activity.selectedUser.deselect();
-                    user.select();
+                if(activity.selectedConversation != null && activity.selectedConversation.getID() == convo.getID()){
+                    activity.selectedConversation.deselect();
+                    convo.select();
                 }else{
-                    user.deselect();
+                    convo.deselect();
                 }
 
                 break;
@@ -155,24 +155,24 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                 TextView departmentTextView = (TextView) child.findViewById(R.id.department_text_view);
 
                 NavDrawerInnerGroup innerGroup = (NavDrawerInnerGroup) getChild(groupPosition, childPosition);
-                departmentTextView.setText(innerGroup.name);
+                departmentTextView.setText(innerGroup.getName());
 
                 List<User> users = innerGroup.getChildren();
                 LinearLayout userHolder = (LinearLayout) child.findViewById(R.id.inner_layout);
                 for(User u : users){
                     String name = u.name;
-                    Long id = u.id;
+                    Long id = u.getID();
 
                     View userView = inflater.inflate(R.layout.custom_nav_drawer_row, userHolder, false);
                     userHolder.addView(userView);
                     userTextView = (TextView) userView.findViewById(R.id.nav_row_text_view);
                     userTextView.setText(name);
-                    userView.setTag(id);
+                    userView.setTag(R.id.USER, id);
 
                     u.v = userView;
 
-                    if(activity.selectedUser != null && activity.selectedUser.id == u.id){
-                        activity.selectedUser.deselect();
+                    if(activity.selectedConversation != null && activity.selectedConversation.getID() == u.getID()){
+                        activity.selectedConversation.deselect();
                         u.select();
                     }else{
                         u.deselect();
@@ -207,34 +207,43 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         return title;
     }
 
-    public void addConversation(int groupPosition, User newUser){
-        List group = null;
+    public void addConversation(int groupPosition, Conversation c){
+        List<NavDrawerItem> group = null;
 
         switch(groupPosition){
             case UNREAD_GROUP:
                 group = unreadMenu;
-                group.add(newUser);
+                group.add(c);
                 break;
             case PRIVATE_GROUP:
                 group = privateMenu;
-                group.add(newUser);
+                group.add(c);
 
                 break;
         }
 
-        notifyDataSetChanged();
+        dataSetChanged();
     }
+
+    private void dataSetChanged(){
+        activity.runOnUiThread(new Runnable(){
+            public void run(){
+                notifyDataSetChanged();
+            }
+        });
+    }
+
 
     public void addDepartment(String name){
         NavDrawerInnerGroup newGroup = new NavDrawerInnerGroup(activity, name);
         staffMenu.add(newGroup);
-        notifyDataSetChanged();
+        dataSetChanged();
     }
 
     public void addUserToDepartment(String departmentName, User newUser){
         NavDrawerInnerGroup depart = null;
         for(NavDrawerInnerGroup g: staffMenu){
-            if(g.name.equals(departmentName)){
+            if(g.getName().equals(departmentName)){
                 depart = g;
                 break;
             }
@@ -246,7 +255,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         }
 
         depart.addChild(newUser);
-        notifyDataSetChanged();
+        dataSetChanged();
     }
 
 }

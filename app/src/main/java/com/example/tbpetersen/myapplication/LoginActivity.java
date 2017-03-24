@@ -3,7 +3,9 @@ package com.example.tbpetersen.myapplication;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -52,6 +54,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final String[] DUMMY_CREDENTIALS = new String[]{
             "foo@example.com:hello", "bar@example.com:world"
     };
+    public static final String PREFS = "login_prefs";
+    public static final String TOKEN = "neur_res_token";
+    public static final String NAME = "neur_res_name";
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -202,18 +207,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // perform the user login attempt.
             //showProgress(true);
             mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
+            mAuthTask.execute(email);
         }
     }
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return email.contains("@");
+        //return email.contains("@");
+        return true;
     }
 
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
-        return password.length() > 4;
+        return true;
+        //return password.length() > 4;
     }
 
     /**
@@ -310,11 +317,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    public class UserLoginTask extends AsyncTask<String, Void, String> {
 
-        private final String mEmail;
+        String mEmail;
         private final String mPassword;
-        private String loginToken;
 
         UserLoginTask(String email, String password) {
             mEmail = email;
@@ -322,17 +328,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
+        protected String doInBackground(String... params) {
+            mEmail = params[0];
             // TODO: attempt authentication against a network service.
+            String loginToken = null;
             try {
-                loginToken = SessionWrapper.getLoginToken("tbpetersen");
+                loginToken = SessionWrapper.getLoginToken(mEmail);
 
                 if(loginToken == null){
-                    return false;
+                    return loginToken;
                 }
-                //Thread.sleep(2000);
+
             } catch (Exception e) {
-                return false;
+                return null;
             }
 
             /*for (String credential : DUMMY_CREDENTIALS) {
@@ -344,19 +352,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
             */
 
-            // TODO: register the new account here.
-            return true;
+            SharedPreferences sp = LoginActivity.this.getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putString(LoginActivity.TOKEN, loginToken);
+            editor.putString(LoginActivity.NAME , mEmail);
+            editor.commit();
+            return loginToken;
         }
 
-        @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(String success) {
             mAuthTask = null;
             //showProgress(false);
 
-            if (success) {
+            if (success != null) {
                 Intent startApp = new Intent(LoginActivity.this, MainActivity.class);
-                startApp.putExtra("username", "tbpetersen");
-                startApp.putExtra("LoginToken", loginToken);
                 LoginActivity.this.startActivity(startApp);
                 finish();
             } else {

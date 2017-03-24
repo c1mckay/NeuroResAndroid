@@ -119,7 +119,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             holder.messageText.setText(message.getMessageText());
         }
 
-        boolean currentUserSaidThis = r.nextBoolean();
+        boolean currentUserSaidThis = message.getOwner().length() != 0;
         holder.singleMessageContainer.setGravity(currentUserSaidThis ? Gravity.LEFT : Gravity.RIGHT);
         holder.messageText.setBackgroundResource(currentUserSaidThis ? R.drawable.balloon_incoming_normal : R.drawable.balloon_outgoing_normal);
 

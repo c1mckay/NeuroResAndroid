@@ -12,15 +12,17 @@ import java.util.List;
 public class NavDrawerInnerGroup extends NavDrawerItem {
     private Context context;
     private List<User> children;
+    private String name;
 
     NavDrawerInnerGroup(Context context, String name){
+        super(null, context);
         this.name = name;
         this.context = context;
 
-        children = new ArrayList<User>();
+        children = new ArrayList<>();
     }
 
-    public void addChild(User newChild){
+    void addChild(User newChild){
         children.add(newChild);
     }
 
@@ -32,7 +34,11 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
         return children.size();
     }
 
-    public List<User> getChildren(){
+    List<User> getChildren(){
         return children;
+    }
+
+    public String getName(){
+        return name;
     }
 }

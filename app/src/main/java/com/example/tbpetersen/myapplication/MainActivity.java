@@ -3,6 +3,7 @@ package com.example.tbpetersen.myapplication;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -10,6 +11,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -73,39 +75,36 @@ public class MainActivity extends AppCompatActivity
     private boolean needToChangeFragment = false;
 
     /* Contains all the users that that there are converstaions with */
-    public HashMap<Long,User> currentConversations;
+    public HashMap<Long,User> userList;
+    public HashMap<Long,Conversation> currentConversations;
     /* The currently selected user */
-    public User selectedUser;
+    public Conversation selectedConversation;
 
     public User loggedInUser;
-
-    SessionWrapper sessionWrapper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Check for the login Token
-        Intent intent = getIntent();
-        if(intent.hasExtra("LoginToken")){
-            String loginToken = intent.getStringExtra("LoginToken");
-            sessionWrapper = new SessionWrapper(this,loginToken);
 
-            Log.v("tag", loginToken);
-        }else{
-            // Do something because there is no login token
+        if(getToken() == null){
+            Intent i = new Intent(this, LoginActivity.class);
+            startActivity(i);
+            finish();
+            return;
         }
 
         setContentView(R.layout.activity_main);
 
         /*Initialize */
-        currentConversations = new HashMap<Long, User>();
+        currentConversations = new HashMap<>();
+        userList = new HashMap<>();
         messageEditText = (EditText) findViewById(R.id.message_edit_text);
 
 
         // Set the fragment
-        currentFragment = new MainFragment();
-        currentFragment.addUser("Demo");
+        currentFragment = startMainFragment();
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
@@ -148,16 +147,38 @@ public class MainActivity extends AppCompatActivity
                 String newMessage = messageEditText.getText().toString();
                 //Only send the message if it is not empty
                 if(! newMessage.equals("")){
-                    currentFragment.addMessage("Trevor", messageEditText.getText().toString());
+
+                    //currentFragment.addMessage("Trevor", messageEditText.getText().toString());
+                    //TODO
                     messageEditText.setText("");
-                    hideSoftKeyboard();
-                    messageEditText.clearFocus();
                 }
+
+                hideSoftKeyboard();
+                messageEditText.clearFocus();
             }
         });
 
         loadData();
     }
+
+    protected String getToken(){
+        SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        return sPref.getString(LoginActivity.TOKEN, null);
+    }
+
+    private String getUsername(){
+        SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        return sPref.getString(LoginActivity.NAME, null);
+    }
+
+    private MainFragment startMainFragment(){
+        MainFragment mFrag = new MainFragment();
+        Bundle i = new Bundle();
+        i.putString("token", getToken());
+        mFrag.setArguments(i);
+        return mFrag;
+    }
+
 
     @Override
     public void onBackPressed() {
@@ -193,6 +214,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
         return true;
     }
 
@@ -201,22 +223,24 @@ public class MainActivity extends AppCompatActivity
         // If the returning activity was the search activity
         if(requestCode == SEARCH_USER_REQUEST && resultCode == Activity.RESULT_OK){
             // Get the username and id of the newly searched user
-            String searchedUsername = data.getStringExtra("USERNAME");
+            String searchedConversation = data.getStringExtra("USERNAME");
             long searchedID = data.getIntExtra("ID", -1);
+            boolean isConversation = searchedConversation != null;
 
             // Deselect the previously selected user (change the background
             // color and selectedUser)
-            if(selectedUser != null && selectedUser.v != null){
-                selectedUser.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+            if(selectedConversation != null && selectedConversation.v != null){
+                selectedConversation.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
             }
 
             /* Set selectedUser */
-            if(currentConversations.get(searchedID) == null){
-                selectedUser = new User(this, searchedID, searchedUsername);
-                currentConversations.put(selectedUser.id, selectedUser);
-            }else{
-                selectedUser = currentConversations.get(searchedID);
+            if(userList.containsKey(searchedID)) {
+                selectedConversation = currentConversations.get(searchedID);
             }
+                //userList.put(selectedUser.id, selectedUser);
+            //}else{
+                //selectedUser = userList.get(searchedID);
+            //}
             // Tell the main activity that the fragment needs to be changed
             needToChangeFragment = true;
         }
@@ -227,12 +251,13 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         // Check if the main fragment needs to be changed
         if(needToChangeFragment){
-            if(selectedUser.v == null) {
+            if(selectedConversation.v == null) {
                 // Add a view to the navigation bar for the new user
-                addConversation(PRIVATE_MENU_GROUP, selectedUser);
+                addToNavBar(PRIVATE_MENU_GROUP, selectedConversation);
             }else{
                 // Highlight the view that is already in the nav bar
-                selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
+                selectedConversation.select();
+                //selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
             }
             changeFragment();
             needToChangeFragment = false;
@@ -256,21 +281,33 @@ public class MainActivity extends AppCompatActivity
      * Deselects the previously selected user and selects the clicked on user.
      * @param v user clicked on in the nav drawer
      */
-    public void userClickedOn(View v) {
+    public void onViewClicked(View v) {
         //Get the id of the user that was clicked on
-        long id = (long)v.getTag();
-        // Find the user in the hashmap
-        User u = currentConversations.get(id);
-                if(u != null){
-                    //Deselect previous
-                    if(selectedUser != null && selectedUser.v != null){
-                        selectedUser.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                    }
-                    // Select clicked on user
-                    selectedUser = u;
-                    selectedUser.v = v;
-                    selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
-                }
+
+        if(v.getTag(R.id.CONVERSATION) != null){
+            onConversationClick(v, (Long) v.getTag(R.id.CONVERSATION));
+        }else if(v.getTag(R.id.USER) != null){
+            onUserClick((Long) v.getTag(R.id.USER));
+        }
+        return;
+    }
+
+    private void onUserClick(long user_id){
+
+    }
+
+    private void onConversationClick(View v, long conversation_id){
+        NavDrawerItem c = currentConversations.get(conversation_id);
+        if(currentConversations.containsKey(conversation_id)){ //a conversation was clicked, and we're about to load it
+            //Deselect previous
+            if(selectedConversation != null){
+                selectedConversation.deselect();
+            }
+            // Select clicked on user
+            selectedConversation = currentConversations.get(conversation_id);;
+            selectedConversation.v = v;
+            selectedConversation.select();
+        }
         // Reset the input fields and hide it
         messageEditText.setText("");
         hideSoftKeyboard();
@@ -280,25 +317,27 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Add a view to the navigation drawer for the newUser
-     * @param newUser the user to have a view added for
+     * @param conversation the user to have a view added for
      */
-    private void addConversation(int groupPosition, User newUser){
-        navDrawerAdapter.addConversation(groupPosition, newUser);
+    private void addToNavBar(int groupPosition, Conversation conversation){
+        navDrawerAdapter.addConversation(groupPosition, conversation);
         drawerListView.expandGroup(groupPosition);
 
-        currentConversations.put(newUser.id, newUser);
+        //userList.put(cogetID(), newUser);
     }
 
     /**
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void changeFragment(){
-        currentFragment = new MainFragment();
-        currentFragment.addUser(selectedUser.name);
+        currentFragment = startMainFragment();
+        currentFragment.conversation = selectedConversation;
+        currentFragment.userName = loggedInUser.name;
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
-        currentFragment.queueMessage(selectedUser.name, "This is the old message");
+        //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
+        currentFragment.loadMessages(selectedConversation, userList);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -327,7 +366,7 @@ public class MainActivity extends AppCompatActivity
      * @param u the user to be added to the hashmap
      */
     public void addUserToHashTable(User u){
-        currentConversations.put(u.id, u);
+        //currentConversations.put(u.id, u);
     }
 
     /**
@@ -348,13 +387,27 @@ public class MainActivity extends AppCompatActivity
 
     private void addUserToDepartment(String departmentName, User newUser){
         navDrawerAdapter.addUserToDepartment(departmentName,newUser);
-        currentConversations.put(newUser.id, newUser);
+        userList.put(newUser.getID(), newUser);
     }
 
     private void loadData(){
         hideMainElements();
         // Load data from server
-        sessionWrapper.updateUsers(); // loggedInUser is set in onUsersLoaded
+        SessionWrapper.UpdateUsers(getToken(), new SessionWrapper.OnCompleteListener() {
+
+            public void onComplete(String s) {
+                List<User> users = SessionWrapper.GetUserList(s);
+                for(User u: users){
+                    u.setContext(MainActivity.this);
+                }
+                onUsersLoaded(users);
+            }
+
+
+            public void onError(String s) {
+
+            }
+        });
         // sessionWrapper.updateConversations is called at the end of onUsersLoaded
         //(currentConversations needs to be populated before the call is made to updateConversations)
 
@@ -366,8 +419,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onUsersLoaded(List<User> users){
-        String username = getIntent().getStringExtra("username");
+        String username = getUsername();
         for(User u : users){
+            u.setContext(this);
             if(u.name.equals(username)){
                 loggedInUser = u;
                 TextView nameInSettingsView = (TextView) findViewById(R.id.username_in_settings_text_view);
@@ -380,16 +434,27 @@ public class MainActivity extends AppCompatActivity
             Log.v("tag", "Users is null");
         }
 
-        sessionWrapper.updateConversations();
-    }
+        SessionWrapper.UpdateConversations(getToken(), new SessionWrapper.OnCompleteListener() {
+            public void onComplete(String s) {
+                List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s);
 
-    public void onConversationsLoaded(List<Conversation> conversations){
+                //called update conversation without the context
+                //needs to be connected here now
+                for(Conversation c: conversations){
+                    c.setContext(MainActivity.this);
+                }
+                if(conversations != null) {
+                    populatePrivate(conversations);
+                }else{
+                    Log.v("tag", "Users is null");
+                }
+            }
 
-        if(conversations != null) {
-            populatePrivate(conversations);
-        }else{
-            Log.v("tag", "Users is null");
-        }
+            @Override
+            public void onError(String s) {
+
+            }
+        });
     }
 
     public void populateStaff(List<User> users){
@@ -406,7 +471,7 @@ public class MainActivity extends AppCompatActivity
 
         for(User u : users){
             if(u != loggedInUser){
-                currentConversations.put(u.id, u);
+                //currentConversations.put(u.id, u);
                 addUserToDepartment(u.userType, u);
             }
         }
@@ -416,12 +481,12 @@ public class MainActivity extends AppCompatActivity
     public void populatePrivate(List<Conversation> conversations){
         for(Conversation c : conversations){
             if(c.users.get(0) == null){
-                Log.v("tag", "User is null");
+                Log.v("tag", "User is null : " + c.users);
             }
         }
         for(Conversation c : conversations){
-            currentConversations.put(c.users.get(0).id,c.users.get(0) );
-            addConversation(PRIVATE_MENU_GROUP, c.users.get(0));
+            currentConversations.put(c.getID(), c);
+            addToNavBar(PRIVATE_MENU_GROUP, c);
         }
     }
 

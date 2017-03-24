@@ -7,11 +7,18 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.sql.Date;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -25,11 +32,12 @@ public class MainFragment extends Fragment {
     MessageList messageList;
     // Adapter that links the messageList and recyclerview
     MessageAdapter messageAdapter;
+    public Conversation conversation;
 
     //Username of the owner of these messages
-    private String username = null;
+    String userName = null;
     // Used to temporarily store a message when the view has not yet been made
-    private String message = null;
+    //private String message = null;
 
     public MainFragment() {
         // Required empty public constructor
@@ -52,68 +60,86 @@ public class MainFragment extends Fragment {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(messageAdapter);
         // Display any messages that are waiting to be displayed
-        displayMessage();
+        //displayMessage();//messages aren't loaded yet
         // Scroll to the bottom of the list
         recyclerView.scrollToPosition(messageList.size() - 1);
 
         return v;
     }
+    
+    /**
+     * The conversation details to load
+     * @param c the conversation to query the server for
+     */
+    public void loadMessages(Conversation c, final HashMap<Long, User> user){
+        //should actually queue the messages at this point
+        SessionWrapper.GetConversationData(c.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
+            @Override
+            public void onComplete(String s) {
+                try {
+                    JSONArray jMessages = new JSONArray(s);
+                    JSONObject jo;
+                    long user_id;
+                    String userName;
+                    User u;
+                    Date d;
+                    for(int i = 0; i < jMessages.length(); i++){
+                        jo = jMessages.getJSONObject(i);
+                        user_id = jo.getLong("sender");
+                        u = user.get(user_id);
+                        if(u == null)
+                            userName = "";
+                        else
+                            userName = u.name;
+                        addMessage(userName, jo.getString("text"), System.currentTimeMillis());
+                    }
+                    displayMessages();
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
 
-    private void loadMessages(){
-        messageList.add(username, "Hello this is a very long line of text and I dont know how the message will look\nLine 2", 1487269703028L);
-        messageList.add(username, "Hello3", 1475269703028L);
-        messageList.add(username, "Hello5", 1487169703028L);
-        for(int i = 0; i < 8; i++){
-            messageList.add(username, "First", 1487269703028L);
-        }
-        messageAdapter.notifyItemRangeInserted(0, messageList.size() - 1);
+            }
+
+            @Override
+            public void onError(String s) {
+
+            }
+        });
+
         //messageAdapter.notifyDataSetChanged();
     }
 
-    /**
-     * Queue up a message when the view has not yet been created to display them yet
-     * @param username the owner of the message
-     * @param message the message text
-     */
-    public void queueMessage(String username, String message){
-        this.username = username;
-        this.message = message;
+    private String getToken(){
+        return getArguments().getString("token", null);
     }
+    
 
     /**
      * Add a message to be displayed
      * @param username the owner of the message
      * @param message the message text
+     * @param time the time at which the message was sent
      */
-    public void addMessage(String username, String message){
-        this.username = username;
-        this.message = message;
-        displayMessage();
+    public void addMessage(String username, String message, long time){
+        messageList.add(username, message, time);
+        messageAdapter.notifyItemInserted(messageList.size() - 1);
+        recyclerView.scrollToPosition(messageList.size() - 1);
     }
 
     /**
      * Display the messages
      */
-    private void displayMessage(){
-        if(username == null || username.equals("Demo")){
-            displayDemoMessage();
-            return;
-        }
-        if(username != null && message != null){
-            messageList.add(username, message, System.currentTimeMillis());
-            messageAdapter.notifyItemInserted(messageList.size() - 1);
-            recyclerView.scrollToPosition(messageList.size() - 1);
-        }//else{
-            //loadMessages();
-        //}
-    }
-
-    /**
-     * Set the user of these messages
-     * @param user the name of the user
-     */
-    public void addUser(String user){
-        this.username = user;
+    private void displayMessages(){
+        
+        //messageList.add(username, message, System.currentTimeMillis());
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                messageAdapter.notifyItemInserted(messageList.size() - 1);
+                recyclerView.scrollToPosition(messageList.size() - 1);
+            }
+        });
+    
     }
 
     public void displayDemoMessage(){

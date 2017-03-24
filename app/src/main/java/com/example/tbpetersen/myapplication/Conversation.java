@@ -1,24 +1,55 @@
 package com.example.tbpetersen.myapplication;
 
+import android.content.Context;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by tbpetersen on 3/23/2017.
  */
 
-public class Conversation {
-    long id;
-    public List<User> users;
+public class Conversation extends NavDrawerItem{
+    List<User> users;
 
-    Conversation(List<User> users, long id){
-        this.users = users;
-        this.id = id;
-    }
-
-    Conversation(long id){
+    Conversation(long id, Context c){
+        super(id, c);
         users = new ArrayList<User>();
-        this.id = id;
     }
 
+    void addUser(User user) {
+        users.add(user);
+    }
+
+    public String getName() {
+        if(users == null)
+            return "Bugged out conversation";
+        if(users.size() == 1)
+            return users.get(0).name;
+        StringBuilder sb = new StringBuilder();
+        for(User u: users){
+            sb.append(u.name);
+            sb.append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        return sb.toString();
+    }
+
+    private ArrayList<Long> tempIDs;
+    void addTemporaryUser(long userID) {
+        if(tempIDs == null)
+            tempIDs = new ArrayList<>();
+        tempIDs.add(userID);
+    }
+
+    public void setContext(MainActivity activity) {
+        super.setContext(activity);
+        User u;
+        for(Long userID: tempIDs) {
+            u = activity.userList.get(userID);
+            if(u != null)
+                addUser(u);
+        }
+    }
 }

@@ -8,29 +8,29 @@ import android.view.View;
  */
 
 public class User extends NavDrawerItem{
-    public long id;
-    public String userType;
-    public View v;
-
-    private Context context;
+    String userType;
+    String name;
     User(Context context, long id, String name){
-        this.context = context;
+        super(id, context);
         this.name = name;
-        this.id = id;
     }
 
     User(Context context, long id, String name, String userType){
-        this.context = context;
+        super(id, context);
         this.name = name;
-        this.id = id;
         this.userType = userType;
     }
 
     User(Context context, long id, String name, View v){
-        this.context = context;
+        super(id, context);
+        setView(v);
         this.name = name;
-        this.id = id;
-        this.v = v;
+    }
+
+    User(long id, String name, String userType){
+        super(id, null);
+        this.name = name;
+        this.userType = userType;
     }
 
     @Override
@@ -38,16 +38,6 @@ public class User extends NavDrawerItem{
         return name;
     }
 
-    public void select(){
-        if(v != null){
-            v.setBackgroundColor(context.getResources().getColor(R.color.selected));
-        }
-    }
 
-    public void deselect(){
-        if(v != null){
-            v.setBackgroundColor(context.getResources().getColor(R.color.colorPrimary));
-        }
-    }
 
 }

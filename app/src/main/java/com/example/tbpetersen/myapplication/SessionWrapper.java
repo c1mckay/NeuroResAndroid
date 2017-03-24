@@ -8,12 +8,20 @@ import android.util.Log;
 import android.util.Pair;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
 import java.io.InputStream;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,43 +32,40 @@ public class SessionWrapper{
   public static final String LOGIN_ENDPOINT = "/login";
   public static final String GET_USERS_ENDPOINT = "/users_list";
   public static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
-
-
-  private String loginToken;
-  // Used as a context and also for calling onUsersLoaded / onConversationsLoaded
-  private MainActivity mainActivity;
+  public static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
 
   /**
    * Create a session using a valid loginToken and mainActivity
    * (In the main activity, the login activity should have already gotten a login token. Use this
    * token to create a sessionWrapper in the main activity)
    * @param mainActivity
-   * @param loginToken
      */
-  SessionWrapper(MainActivity mainActivity, String loginToken){
-    this.loginToken = loginToken;
-    this.mainActivity = mainActivity;
-  }
+
 
   /**
    * Gets a login token for the supplied username
    * @param username The user to get a login token for
    * @return The loginToken for the user
      */
-  public static String getLoginToken(String username){
-      List<Pair<String,String>> headers = new ArrayList<Pair<String, String>>();
-      headers.add(new Pair("auth", username));
+  //I dont think you can/are supposed to do HTTP requests on the main thread
+  static String getLoginToken(String username){
+      List<Pair<String,String>> headers = new ArrayList<>();
+      headers.add(new Pair<>("auth", username));
 
-      return request("POST", LOGIN_ENDPOINT, headers);
+      return request("POST", LOGIN_ENDPOINT, headers, null);
+  }
+
+  public static void GetConversationData(long id, String token, OnCompleteListener ocl){
+    new HTTPRequestThread(token, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
   }
 
   /**
    * Send a POST request to /users_list. Data received a JSON array of users. Once the POST request
    * has finished, onUsersLoaded is called in the mainActivity(from within HTTPRequestTread)
    */
-  public void  updateUsers(){
-    HTTPRequestThread httpRequestThread = new HTTPRequestThread(GET_USERS_ENDPOINT);
-    httpRequestThread.execute((Void) null);
+  public static void UpdateUsers(String token, OnCompleteListener oci){
+    HTTPRequestThread httpRequestThread = new HTTPRequestThread(token, oci);
+    httpRequestThread.execute(GET_USERS_ENDPOINT);
   }
 
   /**
@@ -68,9 +73,8 @@ public class SessionWrapper{
    * request has finished, onConversationsLoaded is called in the mainActivity(from within
    * HTTPRequestTread)
    */
-  public void  updateConversations(){
-    HTTPRequestThread httpRequestThread = new HTTPRequestThread(CONVERSATIONS_ENDPOINT);
-    httpRequestThread.execute((Void) null);
+  public static void  UpdateConversations(String token, OnCompleteListener oci){
+    new HTTPRequestThread(token, oci).execute(CONVERSATIONS_ENDPOINT);
   }
 
   /**
@@ -78,9 +82,10 @@ public class SessionWrapper{
    * @param requestType Should be either POST of GET
    * @param endpoint endpoint at neurores.ucsd.edu (For example /login or /conversation_data)
    * @param headers The headers to add to the request (usually need to include 'auth' : loginToken)
+   * @param data the data to put into the HTTP packet
    * @return The body of the response from the server
    */
-  private static String request(String requestType, String endpoint, List<Pair<String,String>> headers){
+  private static String request(String requestType, String endpoint, List<Pair<String,String>> headers, String data){
     int code = 0;
     String message = "";
 
@@ -98,6 +103,12 @@ public class SessionWrapper{
       }
 
       con.setUseCaches(false);
+      con.setDoOutput(true);
+      con.setDoInput(true);
+
+      if(data != null){
+        writeData(data, con);
+      }
 
       code = con.getResponseCode();
       message = con.getResponseMessage();
@@ -121,107 +132,128 @@ public class SessionWrapper{
     }
   }
 
+  private static void writeData(String data, URLConnection conn) throws IOException {
+    OutputStream os = conn.getOutputStream();
+    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+    writer.write(data);
+    writer.flush();
+    writer.close();
+    os.close();
+  }
+
+  interface OnCompleteListener{
+    void onComplete(String s);
+    void onError(String s);
+  }
+
   /**
    * Class for doing async HTTP requests. The thread will request data form the server and then
    * call the appropriate method for mainActivity (mainActivity is a listener) For example,
    * onConversationsLoaded is called when a thread with and endpoint of /conversation_data is done
    * executing
    */
-  class HTTPRequestThread extends AsyncTask<Void,Void, Boolean>{
+  static class HTTPRequestThread extends AsyncTask<String,Void, String>{
 
     // The endpoint that will be used in the request
-    String endpoint;
+    String token;
+    OnCompleteListener ocl;
 
     /**
      * Single argument ctor
-     * @param endpoint The endpoint that will be used in the request
-       */
-    HTTPRequestThread(String endpoint){
-      this.endpoint = endpoint;
+     * @param token the auth token for the request
+     * @ocl listener what to do when the request is completed
+     */
+    HTTPRequestThread(String token, OnCompleteListener ocl){
+      this.ocl = ocl;
+      this.token = token;
     }
 
     /**
      * Makes a request to the endpoint that was passed to this thread when it was created
-     * @param params
+     * @param endpoints the endpoint to talk to
      * @return
        */
     @Override
-    protected Boolean doInBackground(Void... params) {
+    protected String doInBackground(String... endpoints) {
+      String endpoint = endpoints[0];
 
-      List<Pair<String,String>> headers = new ArrayList<Pair<String, String>>();
+      List<Pair<String, String>> headers = new ArrayList<Pair<String, String>>();
       /* Add the auth header for this request */
-      headers.add(new Pair( (String) "auth", (String) loginToken));
+      headers.add(new Pair<>("auth", token));
       /* Make the request */
-      String jsonString = request("POST", endpoint, headers);
+      return request("POST", endpoint, headers, data);
 
-
-      /* Create user objects using the JSON from the server response
-         Alert main activity that this request has been made */
-      switch (endpoint){
-
-        case GET_USERS_ENDPOINT:
-          getUsers(jsonString);
-          break;
-
-        case CONVERSATIONS_ENDPOINT:
-          getConversations(jsonString);
-          break;
-      }
-
-      return null;
     }
 
-    private void getUsers(String jsonString){
-      List<User> userList = new ArrayList<User>();
-      try{
-        JSONArray userJSONArray = new JSONArray(jsonString);
-        for(int i = 0; i < userJSONArray.length(); i++){
-          JSONObject current = userJSONArray.getJSONObject(i);
-          String name = current.getString("email");
-          String userType = current.getString("user_type");
-          long userId = current.getLong("user_id");
-          userList.add(new User(mainActivity, userId,name, userType));
-        }
-      }catch( Exception e){
-        Log.v("tag", "Failed to get JSONArray from json from " + endpoint);
-      }
-
-      mainActivity.onUsersLoaded(userList);
+    protected void onPostExecute(String result){
+        if(ocl != null)
+            ocl.onComplete(result);
     }
 
-    private void getConversations(String jsonString){
-      List<Conversation> conversationList = new ArrayList<Conversation>();
-      try{
+
+    private String data;
+    public HTTPRequestThread setData(String data) {
+      this.data = data;
+      return this;
+    }
+  }
+
+  static List<User> GetUserList(String jsonString){
+    List<User> userList = new ArrayList<User>();
+    try{
+      JSONArray userJSONArray = new JSONArray(jsonString);
+      for(int i = 0; i < userJSONArray.length(); i++){
+        JSONObject current = userJSONArray.getJSONObject(i);
+        String name = current.getString("email");
+        String userType = current.getString("user_type");
+        long userId = current.getLong("user_id");
+        userList.add(new User(null, userId,name, userType));
+      }
+    }catch( Exception e){
+      Log.v("tag", "Failed to get JSONArray from json from " + GET_USERS_ENDPOINT);
+      e.printStackTrace();
+    }
+    return userList;
+  }
+
+  public static List<Conversation> TranslateConversationMetadata(String jsonString){
+    List<Conversation> conversationList = new ArrayList<Conversation>();
+    try{
         /* The conversations in json form*/
-        JSONObject conversationJSONObject = new JSONObject(jsonString);
+      JSONObject conversationJSONObject = new JSONObject(jsonString);
 
         /* Calling "next" on the iterator will return the id of the next conversation (id in string form) */
-        Iterator<String> iterator = conversationJSONObject.keys();
-        Conversation currentConversation = null;
-        // Iterate over all conversations
-        while(iterator.hasNext()){
-          String conversationId = iterator.next();
-          currentConversation = new Conversation(new Long(conversationId));
-          JSONArray currentArray = conversationJSONObject.getJSONArray(conversationId);
-          // Iterate over users in conversations
-          for(int i = 0; i < currentArray.length(); i++){
-            long currentUserId = currentArray.getLong(i);
+      Iterator<String> iterator = conversationJSONObject.keys();
+      Conversation currentConversation = null;
+      User user;
+      String userID_s;
+      long userID;
+      // Iterate over all conversations
+      while(iterator.hasNext()){
+        String conversationId = iterator.next();
+        currentConversation = new Conversation(Long.valueOf(conversationId), null);
+        //currentConversation.setUnread(conversationJsonObject.lastUnread);
+        JSONArray currentArray = conversationJSONObject.getJSONArray(conversationId);
+        //JSONArray currentArray = conversationJSONObject.getJSONArray(conversationId).getJSONArray("members");
+        // Iterate over users in conversations
+        for(int i = 0; i < currentArray.length(); i++){
+          userID_s = currentArray.get(i).toString();
+          userID = Long.parseLong(userID_s);
 
-            User currentUser = mainActivity.currentConversations.get(currentUserId);
-            if(currentUser != null && currentUser != mainActivity.loggedInUser){
-              currentConversation.users.add(currentUser);
-            }
-          }
-            conversationList.add(currentConversation);
-
+          currentConversation.addTemporaryUser(userID);
         }
-
-      }catch( Exception e){
-        Log.v("tag", "Failed to get JSONArray from json from " + endpoint);
+        conversationList.add(currentConversation);
       }
 
-      mainActivity.onConversationsLoaded(conversationList);
+    }catch( Exception e){
+      Log.v("tag", "Failed to get JSONArray from json from " + CONVERSATIONS_ENDPOINT);
+      e.printStackTrace();
     }
+
+    return conversationList;
+  }
+
+  private void pushConversationMessages(JSONObject jo){
 
   }
 
