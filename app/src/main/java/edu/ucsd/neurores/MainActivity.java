@@ -20,6 +20,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -332,12 +333,18 @@ public class MainActivity extends AppCompatActivity
         v = (View) v.getParent();
         View innerLayout = v.findViewById(R.id.inner_layout);
         int newVisibility;
+        int imageID;
         if(innerLayout.getVisibility() == LinearLayout.VISIBLE){
             newVisibility = LinearLayout.GONE;
+            imageID = R.drawable.expander;
         }else{
             newVisibility = LinearLayout.VISIBLE;
+            imageID = R.drawable.contrator;
         }
         innerLayout.setVisibility(newVisibility);
+
+        ImageView iv = (ImageView) v.findViewById(R.id.expander);
+        iv.setImageResource(imageID);
     }
 
     /**
