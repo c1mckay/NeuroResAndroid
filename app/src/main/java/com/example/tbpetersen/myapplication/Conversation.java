@@ -52,4 +52,12 @@ public class Conversation extends NavDrawerItem{
                 addUser(u);
         }
     }
+
+    public String getUser(long from) {
+        for(User u: users){
+            if(u.getID().equals(from))
+                return u.name;
+        }
+        return null;
+    }
 }
