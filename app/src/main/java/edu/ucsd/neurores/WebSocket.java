@@ -35,6 +35,8 @@ public class WebSocket extends WebSocketClient {
         JSONObject jo = null;
         try {
             jo = new JSONObject(message);
+            if(jo.getLong("conv_id") != mFrag.conversation.getID())
+                return;
             message = jo.getString("text");
             String from = mFrag.conversation.getUser(jo.getLong("from"));
             if(from == null)
