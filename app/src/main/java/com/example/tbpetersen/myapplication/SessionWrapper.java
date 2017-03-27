@@ -94,7 +94,7 @@ public class SessionWrapper{
       URL url = new URL(BASE_URL + endpoint);
       HttpURLConnection con = (HttpURLConnection) url.openConnection();
       con.setRequestMethod(requestType);
-      if(requestType.toLowerCase().equals("post")){
+      if(requestType.equalsIgnoreCase("post")){
           con.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
       }
 
