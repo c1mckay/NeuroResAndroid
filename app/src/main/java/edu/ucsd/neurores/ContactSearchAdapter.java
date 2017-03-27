@@ -1,16 +1,10 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
 import android.content.Context;
-import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
-import static android.R.id.list;
-import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
 
 /**
  * Created by tbpetersen on 3/16/2017.

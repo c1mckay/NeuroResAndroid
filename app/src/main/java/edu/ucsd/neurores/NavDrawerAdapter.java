@@ -1,30 +1,16 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
-import android.animation.Animator;
-import android.animation.TimeInterpolator;
 import android.content.Context;
 import android.graphics.Paint;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.BaseExpandableListAdapter;
-import android.widget.EditText;
-import android.widget.ExpandableListView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created by tbpetersen on 2/23/2017.

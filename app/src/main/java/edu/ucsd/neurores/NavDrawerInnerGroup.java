@@ -1,4 +1,4 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
 import android.content.Context;
 

@@ -1,28 +1,19 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
-import android.app.SearchManager;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SearchView;
-import android.widget.SearchView.OnQueryTextListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
-
-import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
 public class SearchActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
 /**
  * Created by tbpetersen on 2/14/2017.

@@ -1,9 +1,8 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
 import android.content.Context;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**

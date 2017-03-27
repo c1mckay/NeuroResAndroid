@@ -1,24 +1,17 @@
-package com.example.tbpetersen.myapplication;
+package edu.ucsd.neurores;
 
-import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 import android.util.Pair;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
 import java.io.InputStream;
 import java.net.URLConnection;

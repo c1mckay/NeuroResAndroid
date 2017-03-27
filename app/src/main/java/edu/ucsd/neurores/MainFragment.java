@@ -1,6 +1,4 @@
-package com.example.tbpetersen.myapplication;
-
-import org.java_websocket.client.WebSocketClient;
+package edu.ucsd.neurores;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,7 +17,6 @@ import org.json.JSONObject;
 import java.net.URISyntaxException;
 import java.sql.Date;
 import java.util.HashMap;
-import java.util.concurrent.ThreadPoolExecutor;
 
 
 /**
