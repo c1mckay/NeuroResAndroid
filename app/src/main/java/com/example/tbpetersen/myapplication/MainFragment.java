@@ -1,8 +1,8 @@
 package com.example.tbpetersen.myapplication;
 
+import org.java_websocket.client.WebSocketClient;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,19 +12,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URISyntaxException;
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class MainFragment extends Fragment {
+
 
     // View that holds all the messages
     RecyclerView recyclerView;
@@ -38,6 +41,8 @@ public class MainFragment extends Fragment {
     String userName = null;
     // Used to temporarily store a message when the view has not yet been made
     //private String message = null;
+
+    WebSocket socket;
 
     public MainFragment() {
         // Required empty public constructor
@@ -107,9 +112,10 @@ public class MainFragment extends Fragment {
         });
 
         //messageAdapter.notifyDataSetChanged();
+
     }
 
-    private String getToken(){
+    String getToken(){
         return getArguments().getString("token", null);
     }
     
@@ -122,8 +128,7 @@ public class MainFragment extends Fragment {
      */
     public void addMessage(String username, String message, long time){
         messageList.add(username, message, time);
-        messageAdapter.notifyItemInserted(messageList.size() - 1);
-        recyclerView.scrollToPosition(messageList.size() - 1);
+        displayMessages();
     }
 
     /**
@@ -135,35 +140,33 @@ public class MainFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                messageAdapter.notifyItemInserted(messageList.size() - 1);
+                messageAdapter.notifyDataSetChanged();
+                //messageAdapter.notifyItemInserted(messageList.size() - 1);
                 recyclerView.scrollToPosition(messageList.size() - 1);
             }
         });
     
     }
 
-    public void displayDemoMessage(){
-        String dp = "dpiccioni";
-        String nk = "nkaranjia";
-        long t = System.currentTimeMillis();
-        messageList.add(dp, "Hello",t );
-        messageList.add(nk, "This is a chat example with an incredibly long message.", t);
-        messageList.add(dp, "Back to me.", t);
-        messageList.add(nk, "I will demonstrate overflowing with two messages.", t);
-        messageList.add(nk, "This is the second message I submitted.", t);
-        messageList.add(nk, "More concept.", t);
-        messageList.add(dp, "Interesting. I can also play with borders to see how that looks like.", t);
-        messageList.add(nk, "Thoughts?", t);
+    public void onResume(){
+        try {
+            socket = new WebSocket(this);
+            socket.connect();
+        } catch (URISyntaxException e) {
+            errorVisMessage("Failed to connect to server");
+            e.printStackTrace();
+        }
+        super.onResume();
+    }
 
-        messageList.add(dp, "Hello",t );
-        messageList.add(nk, "This is a chat example with an incredibly long message.", t);
-        messageList.add(dp, "Back to me.", t);
-        messageList.add(nk, "I will demonstrate overflowing with two messages.", t);
-        messageList.add(nk, "This is the second message I submitted.", t);
-        messageList.add(nk, "More concept.", t);
-        messageList.add(dp, "Interesting. I can also play with borders to see how that looks like.", t);
-        messageList.add(nk, "Thoughts?", t);
-        messageAdapter.notifyDataSetChanged();
+    public void errorVisMessage(String s){
+        Log.d("visError", s);
+    }
+
+    public void onPause(){
+        socket.close();
+        socket = null;
+        super.onPause();
     }
 
 }

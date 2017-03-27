@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity
                 if(! newMessage.equals("")){
 
                     //currentFragment.addMessage("Trevor", messageEditText.getText().toString());
-                    //TODO
+                    currentFragment.socket.pushMessage(newMessage);
                     messageEditText.setText("");
                 }
 
@@ -436,6 +436,13 @@ public class MainActivity extends AppCompatActivity
 
         SessionWrapper.UpdateConversations(getToken(), new SessionWrapper.OnCompleteListener() {
             public void onComplete(String s) {
+                if(s == null){
+                    //indicates the http request returned null, and something went wrong. have them login again
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                    return;
+                }
                 List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s);
 
                 //called update conversation without the context
