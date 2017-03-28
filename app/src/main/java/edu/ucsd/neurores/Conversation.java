@@ -59,4 +59,8 @@ public class Conversation extends NavDrawerItem{
         }
         return null;
     }
+
+    public int getSize() {
+        return users.size();
+    }
 }

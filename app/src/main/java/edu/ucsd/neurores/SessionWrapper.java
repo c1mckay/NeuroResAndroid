@@ -26,6 +26,7 @@ public class SessionWrapper{
   public static final String GET_USERS_ENDPOINT = "/users_list";
   public static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
   public static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
+  public static final String CREATE_CONVERSATION = "/start_conversation";
 
   /**
    * Create a session using a valid loginToken and mainActivity
@@ -50,6 +51,10 @@ public class SessionWrapper{
 
   public static void GetConversationData(long id, String token, OnCompleteListener ocl){
     new HTTPRequestThread(token, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
+  }
+
+  public static void CreateConversation(ArrayList<Long> users, String token, OnCompleteListener ocl){
+    new HTTPRequestThread(token, ocl).setData(new JSONArray(users).toString()).execute(CREATE_CONVERSATION);
   }
 
   /**

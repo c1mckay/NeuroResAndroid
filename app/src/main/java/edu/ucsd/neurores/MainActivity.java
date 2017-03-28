@@ -26,6 +26,11 @@ import android.widget.TextView;
 
 import com.google.firebase.crash.FirebaseCrash;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
@@ -269,11 +274,46 @@ public class MainActivity extends AppCompatActivity
         }else if(v.getTag(R.id.USER) != null){
             onUserClick((Long) v.getTag(R.id.USER));
         }
-        return;
     }
 
     private void onUserClick(long user_id){
+        for(Conversation c: currentConversations.values()){
+            if(c.getSize() == 1 && c.users.get(0).getID() == user_id){
+                onConversationClick(c.v, c.getID());
+                return;
+            }
+        }
+        ArrayList<Long> users = new ArrayList<>();
+        users.add(user_id);
+        SessionWrapper.CreateConversation(users, getToken(), new SessionWrapper.OnCompleteListener() {
 
+            public void onComplete(String s) {
+                try {
+                    JSONObject jo = new JSONObject(s);
+                    JSONArray users = jo.getJSONArray("user_ids");
+                    long id = jo.getLong("conv_id");
+
+                    Conversation c = new Conversation(id, MainActivity.this);
+                    for(int i = 0; i < users.length(); i++){
+                        id = users.getLong(i);
+                        if(id != loggedInUser.getID())
+                            c.addUser(userList.get(id));
+                    }
+                    currentConversations.put(c.getID(), c);
+                    addToNavBar(PRIVATE_MENU_GROUP, c);
+
+                    onConversationClick(c.v, c.getID());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(String s) {
+
+            }
+        });
     }
 
     private void onConversationClick(View v, long conversation_id){
