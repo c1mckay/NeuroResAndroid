@@ -11,3 +11,4 @@
 .idea/workspace.xml
 app/app.iml
 local.properties
+app/google-services.json

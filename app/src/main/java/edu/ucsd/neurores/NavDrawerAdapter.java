@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -96,10 +97,26 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
             LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.menu_header, parent, false);
         }
+        final View headerView = convertView;
         TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
         textView.setText(getGroupTitle(groupPosition));
         //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
         textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+        convertView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ImageView iv = (ImageView) headerView.findViewById(R.id.expander);
+                if(iv.getTag() == null || (Boolean) iv.getTag()) {
+                    iv.setImageResource(R.drawable.contrator);
+                    iv.setTag(false);
+                }else{
+                    iv.setImageResource(R.drawable.expander);
+                    iv.setTag(true);
+                }
+
+
+            }
+        });
 
         return convertView;
     }
