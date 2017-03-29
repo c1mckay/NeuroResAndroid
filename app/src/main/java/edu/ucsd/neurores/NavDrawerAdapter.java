@@ -113,8 +113,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     iv.setImageResource(R.drawable.expander);
                     iv.setTag(true);
                 }
-
-
             }
         });
 

@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.firebase.crash.FirebaseCrash;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -79,6 +80,7 @@ public class MainActivity extends AppCompatActivity
             finish();
             return;
         }
+        Log.d("token", FirebaseInstanceId.getInstance().getToken());
 
         setContentView(R.layout.activity_main);
 
