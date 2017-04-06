@@ -28,9 +28,9 @@
                 android:layout_height="wrap_content" />
 
             <ExpandableListView
+                android:id="@+id/nav_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/nav_view"
                 android:layout_gravity="start"
                 android:dividerHeight="0dp"
                 android:childDivider="@android:color/transparent">

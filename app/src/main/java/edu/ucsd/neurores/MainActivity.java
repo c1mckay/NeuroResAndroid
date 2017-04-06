@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -37,7 +38,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener{
+        implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener {
 
     public static final int UNREAD_MENU_GROUP = 0;
     public static final int STAFF_MENU_GROUP = 1;
@@ -99,8 +100,9 @@ public class MainActivity extends AppCompatActivity
         // Setup the toolbar
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        // Do not display the app name in the toolbar
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        // Set the navigation bar text to be the empty string
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setTitle("");
 
         // Get a reference to the list view that holds the main data in the
         // navigation drawer
@@ -109,13 +111,11 @@ public class MainActivity extends AppCompatActivity
         navDrawerAdapter = new NavDrawerAdapter(this);
         drawerListView.setAdapter(navDrawerAdapter);
 
-        // Expand the list on start
+
+        // Expand the lists on start
         for (int i = 0; i < navDrawerAdapter.getGroupCount(); i++){
             drawerListView.expandGroup(i);
         }
-
-
-
 
         // Set up the drawer and its listeners
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -210,27 +210,43 @@ public class MainActivity extends AppCompatActivity
         // If the returning activity was the search activity
         if(requestCode == SEARCH_USER_REQUEST && resultCode == Activity.RESULT_OK){
             // Get the username and id of the newly searched user
-            String searchedConversation = data.getStringExtra("USERNAME");
-            long searchedID = data.getIntExtra("ID", -1);
-            boolean isConversation = searchedConversation != null;
+            long searchedID = data.getLongExtra("CONVERSATION_ID", -1);
+            long[] userIDs = data.getLongArrayExtra("USERS_IDS");
+            if(searchedID != -1 && userIDs.length > 0){
 
-            // Deselect the previously selected user (change the background
-            // color and selectedUser)
-            if(selectedConversation != null && selectedConversation.v != null){
-                selectedConversation.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-            }
+                // Deselect the previously selected user (change the background
+                // color and selectedUser)
+                if(selectedConversation != null && selectedConversation.v != null){
+                    selectedConversation.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
 
             /* Set selectedUser */
-            if(userList.containsKey(searchedID)) {
-                selectedConversation = currentConversations.get(searchedID);
-            }
+                if(currentConversations.containsKey(searchedID)) {
+                    selectedConversation = currentConversations.get(searchedID);
+                }else{
+                    Conversation newConversation = new Conversation(searchedID, this);
+                    for(long l : userIDs){
+                        if(userList.containsKey(l)){
+                            newConversation.addUser(userList.get(l));
+                        }else{
+                            Log.v("tag", "Error: User with id of " + l + " was said to be in conv "
+                                    + searchedID + " but was not found in list of users");
+                        }
+                    }
+                    newConversation.logAllNames();
+                    currentConversations.put(searchedID, newConversation);
+                    selectedConversation = newConversation;
+                    //addToNavBar(PRIVATE_MENU_GROUP, newConversation);
+                }
                 //userList.put(selectedUser.id, selectedUser);
-            //}else{
+                //}else{
                 //selectedUser = userList.get(searchedID);
-            //}
-            // Tell the main activity that the fragment needs to be changed
-            needToChangeFragment = true;
+                //}
+                // Tell the main activity that the fragment needs to be changed
+                needToChangeFragment = true;
+            }
         }
+
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -260,6 +276,7 @@ public class MainActivity extends AppCompatActivity
      */
     public void searchOnClick(View view) {
         Intent startSearch = new Intent(MainActivity.this, SearchActivity.class);
+        startSearch.putExtra("token", getToken());
         startActivityForResult(startSearch, SEARCH_USER_REQUEST);
     }
 
@@ -360,6 +377,7 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.commit();
         //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
         currentFragment.loadMessages(selectedConversation, userList);
+        getSupportActionBar().setTitle(selectedConversation.getName());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -495,7 +513,10 @@ public class MainActivity extends AppCompatActivity
     public void populateStaff(List<User> users){
         TreeSet<String> departments = new TreeSet<String>();
         for(User u : users){
-            departments.add(u.userType);
+            // Do not include the dev department
+            if(!u.userType.equals("dev")){
+                departments.add(u.userType);
+            }
         }
 
         String curr = departments.first();
@@ -542,6 +563,18 @@ public class MainActivity extends AppCompatActivity
         findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
     }
 
+    public void logout(View v){
+        SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sPref.edit();
+        editor.putString(LoginActivity.TOKEN, null);
+        editor.putString(LoginActivity.NAME , null);
+        editor.commit();
+
+        Intent i = new Intent(this, LoginActivity.class);
+        startActivity(i);
+        finish();
+    }
+
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
     @Override
@@ -563,4 +596,12 @@ public class MainActivity extends AppCompatActivity
     public void onDrawerStateChanged(int newState) {
 
     }
+
+    /***************************************************/
+
+
+    private void print(String s){
+        Log.v("tag", s);
+    }
+
 }

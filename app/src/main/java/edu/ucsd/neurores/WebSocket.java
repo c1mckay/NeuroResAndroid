@@ -27,7 +27,7 @@ public class WebSocket extends WebSocketClient {
             e.printStackTrace();
         }
         send(jo.toString());
-        pushMessage("hello");
+        //pushMessage("hello");
     }
 
     public void onMessage(String message) {
@@ -40,7 +40,7 @@ public class WebSocket extends WebSocketClient {
             message = jo.getString("text");
             String from = mFrag.conversation.getUser(jo.getLong("from"));
             if(from == null)
-                from = "";//this should just a message i sent, an echo.
+                from = "";//this should just a message I sent, an echo.
             long time = System.currentTimeMillis();
             mFrag.addMessage(from,message,time);
         } catch (JSONException e) {

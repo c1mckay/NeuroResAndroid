@@ -1,6 +1,7 @@
 package edu.ucsd.neurores;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,5 +63,11 @@ public class Conversation extends NavDrawerItem{
 
     public int getSize() {
         return users.size();
+    }
+
+    public void logAllNames(){
+        for(User u : users){
+            Log.v("tag", "Name: " + u.name);
+        }
     }
 }

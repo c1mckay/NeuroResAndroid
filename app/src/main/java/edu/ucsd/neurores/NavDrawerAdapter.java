@@ -2,6 +2,7 @@ package edu.ucsd.neurores;
 
 import android.content.Context;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -102,19 +103,15 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         textView.setText(getGroupTitle(groupPosition));
         //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
         textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ImageView iv = (ImageView) headerView.findViewById(R.id.expander);
-                if(iv.getTag() == null || (Boolean) iv.getTag()) {
-                    iv.setImageResource(R.drawable.contrator);
-                    iv.setTag(false);
-                }else{
-                    iv.setImageResource(R.drawable.expander);
-                    iv.setTag(true);
-                }
+
+
+        // Assign the correct indicator (expanded or collapsed)
+        ImageView iv = (ImageView) convertView.findViewById(R.id.expander);
+            if(isExpanded){
+                iv.setImageResource(R.drawable.contrator);
+            }else{
+                iv.setImageResource(R.drawable.expander);
             }
-        });
 
         return convertView;
     }
@@ -219,7 +216,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
             case PRIVATE_GROUP:
                 group = privateMenu;
                 group.add(c);
-
                 break;
         }
 

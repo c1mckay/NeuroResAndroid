@@ -28,7 +28,7 @@ public class MainFragment extends Fragment {
     // View that holds all the messages
     RecyclerView recyclerView;
     // List that holds all the messages
-    MessageList messageList;
+    public MessageList messageList;
     // Adapter that links the messageList and recyclerview
     MessageAdapter messageAdapter;
     public Conversation conversation;
@@ -78,6 +78,7 @@ public class MainFragment extends Fragment {
             @Override
             public void onComplete(String s) {
                 try {
+                    Log.v("tag",s);
                     JSONArray jMessages = new JSONArray(s);
                     JSONObject jo;
                     long user_id;
