@@ -4,6 +4,8 @@ package edu.ucsd.neurores;
  * Created by tbpetersen on 2/14/2017.
  */
 
+import android.util.Log;
+
 /**
  * Represents a message from a user. Contains a user's name, message text
  * and the time that the message was sent.
@@ -52,5 +54,11 @@ public class Message {
 
     public void appendText(String text){
         messageText += ("\n" + text);
+    }
+
+    public void logMessageInfo(){
+        Log.v("tag", "Owner: " + owner + "\n" +
+                      "Text: " + messageText + "\n" +
+                      "Time: " + time + "\n");
     }
 }

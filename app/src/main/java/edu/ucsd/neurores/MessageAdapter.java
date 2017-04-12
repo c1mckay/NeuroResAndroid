@@ -1,6 +1,7 @@
 package edu.ucsd.neurores;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -132,7 +133,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
         }else {
             switcher = paddingRight;
             paddingRight = paddingLeft;
-            paddingLeft = switcher;
+            //paddingLeft = switcher;
+            // Hardcode the padding on the left
+            paddingLeft = 21;
             holder.leftView.setVisibility(View.GONE);
         }
         holder.messageText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);

@@ -31,6 +31,7 @@
     <string name="private_menu_title">Private</string>
     <string name="signing_in">Signing In</string>
     <string name="log_in">Log in</string>
+    <string name="logout">Logout</string>
 
     <string-array name="sub_menus">
         <item>Unread</item>

@@ -1,6 +1,7 @@
 package edu.ucsd.neurores;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 
 /**

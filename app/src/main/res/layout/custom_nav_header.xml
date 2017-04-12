@@ -30,8 +30,34 @@
             android:src="@drawable/settings"
             android:layout_marginRight="11dp"
             android:layout_marginEnd="11dp"
-            android:onClick="logout"
+            android:onClick="toggleSettings"
             android:layout_gravity="center_vertical"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="right">
+
+        <LinearLayout
+            android:id="@+id/settings_menu_dropdown"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@color/white">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textSize="20sp"
+                android:onClick="logout"
+                android:text="@string/logout"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 

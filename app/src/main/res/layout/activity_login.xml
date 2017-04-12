@@ -41,6 +41,7 @@
         android:textAlignment="center"
         android:textColor="#FF0000"
         android:layout_above="@id/email_sign_in_button"
+        android:visibility="invisible"
         android:text="Incorrect password"/>
 
     <android.support.design.widget.TextInputLayout

@@ -319,6 +319,7 @@ public class MainActivity extends AppCompatActivity
                             c.addUser(userList.get(id));
                     }
                     currentConversations.put(c.getID(), c);
+                    Log.v("tag2","Size: " + currentConversations.size());
                     addToNavBar(PRIVATE_MENU_GROUP, c);
 
                     onConversationClick(c.v, c.getID());
@@ -390,7 +391,6 @@ public class MainActivity extends AppCompatActivity
      * @param v the view that will have its visibility toggled
      */
     public void toggleVisibility(View v){
-        v = (View) v.getParent();
         View innerLayout = v.findViewById(R.id.inner_layout);
         int newVisibility;
         int imageID;
@@ -604,4 +604,12 @@ public class MainActivity extends AppCompatActivity
         Log.v("tag", s);
     }
 
+    public void toggleSettings(View view) {
+        View dropdown = findViewById(R.id.settings_menu_dropdown);
+        if(dropdown.getVisibility() == View.GONE){
+            dropdown.setVisibility(View.VISIBLE);
+        }else{
+            dropdown.setVisibility(View.GONE);
+        }
+    }
 }

@@ -139,7 +139,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                 userTextView.setText(convo.getName());
                 child.setTag(R.id.CONVERSATION, convo.getID());
 
-                if(activity.selectedConversation != null && activity.selectedConversation.getID() == convo.getID()){
+                if(activity.selectedConversation != null && activity.selectedConversation.getID().equals(convo.getID())){
                     activity.selectedConversation.deselect();
                     convo.select();
                 }else{
@@ -169,12 +169,16 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
                     u.v = userView;
 
+                    //This was causing a bug. I don't think that we need it anymore but keeping it
+                    // just in case
+                    /*
                     if(activity.selectedConversation != null && activity.selectedConversation.getID() == u.getID()){
                         activity.selectedConversation.deselect();
                         u.select();
                     }else{
                         u.deselect();
                     }
+                    */
                 }
 
 
