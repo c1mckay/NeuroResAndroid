@@ -81,7 +81,8 @@ public class MainActivity extends AppCompatActivity
             finish();
             return;
         }
-        Log.d("token", FirebaseInstanceId.getInstance().getToken());
+        if(FirebaseInstanceId.getInstance().getToken() != null)
+            Log.d("token", FirebaseInstanceId.getInstance().getToken());
 
         setContentView(R.layout.activity_main);
 
