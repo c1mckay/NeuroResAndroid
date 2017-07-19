@@ -32,6 +32,9 @@
     <string name="signing_in">Signing In</string>
     <string name="log_in">Log in</string>
     <string name="logout">Logout</string>
+    <string name="onboardingMessage">Looks like you haven\'t started any conversations yet. Open up the menu on the left to start one.</string>
+    <string name="welcome">Welcome!</string>
+
 
     <string-array name="sub_menus">
         <item>Unread</item>

@@ -55,6 +55,11 @@ public class MainFragment extends Fragment {
         messageList = new MessageList();
         messageAdapter = new MessageAdapter(messageList);
 
+        //Add onboarding message
+        if(! hasConversation()){
+            addMessage("", getActivity().getResources().getString(R.string.onboardingMessage), System.currentTimeMillis());
+        }
+
 
         RecyclerView.LayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(rvLayoutManager);
@@ -115,7 +120,12 @@ public class MainFragment extends Fragment {
     String getToken(){
         return getArguments().getString("token", null);
     }
-    
+
+    boolean hasConversation(){
+        return getArguments().getBoolean("hasConversation", true);
+    }
+
+
 
     /**
      * Add a message to be displayed
