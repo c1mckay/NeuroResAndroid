@@ -221,10 +221,6 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_search) {
-            return true;
-        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -423,7 +419,7 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void setInitialFragment(){
-        if(! hasPreviousConversation() && ! hasOngoingConversations()){
+        if(isNewUser()){
             currentFragment = loadOnboardingFragment();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
@@ -487,6 +483,10 @@ public class MainActivity extends AppCompatActivity
      */
     public void addUserToHashTable(User u){
         //currentConversations.put(u.id, u);
+    }
+
+    public boolean isNewUser(){
+        return (! hasPreviousConversation()) && (! hasOngoingConversations());
     }
 
     /**
@@ -637,6 +637,10 @@ public class MainActivity extends AppCompatActivity
         findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
 
         setupMainElements();
+        if(isNewUser()){
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            drawer.openDrawer(GravityCompat.START);
+        }
     }
 
     public void logout(View v){
