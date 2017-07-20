@@ -4,7 +4,10 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.util.Pair;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
@@ -46,7 +49,18 @@ public class SessionWrapper{
       List<Pair<String,String>> headers = new ArrayList<>();
       headers.add(new Pair<>("auth", username));
 
-      return request("POST", LOGIN_ENDPOINT, headers, null);
+      String firebaseTokenData = null;
+      if(FirebaseInstanceId.getInstance().getToken() != null) {
+        try {
+          JSONObject firebaseToken = new JSONObject();
+          firebaseToken.put("android_token", FirebaseInstanceId.getInstance().getToken());
+          firebaseTokenData = firebaseToken.toString();
+        }catch(JSONException e){
+          firebaseTokenData = null;
+        }
+      }
+
+      return request("POST", LOGIN_ENDPOINT, headers, firebaseTokenData);
   }
 
   public static void GetConversationData(long id, String token, OnCompleteListener ocl){
@@ -184,8 +198,10 @@ public class SessionWrapper{
     }
 
     protected void onPostExecute(String result){
-        if(ocl != null)
-            ocl.onComplete(result);
+        if(ocl != null){
+          ocl.onComplete(result);
+
+        }
     }
 
 
