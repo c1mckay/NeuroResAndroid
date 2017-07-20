@@ -5,10 +5,11 @@
 /.idea/workspace.xml
 /.idea/libraries
 .DS_Store
-/build
+build/
 /captures
 .externalNativeBuild
 .idea/workspace.xml
 app/app.iml
 local.properties
 app/google-services.json
+*.rawproto

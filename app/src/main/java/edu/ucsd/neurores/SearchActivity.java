@@ -2,6 +2,10 @@ package edu.ucsd.neurores;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -169,6 +173,7 @@ public class SearchActivity extends AppCompatActivity {
         searchView.setIconifiedByDefault(true);
         searchView.setFocusable(true);
         searchView.setIconified(true);
+
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
 

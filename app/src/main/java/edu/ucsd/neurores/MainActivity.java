@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity
     public static final int STAFF_MENU_GROUP = 1;
     public static final int PRIVATE_MENU_GROUP = 2;
 
+    public static final String PREV_CONVERSATION_ID = "previousConversationID";
+
 
     Toolbar toolbar = null;
     //  This adapter controls the Navigation Drawer's views and data
@@ -93,17 +95,16 @@ public class MainActivity extends AppCompatActivity
 
 
         // Set the fragment
-        currentFragment = startMainFragment();
-        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
-        fragmentTransaction.commit();
+        //currentFragment = startMainFragment();
+
+
 
         // Setup the toolbar
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Set the navigation bar text to be the empty string
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-        getSupportActionBar().setTitle("");
+        getSupportActionBar().setTitle(getResources().getString(R.string.welcome));
 
         // Get a reference to the list view that holds the main data in the
         // navigation drawer
@@ -134,7 +135,7 @@ public class MainActivity extends AppCompatActivity
                 // The text in the input field
                 String newMessage = messageEditText.getText().toString();
                 //Only send the message if it is not empty
-                if(! newMessage.equals("")){
+                if(! newMessage.equals("") && currentFragment.conversation != null){
 
                     //currentFragment.addMessage("Trevor", messageEditText.getText().toString());
                     currentFragment.socket.pushMessage(newMessage);
@@ -149,9 +150,28 @@ public class MainActivity extends AppCompatActivity
         loadData();
     }
 
+    public void setupMainElements(){
+        setInitialFragment();
+
+    }
+
     protected String getToken(){
         SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         return sPref.getString(LoginActivity.TOKEN, null);
+    }
+
+    protected boolean hasPreviousConversation(){
+        SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        return sPref.getLong(PREV_CONVERSATION_ID, -1) != -1;
+    }
+
+    protected boolean hasOngoingConversations(){
+        return currentConversations.size() > 0;
+    }
+
+    protected long getPreviousConversationID(){
+        SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        return sPref.getLong(PREV_CONVERSATION_ID, -1);
     }
 
     private String getUsername(){
@@ -163,6 +183,15 @@ public class MainActivity extends AppCompatActivity
         MainFragment mFrag = new MainFragment();
         Bundle i = new Bundle();
         i.putString("token", getToken());
+        mFrag.setArguments(i);
+        return mFrag;
+    }
+
+    private MainFragment loadOnboardingFragment(){
+        MainFragment mFrag = new MainFragment();
+        Bundle i = new Bundle();
+        i.putString("token", getToken());
+        i.putBoolean("hasConversation", false);
         mFrag.setArguments(i);
         return mFrag;
     }
@@ -192,10 +221,6 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_search) {
-            return true;
-        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -385,6 +410,50 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
         recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+
+        updateMostRecentConversation(selectedConversation.getID());
+    }
+
+
+    /**
+     * Change the messages in the fragment to be the messages of selectedUser
+     */
+    private void setInitialFragment(){
+        if(isNewUser()){
+            currentFragment = loadOnboardingFragment();
+            android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+            fragmentTransaction.commit();
+            return;
+        }
+
+        long conversationID;
+        if(hasOngoingConversations() && ! hasPreviousConversation()){
+            conversationID = getFirstPrivateConversationID();
+        }else{
+            conversationID = getPreviousConversationID();
+        }
+
+        selectedConversation = currentConversations.get(conversationID);
+        currentFragment = startMainFragment();
+        currentFragment.conversation = selectedConversation;
+        currentFragment.userName = loggedInUser.name;
+        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+        fragmentTransaction.commit();
+        //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
+        currentFragment.loadMessages(selectedConversation, userList);
+        getSupportActionBar().setTitle(selectedConversation.getName());
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        //RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+        //recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+    }
+
+    private long getFirstPrivateConversationID(){
+        NavDrawerItem item = navDrawerAdapter.getChild(PRIVATE_MENU_GROUP, 0);
+        return item.getID();
     }
 
     /**
@@ -414,6 +483,10 @@ public class MainActivity extends AppCompatActivity
      */
     public void addUserToHashTable(User u){
         //currentConversations.put(u.id, u);
+    }
+
+    public boolean isNewUser(){
+        return (! hasPreviousConversation()) && (! hasOngoingConversations());
     }
 
     /**
@@ -462,7 +535,6 @@ public class MainActivity extends AppCompatActivity
         //addConversation(UNREAD_MENU_GROUP, new User(this, 63L, hardCodedPrivate[7]));
 
 
-        onLoadComplete();
     }
 
     public void onUsersLoaded(List<User> users){
@@ -502,6 +574,7 @@ public class MainActivity extends AppCompatActivity
                 }else{
                     Log.v("tag", "Users is null");
                 }
+                onLoadComplete();
             }
 
             @Override
@@ -562,6 +635,12 @@ public class MainActivity extends AppCompatActivity
         findViewById(R.id.message_send_button).setVisibility(View.VISIBLE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
         findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
+
+        setupMainElements();
+        if(isNewUser()){
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            drawer.openDrawer(GravityCompat.START);
+        }
     }
 
     public void logout(View v){
@@ -569,11 +648,19 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences.Editor editor = sPref.edit();
         editor.putString(LoginActivity.TOKEN, null);
         editor.putString(LoginActivity.NAME , null);
+        editor.putLong(PREV_CONVERSATION_ID , -1);
         editor.commit();
 
         Intent i = new Intent(this, LoginActivity.class);
         startActivity(i);
         finish();
+    }
+
+    public void updateMostRecentConversation(long conversationID){
+        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putLong(PREV_CONVERSATION_ID, conversationID);
+        editor.commit();
     }
 
     /***** Methods for listening for the navigation drawer opening/closing *****/
