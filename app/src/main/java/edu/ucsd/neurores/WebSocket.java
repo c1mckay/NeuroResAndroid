@@ -31,10 +31,13 @@ public class WebSocket extends WebSocketClient {
     }
 
     public void onMessage(String message) {
-        Log.d("yup", message);
         JSONObject jo = null;
         try {
             jo = new JSONObject(message);
+            if(jo.has("userStatusUpdate")){
+                //// TODO: 7/20/2017
+                return;
+            }
             if(jo.getLong("conv_id") != mFrag.conversation.getID())
                 return;
             message = jo.getString("text");
