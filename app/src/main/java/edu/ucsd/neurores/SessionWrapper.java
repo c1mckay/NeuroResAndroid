@@ -1,35 +1,57 @@
 package edu.ucsd.neurores;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.util.Pair;
 
+import com.google.android.gms.common.api.Scope;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
 public class SessionWrapper{
 
-  public static final String BASE_URL = "http://neurores.ucsd.edu:3000";
+  public static final String BASE_URL = "neurores.ucsd.edu";
   public static final String LOGIN_ENDPOINT = "/login";
   public static final String GET_USERS_ENDPOINT = "/users_list";
   public static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
   public static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
   public static final String CREATE_CONVERSATION = "/start_conversation";
+  public static final String MARK_SEEN = "/mark_seen";
 
   /**
    * Create a session using a valid loginToken and mainActivity
@@ -45,8 +67,29 @@ public class SessionWrapper{
    * @return The loginToken for the user
      */
   //I dont think you can/are supposed to do HTTP requests on the main thread
-  static String getLoginToken(String username){
-      List<Pair<String,String>> headers = new ArrayList<>();
+  static String getLoginToken(Context context, String username){
+
+    /*
+    try {
+      TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
+      KeyStore ks = KeyStore.getInstance("BKS");
+      //FileInputStream in = new FileInputStream("C:\\Users\\tbpetersen\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\res\\raw\\neurores.bks");
+      InputStream in = context.getResources().openRawResource(R.raw.neurores);
+      ks.load(in, context.getApplicationContext().getResources().getString(R.string.bks_password).toCharArray());
+      in.close();
+      tmf.init(ks);
+      TrustManager[] tms = tmf.getTrustManagers();
+      SSLContext sslContext = SSLContext.getInstance("SSL");
+      sslContext.init(null, tms, null);
+      SSLContext.setDefault(sslContext);
+      Log.v("taggy","did the stuff");
+    }catch(Exception e){
+      Log.v("taggy","failed to do test stuff:\n" + e.getMessage());
+    }
+    */
+
+
+    List<Pair<String,String>> headers = new ArrayList<>();
       headers.add(new Pair<>("auth", username));
 
       String firebaseTokenData = null;
@@ -59,24 +102,30 @@ public class SessionWrapper{
           firebaseTokenData = null;
         }
       }
-
-      return request("POST", LOGIN_ENDPOINT, headers, firebaseTokenData);
+    if(context == null){
+      Log.v("contextp", "Error getting login token");
+    }
+      return request("POST", LOGIN_ENDPOINT, headers, firebaseTokenData, context);
   }
 
-  public static void GetConversationData(long id, String token, OnCompleteListener ocl){
-    new HTTPRequestThread(token, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
+  public static void GetConversationData(Context context, long id, String token, OnCompleteListener ocl){
+    new HTTPRequestThread(context, token, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
   }
 
-  public static void CreateConversation(ArrayList<Long> users, String token, OnCompleteListener ocl){
-    new HTTPRequestThread(token, ocl).setData(new JSONArray(users).toString()).execute(CREATE_CONVERSATION);
+  public static void CreateConversation(Context context, ArrayList<Long> users, String token, OnCompleteListener ocl){
+    new HTTPRequestThread(context, token, ocl).setData(new JSONArray(users).toString()).execute(CREATE_CONVERSATION);
+  }
+
+  public static void markConversationSeen(Context context, long id, String token, OnCompleteListener ocl){
+    new HTTPRequestThread(context, token, ocl).setData(Long.toString(id)).execute(MARK_SEEN);
   }
 
   /**
    * Send a POST request to /users_list. Data received a JSON array of users. Once the POST request
    * has finished, onUsersLoaded is called in the mainActivity(from within HTTPRequestTread)
    */
-  public static void UpdateUsers(String token, OnCompleteListener oci){
-    HTTPRequestThread httpRequestThread = new HTTPRequestThread(token, oci);
+  public static void UpdateUsers(Context context, String token, OnCompleteListener oci){
+    HTTPRequestThread httpRequestThread = new HTTPRequestThread(context, token, oci);
     httpRequestThread.execute(GET_USERS_ENDPOINT);
   }
 
@@ -85,8 +134,8 @@ public class SessionWrapper{
    * request has finished, onConversationsLoaded is called in the mainActivity(from within
    * HTTPRequestTread)
    */
-  public static void  UpdateConversations(String token, OnCompleteListener oci){
-    new HTTPRequestThread(token, oci).execute(CONVERSATIONS_ENDPOINT);
+  public static void  UpdateConversations(Context context, String token, OnCompleteListener oci){
+    new HTTPRequestThread(context, token, oci).execute(CONVERSATIONS_ENDPOINT);
   }
 
   /**
@@ -97,32 +146,118 @@ public class SessionWrapper{
    * @param data the data to put into the HTTP packet
    * @return The body of the response from the server
    */
-  private static String request(String requestType, String endpoint, List<Pair<String,String>> headers, String data){
+  private static String request(String requestType, String endpoint, List<Pair<String,String>> headers, String data, Context context){
     int code = 0;
     String message = "";
+    String blankLine = "\r\n\r\n";
+
+    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
+    SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
+    try{
+      String request = "";
+      Socket sock = new Socket(BASE_URL, 443);
+      SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock, BASE_URL, 443, false);
+      PrintWriter pw = new PrintWriter(socketSSL.getOutputStream());
+      BufferedReader br = new BufferedReader(new InputStreamReader(socketSSL.getInputStream(), "UTF-8"));
+
+      request += requestType + " " + endpoint + " HTTP/1.1\r\n";
+      pw.print(requestType + " " + endpoint + " HTTP/1.1\r\n");
+      request += "Host: neurores.ucsd.edu\r\n";
+      request += "Connection: close\r\n";
+      pw.print("Host: neurores.ucsd.edu\r\n");
+      pw.print("Connection: close\r\n");
+      for(Pair<String,String> p : headers){
+        pw.print(p.first + ": " + p.second + "\r\n");
+        request += (p.first + ": " + p.second + "\r\n");
+      }
+
+      if(requestType.toLowerCase().equals("post")) {
+        pw.print("Content-Type: application/json\r\n");
+        request += "Content-Type: application/json\r\n";
+        if (data != null) {
+          pw.print("Content-Length: " + data.length() + "\r\n");
+          request += "Content-Length: " + data.length() + "\r\n";
+
+          pw.print("\r\n" + data);
+          request += "\r\n" + data;
+        }
+      }
+      pw.write("\r\n");
+      request += "\r\n";
+      pw.flush();
+
+      Log.v("requestr" , request);
+
+      int nextChar;
+      String response = "";
+      while( (nextChar = br.read()) !=  -1){
+        response += (char)nextChar;
+      }
+
+      Log.v("requestr", response + "\n");
+      if(response.contains("Content-Length: ")){
+        int index = response.indexOf("Content-Length: ") + "Content-Length: ".length();
+        response = response.substring(index);
+        if(! response.contains("\r\n")){
+          throw new Exception("Malformed response");
+        }
+        index = response.indexOf("\r\n");
+        int contentLength = Integer.parseInt(response.substring(0, index));
+        response = response.substring(index + "\r\n".length() + 2);
+        response = response.substring(0, contentLength);
+      }else{
+        response = response.substring(response.indexOf(blankLine) + blankLine.length());
+      }
+      if(response.toLowerCase().equals("invalid token")){
+        throw new InvalidLoginTokenException("Invalid login token");
+      }
+      return  response;
+    }catch(Exception e){
+      Log.v("taggy", "Fail");
+      Log.v("taggy", e.getMessage());
+      e.printStackTrace();
+      return null;
+    }
+
+
+    /*
 
     try{
+      Log.v("taggy", "Making the request");
 
       URL url = new URL(BASE_URL + endpoint);
-      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+      Log.v("taggy", "Made the connection");
+
       con.setRequestMethod(requestType);
+      Log.v("taggy", "Setting request type");
       if(requestType.equalsIgnoreCase("post")){
           con.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
       }
+      Log.v("taggy", "Set request properties");
 
       for(Pair p : headers){
           con.setRequestProperty((String)p.first, (String)p.second);
       }
 
+      Log.v("taggy", "Set headers");
+
       con.setUseCaches(false);
       con.setDoOutput(true);
       con.setDoInput(true);
 
+
       if(data != null){
-        writeData(data, con);
+        try {
+          writeData(data, con);
+        }catch(Exception e){
+          Log.v("taggy", e.getMessage());
+        }
       }
+      Log.v("taggy", "Trying for response");
 
       code = con.getResponseCode();
+      Log.v("taggy", "Got response");
       message = con.getResponseMessage();
       Log.v("tag", code + "");
       if(code == 200){
@@ -142,7 +277,35 @@ public class SessionWrapper{
       Log.v("tag", e.toString());
       return null;
     }
+
+    */
+
   }
+
+  public static boolean isValidJSON(String test) {
+    try {
+      new JSONObject(test);
+    } catch (JSONException ex) {
+      // edited, to include @Arthur's comment
+      // e.g. in case JSONArray is valid as well...
+      try {
+        new JSONArray(test);
+      } catch (JSONException ex1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean isJSONObject(String s){
+    try{
+      JSONObject jsonObject = new JSONObject(s);
+      return true;
+    }catch (JSONException e){
+      return false;
+    }
+  }
+
 
   private static void writeData(String data, URLConnection conn) throws IOException {
     OutputStream os = conn.getOutputStream();
@@ -152,6 +315,7 @@ public class SessionWrapper{
     writer.close();
     os.close();
   }
+
 
   interface OnCompleteListener{
     void onComplete(String s);
@@ -169,15 +333,17 @@ public class SessionWrapper{
     // The endpoint that will be used in the request
     String token;
     OnCompleteListener ocl;
+    Context context;
 
     /**
      * Single argument ctor
      * @param token the auth token for the request
      * @ocl listener what to do when the request is completed
      */
-    HTTPRequestThread(String token, OnCompleteListener ocl){
+    HTTPRequestThread(Context context, String token, OnCompleteListener ocl){
       this.ocl = ocl;
       this.token = token;
+      this.context = context;
     }
 
     /**
@@ -193,7 +359,7 @@ public class SessionWrapper{
       /* Add the auth header for this request */
       headers.add(new Pair<>("auth", token));
       /* Make the request */
-      return request("POST", endpoint, headers, data);
+      return request("POST", endpoint, headers, data, context);
 
     }
 
@@ -214,6 +380,7 @@ public class SessionWrapper{
 
   static List<User> GetUserList(String jsonString){
     List<User> userList = new ArrayList<User>();
+
     try{
       JSONArray userJSONArray = new JSONArray(jsonString);
       for(int i = 0; i < userJSONArray.length(); i++){
@@ -232,6 +399,7 @@ public class SessionWrapper{
 
   public static List<Conversation> TranslateConversationMetadata(String jsonString){
     List<Conversation> conversationList = new ArrayList<Conversation>();
+
     try{
         /* The conversations in json form*/
       JSONObject conversationJSONObject = new JSONObject(jsonString);
@@ -247,7 +415,15 @@ public class SessionWrapper{
         String conversationId = iterator.next();
         currentConversation = new Conversation(Long.valueOf(conversationId), null);
         //currentConversation.setUnread(conversationJsonObject.lastUnread);
-        JSONArray currentArray = conversationJSONObject.getJSONArray(conversationId);
+        JSONObject currentConversationObject = conversationJSONObject.getJSONObject(conversationId);
+        String stringUnseen = currentConversationObject.getString("unseen_count");
+        if(stringUnseen.equals("null")){
+          currentConversation.setNumOfUnseen(0);
+        }else{
+          currentConversation.setNumOfUnseen(Integer.parseInt(stringUnseen));
+        }
+
+        JSONArray currentArray = currentConversationObject.getJSONArray("members");
         //JSONArray currentArray = conversationJSONObject.getJSONArray(conversationId).getJSONArray("members");
         // Iterate over users in conversations
         for(int i = 0; i < currentArray.length(); i++){
@@ -270,5 +446,7 @@ public class SessionWrapper{
   private void pushConversationMessages(JSONObject jo){
 
   }
+
+
 
 }

@@ -73,7 +73,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
     @Override
     public NavDrawerItem getChild(int groupPosition, int childPosition) {
         return (NavDrawerItem) getGroup(groupPosition).get(childPosition);
-
     }
 
     @Override
@@ -129,8 +128,19 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                 TextView userTextView = (TextView) child.findViewById(R.id.nav_row_text_view);
 
                 if(groupPosition == UNREAD_GROUP){
-                    TextView notificationImageView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
-                    notificationImageView.setVisibility(View.VISIBLE);
+                    TextView notificationTextView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
+                    notificationTextView.setVisibility(View.VISIBLE);
+                    Conversation conversation = (Conversation) getChild(groupPosition, childPosition);
+                    if(conversation.getNumOfUnseen() == 0){
+                        notificationTextView.setVisibility(View.INVISIBLE);
+                    }else {
+                        notificationTextView.setVisibility(View.VISIBLE);
+                        if (conversation.getNumOfUnseen() > 9) {
+                            notificationTextView.setText(R.string.max_num_unread_messages);
+                        } else {
+                            notificationTextView.setText(conversation.getNumOfUnseen() + "");
+                        }
+                    }
                 }
 
                 Conversation convo = (Conversation) getChild(groupPosition,childPosition);
@@ -144,6 +154,15 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     convo.select();
                 }else{
                     convo.deselect();
+                }
+
+                if(convo.users.size() == 1){
+                    if(convo.users.get(0).isOnline()){
+                        ImageView onlineImage = (ImageView) child.findViewById(R.id.nav_row_status_image_view);
+                        if(onlineImage != null){
+                            onlineImage.setImageResource(R.drawable.online);
+                        }
+                    }
                 }
 
                 break;
@@ -259,4 +278,39 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         dataSetChanged();
     }
 
+    public void moveConversationToFirstPosition (int groupPosition, Conversation conversation){
+        List group = getGroup(groupPosition);
+        group.remove(conversation);
+        group.add(0, conversation);
+        notifyDataSetChanged();
+    }
+
+    public void moveConversationToPrivate(Conversation conversation){
+        List<Conversation> unreadGroup = getGroup(UNREAD_GROUP);
+        List<Conversation> privateGroup = getGroup(PRIVATE_GROUP);
+
+        if(unreadGroup.contains(conversation)){
+            unreadGroup.remove(conversation);
+        }
+
+        if(! privateGroup.contains(conversation)){
+            privateGroup.add(0, conversation);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void moveConversationToUnread(Conversation conversation){
+        List<Conversation> unreadGroup = getGroup(UNREAD_GROUP);
+        List<Conversation> privateGroup = getGroup(PRIVATE_GROUP);
+
+        if(privateGroup.contains(conversation)){
+            privateGroup.remove(conversation);
+        }
+
+        if(! unreadGroup.contains(conversation)){
+            unreadGroup.add(0, conversation);
+        }
+
+        notifyDataSetChanged();
+    }
 }

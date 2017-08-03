@@ -61,7 +61,7 @@ public class SearchActivity extends AppCompatActivity {
         // Token for calls to server
         final String token = getIntent().getStringExtra("token");
         // Get all the users. Update the arrayList "users". Set up the search adapter
-        SessionWrapper.UpdateUsers(token, new SessionWrapper.OnCompleteListener() {
+        SessionWrapper.UpdateUsers(getApplicationContext(), token, new SessionWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 try {
@@ -99,7 +99,7 @@ public class SearchActivity extends AppCompatActivity {
                             if(user != null){
                                 ArrayList<Long> usersInConv = new ArrayList<Long>();
                                 usersInConv.add(user.getID());
-                                SessionWrapper.CreateConversation(usersInConv, token, new SessionWrapper.OnCompleteListener() {
+                                SessionWrapper.CreateConversation(getApplicationContext(), usersInConv, token, new SessionWrapper.OnCompleteListener() {
                                     @Override
                                     public void onComplete(String s) {
                                         try{

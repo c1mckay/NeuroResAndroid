@@ -34,6 +34,8 @@
     <string name="logout">Logout</string>
     <string name="onboardingMessage">Looks like you haven\'t started any conversations yet. Open up the menu on the left to start one.</string>
     <string name="welcome">Welcome!</string>
+    <string name="bks_password">$89!hD33</string>
+    <string name="max_num_unread_messages">9+</string>
 
 
     <string-array name="sub_menus">
@@ -110,5 +112,6 @@
         <item>Ansari, H.</item>
         <item>Labuzetta, J.</item>
         <item>Khoromi, S.</item>    </string-array>
+
 
 </resources>

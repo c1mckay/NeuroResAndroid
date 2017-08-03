@@ -15,7 +15,7 @@
         android:id="@+id/nav_row_status_image_view"
         android:layout_width="10sp"
         android:layout_height="10sp"
-        android:src="@drawable/online"
+        android:src="@drawable/offline"
         android:layout_weight="1"
         android:layout_gravity="center"
         android:layout_marginLeft="@dimen/nav_drawer_user_margin_left"

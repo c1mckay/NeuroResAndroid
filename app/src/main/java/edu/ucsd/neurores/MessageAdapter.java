@@ -65,7 +65,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.message_list_row, parent, false);
 
@@ -74,47 +73,13 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-
-        int numOfMessages = messageList.size();
         Message message = messageList.get(position);
 
-        // Check if message_list_row is the layout that was used
-        if(holder.owner != null){
-            // Always have the time shown on the first message
-            if(position == 0){
-                holder.owner.setText(message.getOwner());
-                holder.messageText.setText(message.getMessageText());
-
-                String timeString = getTimeString(message);
-                holder.time.setText(timeString);
-            // Decide what information will be displayed
-            }else{
-                Message lastMessage = messageList.get(position - 1);
-
-                // Do not show name or time if you sent the last message
-                if(message.getOwner().equals(lastMessage.getOwner())){
-                    holder.owner.setText("");
-                    holder.userAndTimeLayout.setVisibility(View.GONE);
-                }else{
-                    holder.owner.setText(message.getOwner());
-                }
-                holder.messageText.setText(message.getMessageText());
-                String timeString = "";
-                // Only show the time the last message was sent longer than MIN_MINUTES ago
-                if(numOfMessages > 1){
-                    long mostRecentMessageTime = lastMessage.getTime();
-                    if( System.currentTimeMillis() - mostRecentMessageTime > (1000 * 60 * MIN_MINUTES)){
-                        timeString = getTimeString(message);
-                    }
-                }else{
-                    timeString = getTimeString(message);
-                }
-
-                holder.time.setText(timeString);
-            }
-         // message_list_row_only_message is the layout
-        }else{
-            holder.messageText.setText(message.getMessageText());
+        holder.owner.setText("");
+        holder.messageText.setText(message.getMessageText());
+        holder.time.setText("");
+        if(shouldShowTimestamp(message)){
+            holder.time.setText(message.getTimeString(Message.SHORT));
         }
 
         boolean currentUserSaidThis = message.getOwner().length() != 0;
@@ -128,7 +93,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
         int switcher;
         if(!currentUserSaidThis) {
-            holder.userAndTimeLayout.setVisibility(View.GONE);
             holder.rightView.setVisibility(View.GONE);
         }else {
             switcher = paddingRight;
@@ -188,6 +152,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             format = new SimpleDateFormat("MMM dd, yyyy");
         }
         return format.format(date);
+    }
+
+    public boolean shouldShowTimestamp(Message m){
+        return true;
     }
 
 }

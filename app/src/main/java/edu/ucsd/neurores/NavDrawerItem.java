@@ -11,13 +11,14 @@ import android.view.View;
 abstract class NavDrawerItem {
     private Long id;
     private Context c;
+    View v;
+
 
     NavDrawerItem(Long id, Context c){
         this.id = id;
         this.c = c;
     }
 
-    View v;
     protected void setView(View v){
         this.v = v;
     }

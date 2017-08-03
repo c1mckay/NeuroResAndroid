@@ -27,7 +27,8 @@ public class NotificationHandler extends FirebaseMessagingService {
             Map<String, String> map = remoteMessage.getData();
             String title = map.get("title");
             String message = map.get("message");
-            sendNotification(title, message);
+            String conversationID = map.get("conv_id");
+            sendNotification(title, message, Long.parseLong(conversationID));
         }
 
         // Check if message contains a notification payload.
@@ -45,8 +46,9 @@ public class NotificationHandler extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String title, String messageBody) {
+    private void sendNotification(String title, String messageBody, long conversationID) {
         Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra(MainActivity.CONVERSATION_ID, conversationID);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);

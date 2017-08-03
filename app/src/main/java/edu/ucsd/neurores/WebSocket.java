@@ -4,18 +4,23 @@ import android.util.Log;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.List;
 
 public class WebSocket extends WebSocketClient {
 
     MainFragment mFrag;
-    WebSocket(MainFragment mFrag) throws URISyntaxException {
-        super(new URI("ws://neurores.ucsd.edu:3000"));
+    MainActivity mainActivity;
+    WebSocket(MainFragment mFrag, MainActivity mainActivity) throws URISyntaxException {
+        super(new URI("wss://neurores.ucsd.edu"));
         this.mFrag = mFrag;
+        this.mainActivity = mainActivity;
     }
 
 
@@ -32,14 +37,23 @@ public class WebSocket extends WebSocketClient {
 
     public void onMessage(String message) {
         JSONObject jo = null;
+        Log.v("sockett", message);
         try {
             jo = new JSONObject(message);
-            if(jo.has("userStatusUpdate")){
-                //// TODO: 7/20/2017
+            if(jo.has("userStatusUpdate") && jo.getBoolean("userStatusUpdate")){
+                updateUserStatus(jo);
                 return;
             }
-            if(jo.getLong("conv_id") != mFrag.conversation.getID())
+            if(jo.getLong("conv_id") != mFrag.conversation.getID()){
+                long conversationID = jo.getLong("conv_id");
+                HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
+                if(currentConversations.containsKey(conversationID)){
+                    moveConversationToUnread(currentConversations.get(conversationID));
+                }else{
+                    createConversation(conversationID);
+                }
                 return;
+            }
             message = jo.getString("text");
             String from = mFrag.conversation.getUser(jo.getLong("from"));
             if(from == null)
@@ -69,5 +83,48 @@ public class WebSocket extends WebSocketClient {
             e.printStackTrace();
         }
         send(jo.toString());
+    }
+
+    public void updateUserStatus(JSONObject jo){
+        if(jo.has("activeUsers")){
+            try{
+                JSONArray onlineUsers = jo.getJSONArray("activeUsers");
+                for( int i = 0; i < onlineUsers.length(); i++){
+                    ((MainActivity)mFrag.getActivity()).updateUserOnline(onlineUsers.getLong(i), true);
+                }
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
+        if(jo.has("onlineUser")){
+            try{
+                long userID = jo.getLong("onlineUser");
+                ((MainActivity)mFrag.getActivity()).updateUserOnline(userID, true);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
+        if(jo.has("offlineUser")){
+            try{
+                long userID = jo.getLong("offlineUser");
+                ((MainActivity)mFrag.getActivity()).updateUserOnline(userID, false);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void moveConversationToUnread(final Conversation conversation){
+        mainActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                conversation.setNumOfUnseen(conversation.getNumOfUnseen() + 1);
+                mainActivity.moveConversationToUnread(conversation);
+            }
+        });
+    }
+
+    private void createConversation(final long conversationID){
+        //TODO
     }
 }

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -17,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,7 +25,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
@@ -45,6 +44,7 @@ public class MainActivity extends AppCompatActivity
     public static final int PRIVATE_MENU_GROUP = 2;
 
     public static final String PREV_CONVERSATION_ID = "previousConversationID";
+    public static final String CONVERSATION_ID = "conversationID";
 
 
     Toolbar toolbar = null;
@@ -85,6 +85,11 @@ public class MainActivity extends AppCompatActivity
         }
         if(FirebaseInstanceId.getInstance().getToken() != null)
             Log.d("token", FirebaseInstanceId.getInstance().getToken());
+
+
+        if(getIntent().hasExtra(CONVERSATION_ID)){
+            setPreviousConversationID(getIntent().getLongExtra(CONVERSATION_ID, -1));
+        }
 
         setContentView(R.layout.activity_main);
 
@@ -141,9 +146,8 @@ public class MainActivity extends AppCompatActivity
                     currentFragment.socket.pushMessage(newMessage);
                     messageEditText.setText("");
                 }
-
-                hideSoftKeyboard();
                 messageEditText.clearFocus();
+
             }
         });
 
@@ -152,7 +156,8 @@ public class MainActivity extends AppCompatActivity
 
     public void setupMainElements(){
         setInitialFragment();
-
+        //Make the keyboard push up the screen
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
     }
 
     protected String getToken(){
@@ -172,6 +177,13 @@ public class MainActivity extends AppCompatActivity
     protected long getPreviousConversationID(){
         SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         return sPref.getLong(PREV_CONVERSATION_ID, -1);
+    }
+
+    protected void setPreviousConversationID(long newID){
+        SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sPref.edit();
+        editor.putLong(PREV_CONVERSATION_ID , newID);
+        editor.commit();
     }
 
     private String getUsername(){
@@ -330,7 +342,7 @@ public class MainActivity extends AppCompatActivity
         }
         ArrayList<Long> users = new ArrayList<>();
         users.add(user_id);
-        SessionWrapper.CreateConversation(users, getToken(), new SessionWrapper.OnCompleteListener() {
+        SessionWrapper.CreateConversation(this, users, getToken(), new SessionWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
                 try {
@@ -396,6 +408,7 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void changeFragment(){
+        hideMainElements();
         currentFragment = startMainFragment();
         currentFragment.conversation = selectedConversation;
         currentFragment.userName = loggedInUser.name;
@@ -403,7 +416,7 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
         //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
-        currentFragment.loadMessages(selectedConversation, userList);
+        currentFragment.loadMessages(this,selectedConversation, userList);
         getSupportActionBar().setTitle(selectedConversation.getName());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -442,7 +455,7 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
         //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
-        currentFragment.loadMessages(selectedConversation, userList);
+        currentFragment.loadMessages(this, selectedConversation, userList);
         getSupportActionBar().setTitle(selectedConversation.getName());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -513,7 +526,8 @@ public class MainActivity extends AppCompatActivity
     private void loadData(){
         hideMainElements();
         // Load data from server
-        SessionWrapper.UpdateUsers(getToken(), new SessionWrapper.OnCompleteListener() {
+        Log.v("contextp", "Loading data");
+        SessionWrapper.UpdateUsers(this, getToken(), new SessionWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
                 List<User> users = SessionWrapper.GetUserList(s);
@@ -553,7 +567,7 @@ public class MainActivity extends AppCompatActivity
             Log.v("tag", "Users is null");
         }
 
-        SessionWrapper.UpdateConversations(getToken(), new SessionWrapper.OnCompleteListener() {
+        SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
                     //indicates the http request returned null, and something went wrong. have them login again
@@ -570,7 +584,7 @@ public class MainActivity extends AppCompatActivity
                     c.setContext(MainActivity.this);
                 }
                 if(conversations != null) {
-                    populatePrivate(conversations);
+                    populateConversations(conversations);
                 }else{
                     Log.v("tag", "Users is null");
                 }
@@ -593,11 +607,14 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        String curr = departments.first();
-        while(curr != null){
-            addDepartment(curr);
-            curr = departments.higher(curr);
+        if(departments.size() > 0){
+            String curr = departments.first();
+            while(curr != null){
+                addDepartment(curr);
+                curr = departments.higher(curr);
+            }
         }
+
 
         for(User u : users){
             if(u != loggedInUser){
@@ -620,7 +637,56 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public void populateUnread(List<Conversation> conversations){
+        for(Conversation c : conversations){
+            if(c.users.get(0) == null){
+                Log.v("tag", "User is null : " + c.users);
+            }
+        }
+        for(Conversation c : conversations){
+            currentConversations.put(c.getID(), c);
+            addToNavBar(UNREAD_MENU_GROUP, c);
+            /*
+
+            TextView notificationTextView = (TextView) conversation.v.findViewById(R.id.nav_row_notification_text_view);
+            Log.v("taggy", "Num: " + conversation.getNumOfUnseen());
+            if(conversation.getNumOfUnseen() == 0){
+                notificationTextView.setVisibility(View.INVISIBLE);
+            }else{
+                notificationTextView.setVisibility(View.VISIBLE);
+                if(conversation.getNumOfUnseen() > 9){
+                    notificationTextView.setText("Wrong");
+                }else{
+                    notificationTextView.setText(conversation.getNumOfUnseen() + "");
+                    notificationTextView.setText("Right");
+                }
+            }
+            */
+
+
+        }
+    }
+
+    public void populateConversations(List<Conversation> conversations){
+        List<Conversation> unreadConversations = new ArrayList<Conversation>();
+        List<Conversation> privateConversations = new ArrayList<Conversation>();
+
+        for(Conversation conversation : conversations){
+            if(conversation.getNumOfUnseen() > 0){
+                unreadConversations.add(conversation);
+            }else{
+                privateConversations.add(conversation);
+            }
+        }
+
+        populateUnread(unreadConversations);
+        populatePrivate(privateConversations);
+    }
+
     private void hideMainElements(){
+        findViewById(R.id.loading_logo_image_view).setVisibility(View.VISIBLE);
+
+
         getSupportActionBar().hide();
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.GONE);
         findViewById(R.id.message_edit_text).setVisibility(View.GONE);
@@ -628,13 +694,18 @@ public class MainActivity extends AppCompatActivity
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
     }
 
-    private void onLoadComplete(){
+    public void showMainElements(){
+        findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
+
         getSupportActionBar().show();
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
         findViewById(R.id.message_edit_text).setVisibility(View.VISIBLE);
         findViewById(R.id.message_send_button).setVisibility(View.VISIBLE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-        findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
+    }
+
+    public void onLoadComplete(){
+        showMainElements();
 
         setupMainElements();
         if(isNewUser()){
@@ -643,7 +714,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void logout(View v){
+    public  void logout(View v){
         SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sPref.edit();
         editor.putString(LoginActivity.TOKEN, null);
@@ -663,6 +734,67 @@ public class MainActivity extends AppCompatActivity
         editor.commit();
     }
 
+    public void updateUserOnline(final long userID, final boolean isOnline){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(userList.containsKey(userID)){
+                    User u = userList.get(userID);
+                    u.setIsOnline(isOnline);
+                    updateGroup(userID, isOnline, PRIVATE_MENU_GROUP);
+                    updateGroup(userID, isOnline, UNREAD_MENU_GROUP);
+                }
+            }
+        });
+
+    }
+
+    private Conversation findConversationWithUser(long userID, int groupID){
+        for(int i = 0; i < navDrawerAdapter.getChildrenCount(groupID); i++) {
+            NavDrawerItem item = navDrawerAdapter.getChild(groupID, i);
+
+            Conversation conversation = currentConversations.get(item.getID());
+            boolean isConversation = true;
+            for (User userInConv : conversation.users) {
+                if (userInConv.getID() != loggedInUser.getID() && userInConv.getID() != userID) {
+                    isConversation = false;
+                }
+            }
+            if(isConversation){
+                return conversation;
+            }
+        }
+        return null;
+    }
+
+    private void updateGroup(final long userID, final boolean isOnline, final int groupID){
+            Conversation conversation = findConversationWithUser(userID, groupID);
+            if(conversation != null){
+                ImageView statusImage = (ImageView) conversation.v.findViewById(R.id.nav_row_status_image_view);
+                if(statusImage != null) {
+                    if (isOnline) {
+                        statusImage.setImageResource(R.drawable.online);
+                    } else {
+                        statusImage.setImageResource(R.drawable.offline);
+                    }
+                    statusImage.postInvalidate();
+                }
+
+                navDrawerAdapter.moveConversationToFirstPosition(groupID, conversation);
+                drawerListView.invalidateViews();
+            }
+    }
+
+    public void moveConversationToPrivate(Conversation conversation){
+        navDrawerAdapter.moveConversationToPrivate(conversation);
+        conversation.setNumOfUnseen(0);
+        drawerListView.invalidateViews();
+    }
+
+    public void moveConversationToUnread(Conversation conversation){
+        navDrawerAdapter.moveConversationToUnread(conversation);
+        drawerListView.invalidateViews();
+    }
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
     @Override

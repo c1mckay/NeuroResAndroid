@@ -12,6 +12,7 @@ import java.util.List;
 
 public class Conversation extends NavDrawerItem{
     List<User> users;
+    private int numOfUnseen;
 
     Conversation(long id, Context c){
         super(id, c);
@@ -69,5 +70,13 @@ public class Conversation extends NavDrawerItem{
         for(User u : users){
             Log.v("tag", "Name: " + u.name);
         }
+    }
+
+    public int getNumOfUnseen(){
+        return numOfUnseen;
+    }
+
+    public void setNumOfUnseen(int numOfUnseen){
+        this.numOfUnseen = numOfUnseen;
     }
 }
