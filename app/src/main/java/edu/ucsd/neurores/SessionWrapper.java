@@ -32,6 +32,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -112,7 +113,7 @@ public class SessionWrapper{
     new HTTPRequestThread(context, token, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
   }
 
-  public static void CreateConversation(Context context, ArrayList<Long> users, String token, OnCompleteListener ocl){
+  public static void CreateConversation(Context context, List<Long> users, String token, OnCompleteListener ocl){
     new HTTPRequestThread(context, token, ocl).setData(new JSONArray(users).toString()).execute(CREATE_CONVERSATION);
   }
 
@@ -397,7 +398,7 @@ public class SessionWrapper{
     return userList;
   }
 
-  public static List<Conversation> TranslateConversationMetadata(String jsonString){
+  public static List<Conversation> TranslateConversationMetadata(String jsonString, HashMap<Long,User> userList){
     List<Conversation> conversationList = new ArrayList<Conversation>();
 
     try{
@@ -429,8 +430,12 @@ public class SessionWrapper{
         for(int i = 0; i < currentArray.length(); i++){
           userID_s = currentArray.get(i).toString();
           userID = Long.parseLong(userID_s);
-
-          currentConversation.addTemporaryUser(userID);
+          if(userList.containsKey(userID)){
+            User u = userList.get(userID);
+            currentConversation.addUser(u);
+          }else{
+            Log.v("taggy", "User with id " + userID + " in a conversation but not in the user list");
+          }
         }
         conversationList.add(currentConversation);
       }

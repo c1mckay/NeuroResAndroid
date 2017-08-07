@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -146,7 +147,7 @@ public class MainActivity extends AppCompatActivity
                     currentFragment.socket.pushMessage(newMessage);
                     messageEditText.setText("");
                 }
-                messageEditText.clearFocus();
+                //messageEditText.clearFocus();
 
             }
         });
@@ -271,7 +272,6 @@ public class MainActivity extends AppCompatActivity
                                     + searchedID + " but was not found in list of users");
                         }
                     }
-                    newConversation.logAllNames();
                     currentConversations.put(searchedID, newConversation);
                     selectedConversation = newConversation;
                     //addToNavBar(PRIVATE_MENU_GROUP, newConversation);
@@ -330,19 +330,27 @@ public class MainActivity extends AppCompatActivity
             onConversationClick(v, (Long) v.getTag(R.id.CONVERSATION));
         }else if(v.getTag(R.id.USER) != null){
             onUserClick((Long) v.getTag(R.id.USER));
+        }else if(v.getTag(R.id.STAFFGROUP) != null){
+            toggleVisibility(v);
+            navDrawerAdapter.toggleIsExpanded((int) v.getTag(R.id.STAFFGROUP));
         }
+        v.invalidate();
     }
 
     private void onUserClick(long user_id){
         for(Conversation c: currentConversations.values()){
-            if(c.getSize() == 1 && c.users.get(0).getID() == user_id){
+            if(c.getNumberOfUsers() == 1 && c.getUserAtIndex(0).getID() == user_id){
                 onConversationClick(c.v, c.getID());
                 return;
             }
         }
-        ArrayList<Long> users = new ArrayList<>();
-        users.add(user_id);
-        SessionWrapper.CreateConversation(this, users, getToken(), new SessionWrapper.OnCompleteListener() {
+        ArrayList<Long> userIDs = new ArrayList<>();
+        userIDs.add(user_id);
+        createConversation(userIDs,PRIVATE_MENU_GROUP , true, 0);
+    }
+
+    private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){
+        SessionWrapper.CreateConversation(this, userIDs, getToken(), new SessionWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
                 try {
@@ -350,19 +358,26 @@ public class MainActivity extends AppCompatActivity
                     JSONArray users = jo.getJSONArray("user_ids");
                     long id = jo.getLong("conv_id");
 
-                    Conversation c = new Conversation(id, MainActivity.this);
+                    Conversation conversation = new Conversation(id, MainActivity.this);
                     for(int i = 0; i < users.length(); i++){
                         id = users.getLong(i);
                         if(id != loggedInUser.getID())
-                            c.addUser(userList.get(id));
+                            conversation.addUser(userList.get(id));
                     }
-                    currentConversations.put(c.getID(), c);
+                    conversation.setNumOfUnseen(numOfUnseen);
+                    currentConversations.put(conversation.getID(), conversation);
                     Log.v("tag2","Size: " + currentConversations.size());
-                    addToNavBar(PRIVATE_MENU_GROUP, c);
+                    Log.v("taggy", "Adding to nav bar");
+                    addToNavBar(groupID, conversation);
 
-                    onConversationClick(c.v, c.getID());
+                    if(changeFragment){
+                        onConversationClick(conversation.v, conversation.getID());
+                    }
+                    Log.v("taggy", "done creating");
 
                 } catch (JSONException e) {
+                    Log.v("taggy", "Fail");
+                    Log.v("taggy",  e.getMessage() + "");
                     e.printStackTrace();
                 }
             }
@@ -372,6 +387,48 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+    }
+
+    public void onNewConversationDetected(final long conversationID){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                SessionWrapper.UpdateConversations(getApplication(), getToken(), new SessionWrapper.OnCompleteListener() {
+                    @Override
+                    public void onComplete(String s) {
+                        if(s == null){
+                            //indicates the http request returned null, and something went wrong. have them login again
+                            Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivity(i);
+                            finish();
+                            return;
+                        }
+                        List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
+
+                        // Find the newly detected conversation
+                        Conversation newConversation = null;
+                        for(Conversation c: conversations){
+                            if(c.getID() == conversationID){
+                                newConversation = c;
+                            }
+                        }
+
+                        if(newConversation == null){
+                            onError("conversation with ID of " + conversationID + " was not found in the list of conversations");
+                            return;
+                        }
+                        Log.v("taggy", "new conversation found! Creating it");
+                        createConversation(newConversation.getUserIDs(), UNREAD_MENU_GROUP, false, 1);
+                    }
+
+                    @Override
+                    public void onError(String s) {
+
+                    }
+                });
+            }
+        });
+
     }
 
     private void onConversationClick(View v, long conversation_id){
@@ -400,6 +457,7 @@ public class MainActivity extends AppCompatActivity
     private void addToNavBar(int groupPosition, Conversation conversation){
         navDrawerAdapter.addConversation(groupPosition, conversation);
         drawerListView.expandGroup(groupPosition);
+        drawerListView.invalidateViews();
 
         //userList.put(cogetID(), newUser);
     }
@@ -432,19 +490,19 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void setInitialFragment(){
-        if(isNewUser()){
+        long conversationID;
+        if(hasOngoingConversations() && ! hasPreviousConversation()){
+            conversationID = getFirstConversationID();
+        }else{
+            conversationID = getPreviousConversationID();
+        }
+
+        if(isNewUser() || conversationID == -1){
             currentFragment = loadOnboardingFragment();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
             fragmentTransaction.commit();
             return;
-        }
-
-        long conversationID;
-        if(hasOngoingConversations() && ! hasPreviousConversation()){
-            conversationID = getFirstPrivateConversationID();
-        }else{
-            conversationID = getPreviousConversationID();
         }
 
         selectedConversation = currentConversations.get(conversationID);
@@ -464,9 +522,42 @@ public class MainActivity extends AppCompatActivity
         //recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
     }
 
+    private long getFirstConversationID(){
+        if(getNumOfPrivateConversations() > 0){
+            return getFirstPrivateConversationID();
+        }else{
+            return getFirstUnreadConversationID();
+        }
+    }
+
     private long getFirstPrivateConversationID(){
-        NavDrawerItem item = navDrawerAdapter.getChild(PRIVATE_MENU_GROUP, 0);
-        return item.getID();
+        if(getNumOfPrivateConversations() > 0){
+            NavDrawerItem item = navDrawerAdapter.getChild(PRIVATE_MENU_GROUP, 0);
+            return item.getID();
+        }else{
+         return -1;
+        }
+    }
+
+    private long getFirstUnreadConversationID(){
+        if(getNumOfUnreadConversations() > 0){
+            NavDrawerItem item = navDrawerAdapter.getChild(UNREAD_MENU_GROUP, 0);
+            return item.getID();
+        }else{
+            return -1;
+        }
+    }
+
+    private int getNumOfPrivateConversations(){
+        return navDrawerAdapter.getChildrenCount(PRIVATE_MENU_GROUP);
+    }
+
+    private int getNumOfUnreadConversations(){
+        return navDrawerAdapter.getChildrenCount(UNREAD_MENU_GROUP);
+    }
+
+    private int getTotalNumOfConversations(){
+        return getNumOfPrivateConversations() + getNumOfUnreadConversations();
     }
 
     /**
@@ -576,7 +667,7 @@ public class MainActivity extends AppCompatActivity
                     finish();
                     return;
                 }
-                List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s);
+                List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
 
                 //called update conversation without the context
                 //needs to be connected here now
@@ -627,8 +718,8 @@ public class MainActivity extends AppCompatActivity
 
     public void populatePrivate(List<Conversation> conversations){
         for(Conversation c : conversations){
-            if(c.users.get(0) == null){
-                Log.v("tag", "User is null : " + c.users);
+            if( ! c.hasUsers()){
+                Log.v("tag", c.getName() + ":" + c.getID() + " has no users");
             }
         }
         for(Conversation c : conversations){
@@ -639,8 +730,8 @@ public class MainActivity extends AppCompatActivity
 
     public void populateUnread(List<Conversation> conversations){
         for(Conversation c : conversations){
-            if(c.users.get(0) == null){
-                Log.v("tag", "User is null : " + c.users);
+            if( ! c.hasUsers()){
+                Log.v("tag", c.getName() + ":" + c.getID() + " has no users");
             }
         }
         for(Conversation c : conversations){
@@ -705,12 +796,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onLoadComplete(){
-        showMainElements();
-
         setupMainElements();
+        //showMainElements();
         if(isNewUser()){
             DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
             drawer.openDrawer(GravityCompat.START);
+            showMainElements();
         }
     }
 
@@ -755,7 +846,8 @@ public class MainActivity extends AppCompatActivity
 
             Conversation conversation = currentConversations.get(item.getID());
             boolean isConversation = true;
-            for (User userInConv : conversation.users) {
+            for (int j = 0; j < conversation.getNumberOfUsers(); j++) {
+                User userInConv = conversation.getUserAtIndex(j);
                 if (userInConv.getID() != loggedInUser.getID() && userInConv.getID() != userID) {
                     isConversation = false;
                 }
@@ -769,7 +861,12 @@ public class MainActivity extends AppCompatActivity
 
     private void updateGroup(final long userID, final boolean isOnline, final int groupID){
             Conversation conversation = findConversationWithUser(userID, groupID);
+
             if(conversation != null){
+                navDrawerAdapter.moveConversationToFirstPosition(groupID, conversation);
+            }
+            if(conversation != null && conversation.v != null){
+
                 ImageView statusImage = (ImageView) conversation.v.findViewById(R.id.nav_row_status_image_view);
                 if(statusImage != null) {
                     if (isOnline) {
@@ -777,12 +874,13 @@ public class MainActivity extends AppCompatActivity
                     } else {
                         statusImage.setImageResource(R.drawable.offline);
                     }
-                    statusImage.postInvalidate();
+                    //statusImage.postInvalidate();
+                    //conversation.v.invalidate();
                 }
-
-                navDrawerAdapter.moveConversationToFirstPosition(groupID, conversation);
-                drawerListView.invalidateViews();
             }
+
+        drawerListView.invalidateViews();
+
     }
 
     public void moveConversationToPrivate(Conversation conversation){

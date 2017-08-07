@@ -2,7 +2,6 @@ package edu.ucsd.neurores;
 
 import android.content.Context;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -156,8 +155,8 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     convo.deselect();
                 }
 
-                if(convo.users.size() == 1){
-                    if(convo.users.get(0).isOnline()){
+                if(convo.getNumberOfUsers() == 1){
+                    if(convo.getUserAtIndex(0).isOnline()){
                         ImageView onlineImage = (ImageView) child.findViewById(R.id.nav_row_status_image_view);
                         if(onlineImage != null){
                             onlineImage.setImageResource(R.drawable.online);
@@ -169,13 +168,25 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
             case STAFF_GROUP:
                 child = inflater.inflate(R.layout.inner_list, parent, false);
+
                 TextView departmentTextView = (TextView) child.findViewById(R.id.department_text_view);
 
                 NavDrawerInnerGroup innerGroup = (NavDrawerInnerGroup) getChild(groupPosition, childPosition);
                 departmentTextView.setText(innerGroup.getName());
+                LinearLayout userHolder = (LinearLayout) child.findViewById(R.id.inner_layout);
+                int imageID;
+                if(innerGroup.getIsExpanded()){
+                    userHolder.setVisibility(View.VISIBLE);
+                    imageID = R.drawable.contrator;
+                }else{
+                    userHolder.setVisibility(View.GONE);
+                    imageID = R.drawable.expander;
+                }
+
+                ImageView iv = (ImageView) child.findViewById(R.id.expander);
+                iv.setImageResource(imageID);
 
                 List<User> users = innerGroup.getChildren();
-                LinearLayout userHolder = (LinearLayout) child.findViewById(R.id.inner_layout);
                 for(User u : users){
                     String name = u.name;
                     Long id = u.getID();
@@ -187,18 +198,9 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     userView.setTag(R.id.USER, id);
 
                     u.v = userView;
-
-                    //This was causing a bug. I don't think that we need it anymore but keeping it
-                    // just in case
-                    /*
-                    if(activity.selectedConversation != null && activity.selectedConversation.getID() == u.getID()){
-                        activity.selectedConversation.deselect();
-                        u.select();
-                    }else{
-                        u.deselect();
-                    }
-                    */
                 }
+
+                child.setTag(R.id.STAFFGROUP, childPosition);
 
 
                 break;
@@ -294,7 +296,11 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         }
 
         if(! privateGroup.contains(conversation)){
-            privateGroup.add(0, conversation);
+            if(conversation.hasOnlineUser()){
+                privateGroup.add(0, conversation);
+            }else{
+                privateGroup.add(conversation);
+            }
         }
         notifyDataSetChanged();
     }
@@ -308,9 +314,18 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         }
 
         if(! unreadGroup.contains(conversation)){
-            unreadGroup.add(0, conversation);
+            if(conversation.hasOnlineUser()){
+                unreadGroup.add(0, conversation);
+            }else{
+                unreadGroup.add(conversation);
+            }
         }
 
         notifyDataSetChanged();
+    }
+
+    public void toggleIsExpanded(int childPosition){
+        NavDrawerInnerGroup inner = staffMenu.get(childPosition);
+        inner.setIsExpanded(! inner.getIsExpanded());
     }
 }

@@ -47,6 +47,11 @@ public class WebSocket extends WebSocketClient {
             if(jo.getLong("conv_id") != mFrag.conversation.getID()){
                 long conversationID = jo.getLong("conv_id");
                 HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
+
+                for(Conversation c : currentConversations.values()){
+                    Log.v("taggy", c.toString());
+                }
+
                 if(currentConversations.containsKey(conversationID)){
                     moveConversationToUnread(currentConversations.get(conversationID));
                 }else{
@@ -125,6 +130,7 @@ public class WebSocket extends WebSocketClient {
     }
 
     private void createConversation(final long conversationID){
-        //TODO
+                Log.v("taggy", "New Conversation detected!");
+                mainActivity.onNewConversationDetected(conversationID);
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
  */
 
 public class Conversation extends NavDrawerItem{
-    List<User> users;
+    private List<User> users;
     private int numOfUnseen;
 
     Conversation(long id, Context c){
@@ -37,21 +37,8 @@ public class Conversation extends NavDrawerItem{
         return sb.toString();
     }
 
-    private ArrayList<Long> tempIDs;
-    void addTemporaryUser(long userID) {
-        if(tempIDs == null)
-            tempIDs = new ArrayList<>();
-        tempIDs.add(userID);
-    }
-
     public void setContext(MainActivity activity) {
         super.setContext(activity);
-        User u;
-        for(Long userID: tempIDs) {
-            u = activity.userList.get(userID);
-            if(u != null)
-                addUser(u);
-        }
     }
 
     public String getUser(long from) {
@@ -62,8 +49,8 @@ public class Conversation extends NavDrawerItem{
         return null;
     }
 
-    public int getSize() {
-        return users.size();
+    public User getUserAtIndex(int index){
+        return users.get(index);
     }
 
     public void logAllNames(){
@@ -78,5 +65,35 @@ public class Conversation extends NavDrawerItem{
 
     public void setNumOfUnseen(int numOfUnseen){
         this.numOfUnseen = numOfUnseen;
+    }
+
+    public List<Long> getUserIDs(){
+        List<Long> userIDs = new ArrayList<Long>();
+        for(User u : users){
+            userIDs.add(u.getID());
+        }
+        return userIDs;
+    }
+
+    public boolean hasOnlineUser(){
+        boolean hasOnlineUser = false;
+        for(User u :users){
+            if(u.isOnline()){
+                hasOnlineUser = true;
+            }
+        }
+        return hasOnlineUser;
+    }
+
+    public String toString(){
+        return getName() + ": " + getID();
+    }
+
+    public boolean hasUsers(){
+        return users.size() > 0;
+    }
+
+    public int getNumberOfUsers(){
+        return users.size();
     }
 }

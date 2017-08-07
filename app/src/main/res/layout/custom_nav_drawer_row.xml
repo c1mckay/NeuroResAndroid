@@ -36,7 +36,6 @@
         android:id="@+id/nav_row_notification_text_view"
         android:layout_width="15dp"
         android:layout_height="15dp"
-        android:text="9+"
         android:textColor="@color/yellow"
         android:layout_weight="1"
         android:layout_gravity="center"

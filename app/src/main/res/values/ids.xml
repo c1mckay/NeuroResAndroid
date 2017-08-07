@@ -7,5 +7,6 @@
     <item name="private_menu" type="id"/>
     <item name="CONVERSATION" type="id"/>
     <item name="USER" type="id"/>
+    <item name="STAFFGROUP" type="id"/>
 
 </resources>
