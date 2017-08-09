@@ -1,6 +1,7 @@
 package edu.ucsd.neurores;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -48,15 +49,13 @@ public class WebSocket extends WebSocketClient {
                 long conversationID = jo.getLong("conv_id");
                 HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
 
-                for(Conversation c : currentConversations.values()){
-                    Log.v("taggy", c.toString());
-                }
-
                 if(currentConversations.containsKey(conversationID)){
                     moveConversationToUnread(currentConversations.get(conversationID));
                 }else{
                     createConversation(conversationID);
                 }
+                long userID = jo.getLong("from");
+                notifyUserOfNewMessage(userID);
                 return;
             }
             message = jo.getString("text");
@@ -64,7 +63,24 @@ public class WebSocket extends WebSocketClient {
             if(from == null)
                 from = "";//this should just a message I sent, an echo.
             long time = System.currentTimeMillis();
-            mFrag.addMessage(from,message,time);
+            boolean isAtBottom = mFrag.isAtBottom();
+            if(isAtBottom){
+                if(mFrag.isLoading()){
+                    mFrag.addTempMessage(from,message,time);
+                }else{
+                    mFrag.addMessage(from,message,time, true);
+                }
+            }else{
+                if(mFrag.isLoading()){
+                    mFrag.addTempMessage(from,message,time);
+                }else{
+                    mFrag.addMessage(from,message,time, false);
+                }
+                long userID = jo.getLong("from");
+                if(userID != mainActivity.loggedInUser.getID()){
+                    notifyUserOfNewMessage(userID);
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -132,5 +148,21 @@ public class WebSocket extends WebSocketClient {
     private void createConversation(final long conversationID){
                 Log.v("taggy", "New Conversation detected!");
                 mainActivity.onNewConversationDetected(conversationID);
+    }
+
+    private void notifyUserOfNewMessage(final long userID){
+        mainActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(mainActivity.userList.containsKey(userID)){
+                    User u = mainActivity.userList.get(userID);
+                    Toast.makeText(mainActivity, "New message from " + u.getName(),
+                            Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(mainActivity, "New message received",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }

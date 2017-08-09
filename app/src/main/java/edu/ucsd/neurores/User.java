@@ -9,24 +9,14 @@ import android.view.View;
 
 public class User extends NavDrawerItem{
     String userType;
-    String name;
+    private String name;
     private boolean isOnline;
-    User(Context context, long id, String name){
-        super(id, context);
-        this.name = name;
-        isOnline = false;
-    }
 
-    User(Context context, long id, String name, String userType){
+    User(Context context, long id, String name, String userType, boolean isOnline){
         super(id, context);
         this.name = name;
         this.userType = userType;
-    }
-
-    User(Context context, long id, String name, View v){
-        super(id, context);
-        setView(v);
-        this.name = name;
+        this.isOnline = isOnline;
     }
 
     User(long id, String name, String userType){
@@ -40,6 +30,10 @@ public class User extends NavDrawerItem{
 
     public void setIsOnline(boolean isOnline){
         this.isOnline = isOnline;
+    }
+
+    public String getName(){
+        return name;
     }
 
     @Override

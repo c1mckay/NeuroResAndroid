@@ -27,10 +27,10 @@ public class Conversation extends NavDrawerItem{
         if(users == null)
             return "Bugged out conversation";
         if(users.size() == 1)
-            return users.get(0).name;
+            return users.get(0).getName();
         StringBuilder sb = new StringBuilder();
         for(User u: users){
-            sb.append(u.name);
+            sb.append(u.getName());
             sb.append(", ");
         }
         sb.delete(sb.length() - 2, sb.length());
@@ -44,7 +44,7 @@ public class Conversation extends NavDrawerItem{
     public String getUser(long from) {
         for(User u: users){
             if(u.getID().equals(from))
-                return u.name;
+                return u.getName();
         }
         return null;
     }
@@ -55,7 +55,7 @@ public class Conversation extends NavDrawerItem{
 
     public void logAllNames(){
         for(User u : users){
-            Log.v("tag", "Name: " + u.name);
+            Log.v("tag", "Name: " + u.getName());
         }
     }
 

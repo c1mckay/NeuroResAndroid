@@ -188,7 +188,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
                 List<User> users = innerGroup.getChildren();
                 for(User u : users){
-                    String name = u.name;
+                    String name = u.getName();
                     Long id = u.getID();
 
                     View userView = inflater.inflate(R.layout.custom_nav_drawer_row, userHolder, false);
@@ -196,6 +196,8 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     userTextView = (TextView) userView.findViewById(R.id.nav_row_text_view);
                     userTextView.setText(name);
                     userView.setTag(R.id.USER, id);
+
+                    userView.findViewById(R.id.nav_row_status_image_view).setVisibility(View.INVISIBLE);
 
                     u.v = userView;
                 }

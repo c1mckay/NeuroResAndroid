@@ -98,10 +98,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             switcher = paddingRight;
             paddingRight = paddingLeft;
             //paddingLeft = switcher;
-            // Hardcode the padding on the left
-            paddingLeft = 21;
             holder.leftView.setVisibility(View.GONE);
         }
+        // Hardcode the padding on the left
+        paddingLeft = 21;
+
         holder.messageText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
     }
 

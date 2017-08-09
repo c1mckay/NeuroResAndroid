@@ -36,6 +36,9 @@
     <string name="welcome">Welcome!</string>
     <string name="bks_password">$89!hD33</string>
     <string name="max_num_unread_messages">9+</string>
+    <string name="reconnecting_to_server">Reconnecting to the server</string>
+    <string name="no_connection">No internet connection. Try again</string>
+    <string name="connecting_to_server">Error connecting to the server</string>
 
 
     <string-array name="sub_menus">

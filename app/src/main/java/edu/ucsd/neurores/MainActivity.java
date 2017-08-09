@@ -76,6 +76,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+
         // Check for the login Token
 
         if(getToken() == null){
@@ -142,10 +144,10 @@ public class MainActivity extends AppCompatActivity
                 String newMessage = messageEditText.getText().toString();
                 //Only send the message if it is not empty
                 if(! newMessage.equals("") && currentFragment.conversation != null){
-
-                    //currentFragment.addMessage("Trevor", messageEditText.getText().toString());
-                    currentFragment.socket.pushMessage(newMessage);
+                    //currentFragment.socket.pushMessage(newMessage);
+                    currentFragment.pushMessage(newMessage);
                     messageEditText.setText("");
+                    scrollToMostRecentMessage();
                 }
                 //messageEditText.clearFocus();
 
@@ -157,8 +159,6 @@ public class MainActivity extends AppCompatActivity
 
     public void setupMainElements(){
         setInitialFragment();
-        //Make the keyboard push up the screen
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
     }
 
     protected String getToken(){
@@ -194,6 +194,7 @@ public class MainActivity extends AppCompatActivity
 
     private MainFragment startMainFragment(){
         MainFragment mFrag = new MainFragment();
+        mFrag.setupSocket(this);
         Bundle i = new Bundle();
         i.putString("token", getToken());
         mFrag.setArguments(i);
@@ -469,7 +470,7 @@ public class MainActivity extends AppCompatActivity
         hideMainElements();
         currentFragment = startMainFragment();
         currentFragment.conversation = selectedConversation;
-        currentFragment.userName = loggedInUser.name;
+        currentFragment.userName = loggedInUser.getName();
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
@@ -508,7 +509,7 @@ public class MainActivity extends AppCompatActivity
         selectedConversation = currentConversations.get(conversationID);
         currentFragment = startMainFragment();
         currentFragment.conversation = selectedConversation;
-        currentFragment.userName = loggedInUser.name;
+        currentFragment.userName = loggedInUser.getName();
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
@@ -646,10 +647,10 @@ public class MainActivity extends AppCompatActivity
         String username = getUsername();
         for(User u : users){
             u.setContext(this);
-            if(u.name.equals(username)){
+            if(u.getName().equals(username)){
                 loggedInUser = u;
                 TextView nameInSettingsView = (TextView) findViewById(R.id.username_in_settings_text_view);
-                nameInSettingsView.setText(loggedInUser.name);
+                nameInSettingsView.setText(loggedInUser.getName());
             }
         }
         if(users != null) {
@@ -893,6 +894,12 @@ public class MainActivity extends AppCompatActivity
         navDrawerAdapter.moveConversationToUnread(conversation);
         drawerListView.invalidateViews();
     }
+
+    public void scrollToMostRecentMessage(){
+        currentFragment.scrollToBottom();
+    }
+
+
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
     @Override

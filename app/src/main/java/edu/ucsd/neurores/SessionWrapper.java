@@ -389,7 +389,8 @@ public class SessionWrapper{
         String name = current.getString("email");
         String userType = current.getString("user_type");
         long userId = current.getLong("user_id");
-        userList.add(new User(null, userId,name, userType));
+        boolean isOnline = current.getBoolean("isOnline");
+        userList.add(new User(null, userId,name, userType, isOnline));
       }
     }catch( Exception e){
       Log.v("tag", "Failed to get JSONArray from json from " + GET_USERS_ENDPOINT);
