@@ -250,7 +250,7 @@ public class MainFragment extends Fragment{
     }
 
     public void onResume(){
-        setupSocket(getActivity());
+        //setupSocket(getActivity());
         super.onResume();
     }
 
@@ -329,8 +329,10 @@ public class MainFragment extends Fragment{
     }
 
     public void onPause(){
-        socket.close();
-        socket = null;
+        if(socket != null){
+            socket.close();
+            socket = null;
+        }
         super.onPause();
     }
 
@@ -366,11 +368,11 @@ public class MainFragment extends Fragment{
         }
     }
 
-    public void setupSocket(Context context){
+    public void setupSocket(MainActivity mainActivity){
         try {
             if(socket == null || socket.isClosed() || ! socket.isOpen()){
-                socket = new WebSocket(this, (MainActivity) getActivity());
-                setupSSL(context, socket);
+                socket = new WebSocket(this, mainActivity);
+                setupSSL(mainActivity, socket);
             }
         }catch (URISyntaxException e){
             Log.v("taggy","Error with uri when creating socket");
