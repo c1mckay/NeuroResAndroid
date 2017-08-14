@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,12 +26,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -76,7 +80,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         setContentView(R.layout.activity_login);
+
+        if( !isConnectedToNetwork()){
+            showNoInternetConnectionToast();
+        }
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
@@ -118,6 +127,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         //mLoginFormView = findViewById(R.id.login_form);
         //mProgressView = findViewById(R.id.login_progress);
     }
+
+    private void showNoInternetConnectionToast() {
+        Toast.makeText(this, R.string.no_internet_connection_login , Toast.LENGTH_LONG).show();
+    }
+
+    private boolean isConnectedToNetwork() {
+        final ConnectivityManager conMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
+
+        return activeNetwork != null && activeNetwork.isConnected();
+    }
+
     private void removeToken(){
         SharedPreferences sp = LoginActivity.this.getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
@@ -176,6 +197,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
+        if(! isConnectedToNetwork()){
+            showNoInternetConnectionToast();
+            return;
+        }
         Button loginButton = (Button) findViewById(R.id.email_sign_in_button);
         loginButton.setText(R.string.signing_in);
         if (mAuthTask != null) {
@@ -396,6 +421,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mAuthTask = null;
             //showProgress(false);
         }
+
+
     }
 }
 

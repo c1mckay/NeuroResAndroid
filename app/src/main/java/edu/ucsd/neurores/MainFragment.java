@@ -51,7 +51,7 @@ public class MainFragment extends Fragment{
     String userName = null;
     // Used to temporarily store a message when the view has not yet been made
     //private String message = null;
-    SimpleDateFormat formatter;
+    public SimpleDateFormat formatter;
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -120,7 +120,7 @@ public class MainFragment extends Fragment{
      * The conversation details to load
      * @param c the conversation to query the server for
      */
-    public void loadMessages(final Context context, final Conversation c, final HashMap<Long, User> user){
+    public void loadMessages(final Context context, final Conversation c, final HashMap<Long, User> users){
         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         formatter.setTimeZone(TimeZone.getDefault());
         //should actually queue the messages at this point
@@ -131,45 +131,8 @@ public class MainFragment extends Fragment{
         SessionWrapper.GetConversationData(context, c.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
-                try {
-                    Log.v("tag",s);
-                    JSONArray jMessages = new JSONArray(s);
-                    JSONObject jo;
-                    long user_id;
-                    String userName;
-                    User u;
-                    Date d;
-                    for(int i = 0; i < jMessages.length(); i++){
-                        jo = jMessages.getJSONObject(i);
-                        user_id = jo.getLong("sender");
-                        d = formatter.parse(jo.getString("date"));
-                        // TODO Work with timeszones
-                        d = new Date(d.getTime() - (1000 * 60 * 60 * 7));
-                        u = user.get(user_id);
-                        if(u == null)
-                            userName = "";
-                        else
-                            userName = u.getName();
-                        //Log.v("taggy", userName + ": " +  jo.getString("text"));
-                        addMessage(userName, jo.getString("text"), d.getTime(),true);
-                    }
-                    while(temp.size() > 0){
-                        addMessage(temp.get(0), true);
-                        temp.remove(0);
-                    }
-                    isLoading = false;
-                    displayMessages(true);
-                }catch(JSONException e){
-                    Log.v("taggy", "There was a json error");
-                    e.printStackTrace();
-                }catch(ParseException e){
-                    Log.v("taggy", "There was a parse error");
-                    e.printStackTrace();
-                }
+                updateMessageView(context, s, users);
                 ((MainActivity)getActivity()).showMainElements();
-                if(conversation.getNumOfUnseen() > 0){
-                    markConversationRead(context, conversation);
-                }
             }
 
             @Override
@@ -179,6 +142,48 @@ public class MainFragment extends Fragment{
         });
 
         //messageAdapter.notifyDataSetChanged();
+
+    }
+
+    public void updateMessageView(Context context, String s, HashMap<Long, User> users){
+        Log.v("tag",s);
+        try{
+            JSONArray jMessages = new JSONArray(s);
+            JSONObject jo;
+            long user_id;
+            String userName;
+            User u;
+            Date d;
+            for(int i = 0; i < jMessages.length(); i++){
+                jo = jMessages.getJSONObject(i);
+                user_id = jo.getLong("sender");
+                d = formatter.parse(jo.getString("date"));
+                // TODO Work with timeszones
+                d = new Date(d.getTime() - (1000 * 60 * 60 * 7));
+                u = users.get(user_id);
+                if(u == null)
+                    userName = "";
+                else
+                    userName = u.getName();
+                //Log.v("taggy", userName + ": " +  jo.getString("text"));
+                addMessage(userName, jo.getString("text"), d.getTime(),true);
+            }
+            while(temp.size() > 0){
+                addMessage(temp.get(0), true);
+                temp.remove(0);
+            }
+            isLoading = false;
+            displayMessages(true);
+        }catch(JSONException e){
+            Log.v("taggy", "There was a json error");
+            e.printStackTrace();
+        }catch(ParseException e){
+            Log.v("taggy", "There was a parse error");
+            e.printStackTrace();
+        }
+        if(conversation.getNumOfUnseen() > 0){
+            markConversationRead(context, conversation);
+        }
 
     }
 
@@ -397,5 +402,9 @@ public class MainFragment extends Fragment{
 
     public boolean isLoading(){
         return isLoading;
+    }
+
+    public boolean canScroll(){
+        return recyclerView.canScrollVertically(1) || recyclerView.canScrollVertically(-1);
     }
 }

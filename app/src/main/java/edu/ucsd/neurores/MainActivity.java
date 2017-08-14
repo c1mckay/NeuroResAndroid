@@ -4,7 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -25,6 +28,7 @@ import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
@@ -32,10 +36,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.Socket;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
+
+import javax.net.ssl.SSLSocket;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener {
@@ -72,15 +80,18 @@ public class MainActivity extends AppCompatActivity
     public Conversation selectedConversation;
 
     public User loggedInUser;
+    Toast mostRecentToast;
+
+    private WebSocket socket;
+    boolean isPaused;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         // Check for the login Token
-
-        if(getToken() == null){
+        if(getToken() == null || ! isConnectedToNetwork()){
             Intent i = new Intent(this, LoginActivity.class);
             startActivity(i);
             finish();
@@ -97,8 +108,14 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         /*Initialize */
+        // TODO Reconnect socket when screen wakes from idle
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        //pm.isDeviceIdleMode();
+        //pm.isInteractive();
+
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
+        isPaused = false;
         messageEditText = (EditText) findViewById(R.id.message_edit_text);
 
 
@@ -144,8 +161,9 @@ public class MainActivity extends AppCompatActivity
                 String newMessage = messageEditText.getText().toString();
                 //Only send the message if it is not empty
                 if(! newMessage.equals("") && currentFragment.conversation != null){
-                    //currentFragment.socket.pushMessage(newMessage);
-                    currentFragment.pushMessage(newMessage);
+                    //currentFragment.pushMessage(newMessage);
+                    pushMessage(newMessage);
+                    setKeyboardPushing();
                     messageEditText.setText("");
                     scrollToMostRecentMessage();
                 }
@@ -157,8 +175,29 @@ public class MainActivity extends AppCompatActivity
         loadData();
     }
 
+    private boolean isConnectedToNetwork() {
+        final ConnectivityManager conMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
+
+        return activeNetwork != null && activeNetwork.isConnected();
+    }
+
+    @Override
+    protected void onPause() {
+        isPaused = true;
+        closeSocket();
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        closeSocket();
+        super.onDestroy();
+    }
+
     public void setupMainElements(){
         setInitialFragment();
+        connectSocket();
     }
 
     protected String getToken(){
@@ -194,11 +233,15 @@ public class MainActivity extends AppCompatActivity
 
     private MainFragment startMainFragment(){
         MainFragment mFrag = new MainFragment();
-        mFrag.setupSocket(this);
+        //mFrag.setupSocket(this);
         Bundle i = new Bundle();
         i.putString("token", getToken());
         mFrag.setArguments(i);
         return mFrag;
+    }
+
+    public void setKeyboardPushing(){
+
     }
 
     private MainFragment loadOnboardingFragment(){
@@ -292,6 +335,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         // Check if the main fragment needs to be changed
+        isPaused = false;
         if(needToChangeFragment){
             if(selectedConversation.v == null) {
                 // Add a view to the navigation bar for the new user
@@ -304,6 +348,8 @@ public class MainActivity extends AppCompatActivity
             changeFragment();
             needToChangeFragment = false;
         }
+        connectSocket();
+        //TODO checkForNewMessages();
         super.onResume();
         hideSoftKeyboard();
     }
@@ -354,6 +400,14 @@ public class MainActivity extends AppCompatActivity
         SessionWrapper.CreateConversation(this, userIDs, getToken(), new SessionWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
+                if(s == null){
+                    //indicates the http request returned null, and something went wrong. have them login again
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                    return;
+                }
+
                 try {
                     JSONObject jo = new JSONObject(s);
                     JSONArray users = jo.getJSONArray("user_ids");
@@ -484,6 +538,13 @@ public class MainActivity extends AppCompatActivity
         recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
 
         updateMostRecentConversation(selectedConversation.getID());
+        updateFrag();
+    }
+
+    private void updateFrag(){
+        if(socket != null){
+            socket.updateFrag(currentFragment);
+        }
     }
 
 
@@ -507,6 +568,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         selectedConversation = currentConversations.get(conversationID);
+        if(selectedConversation == null){
+            logout(null);
+            finish();
+            return;
+        }
         currentFragment = startMainFragment();
         currentFragment.conversation = selectedConversation;
         currentFragment.userName = loggedInUser.getName();
@@ -622,6 +688,13 @@ public class MainActivity extends AppCompatActivity
         SessionWrapper.UpdateUsers(this, getToken(), new SessionWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
+                if(s == null){
+                    //indicates the http request returned null, and something went wrong. have them login again
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                    return;
+                }
                 List<User> users = SessionWrapper.GetUserList(s);
                 for(User u: users){
                     u.setContext(MainActivity.this);
@@ -653,11 +726,8 @@ public class MainActivity extends AppCompatActivity
                 nameInSettingsView.setText(loggedInUser.getName());
             }
         }
-        if(users != null) {
-            populateStaff(users);
-        }else{
-            Log.v("tag", "Users is null");
-        }
+
+        populateStaff(users);
 
         SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
             public void onComplete(String s) {
@@ -675,11 +745,8 @@ public class MainActivity extends AppCompatActivity
                 for(Conversation c: conversations){
                     c.setContext(MainActivity.this);
                 }
-                if(conversations != null) {
-                    populateConversations(conversations);
-                }else{
-                    Log.v("tag", "Users is null");
-                }
+                populateConversations(conversations);
+
                 onLoadComplete();
             }
 
@@ -727,6 +794,8 @@ public class MainActivity extends AppCompatActivity
             currentConversations.put(c.getID(), c);
             addToNavBar(PRIVATE_MENU_GROUP, c);
         }
+
+        moveOnlineConversationsUp(conversations, PRIVATE_MENU_GROUP);
     }
 
     public void populateUnread(List<Conversation> conversations){
@@ -738,24 +807,17 @@ public class MainActivity extends AppCompatActivity
         for(Conversation c : conversations){
             currentConversations.put(c.getID(), c);
             addToNavBar(UNREAD_MENU_GROUP, c);
-            /*
+        }
 
-            TextView notificationTextView = (TextView) conversation.v.findViewById(R.id.nav_row_notification_text_view);
-            Log.v("taggy", "Num: " + conversation.getNumOfUnseen());
-            if(conversation.getNumOfUnseen() == 0){
-                notificationTextView.setVisibility(View.INVISIBLE);
-            }else{
-                notificationTextView.setVisibility(View.VISIBLE);
-                if(conversation.getNumOfUnseen() > 9){
-                    notificationTextView.setText("Wrong");
-                }else{
-                    notificationTextView.setText(conversation.getNumOfUnseen() + "");
-                    notificationTextView.setText("Right");
-                }
+        moveOnlineConversationsUp(conversations, UNREAD_MENU_GROUP);
+    }
+
+    private void moveOnlineConversationsUp(List<Conversation> conversations, int group){
+        for(Conversation c : conversations){
+            if(c.hasOnlineUser()){
+                Log.v("taggy", "moving up");
+                navDrawerAdapter.moveConversationToFirstPosition(group, c);
             }
-            */
-
-
         }
     }
 
@@ -835,9 +897,45 @@ public class MainActivity extends AppCompatActivity
                     u.setIsOnline(isOnline);
                     updateGroup(userID, isOnline, PRIVATE_MENU_GROUP);
                     updateGroup(userID, isOnline, UNREAD_MENU_GROUP);
+                    updateGroupStaff(userID, isOnline);
                 }
             }
         });
+
+    }
+
+    private void checkForNewMessages(){
+        checkCurrentConversationForNewMessages();
+        checkAllConversationsForNewMessages();
+    }
+
+    private void checkCurrentConversationForNewMessages(){
+        if( currentFragment != null && ! currentFragment.isLoading()){
+            SessionWrapper.GetConversationData(this, selectedConversation.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
+                @Override
+                public void onComplete(String s) {
+                    if(s == null){
+                        //indicates the http request returned null, and something went wrong. have them login again
+                        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(i);
+                        finish();
+                        return;
+                    }
+                    //TODO: Append any new messages to the current conversatoin and update any unread messages
+                    currentFragment.updateMessageView(getApplicationContext() ,s, userList);
+
+                }
+
+                @Override
+                public void onError(String s) {
+
+                }
+            });
+        }
+
+    }
+
+    private void checkAllConversationsForNewMessages(){
 
     }
 
@@ -861,11 +959,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateGroup(final long userID, final boolean isOnline, final int groupID){
+
             Conversation conversation = findConversationWithUser(userID, groupID);
 
-            if(conversation != null){
-                navDrawerAdapter.moveConversationToFirstPosition(groupID, conversation);
-            }
+            /*
             if(conversation != null && conversation.v != null){
 
                 ImageView statusImage = (ImageView) conversation.v.findViewById(R.id.nav_row_status_image_view);
@@ -875,11 +972,38 @@ public class MainActivity extends AppCompatActivity
                     } else {
                         statusImage.setImageResource(R.drawable.offline);
                     }
-                    //statusImage.postInvalidate();
-                    //conversation.v.invalidate();
+                }
+            } */
+        // Updates are handeled by the navdrawer adapter now
+        if(conversation != null){
+            navDrawerAdapter.moveConversationToFirstPosition(groupID, conversation);
+        }
+        drawerListView.invalidateViews();
+
+    }
+
+    private void updateGroupStaff(final long userID, final boolean isOnline){
+        /*
+        User user = userList.get(userID);
+        if(user == null){
+            Log.v("taggy", "Couldn't find user");
+            return;
+        }else{
+            Log.v("taggy", "Found user: " + user.getName());
+        }
+        if(user.v != null){
+
+            ImageView statusImage = (ImageView) user.v.findViewById(R.id.nav_row_status_image_view);
+            if(statusImage != null) {
+                if (isOnline) {
+                    statusImage.setImageResource(R.drawable.online);
+                } else {
+                    statusImage.setImageResource(R.drawable.offline);
                 }
             }
-
+        }
+        */
+        // Updates are handeled by the navdrawer adapter now
         drawerListView.invalidateViews();
 
     }
@@ -920,6 +1044,147 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onDrawerStateChanged(int newState) {
 
+    }
+
+    /***************************************************/
+
+
+
+    /********** Socket Methods **********/
+
+    private void connectSocket(){
+        try{
+            Log.v("sockett", "Closing socket!");
+            socket = new WebSocket(currentFragment, this);
+            setupSSL(this, socket);
+        }catch (URISyntaxException e){
+            Log.v("sockett", "The socket failed to intially connect: " + e.getMessage());
+            socket = null;
+        }
+    }
+
+    private void closeSocket(){
+        if(socket != null){
+            Log.v("sockett", "Closing socket!");
+            socket.close();
+            socket = null;
+        }
+    }
+
+
+    private void setupSSL(final Context context, final WebSocket sock){
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
+                    org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
+                    Socket sock1 = new Socket(SessionWrapper.BASE_URL, 443);
+                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, SessionWrapper.BASE_URL, 443, false);
+
+
+                    sock.setSocket(socketSSL);
+                    if(! sock.connectBlocking()){
+                        Log.v("sockett", "Failed to connect socket");
+                        throw new Exception("Error connecting to the web socket");
+                    }else{
+                        Log.v("sockett", "Connected");
+                    }
+
+                }catch (Exception e){
+                    showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
+                    Log.v("taggy", "There was a problem setting up ssl websocket");
+                }
+            }
+        };
+
+        Thread thread = new Thread(r);
+        thread.start();
+
+    }
+
+    private void setupSSLAndSendMessage(final Context context, final WebSocket sock, final String message){
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
+                    org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
+                    Socket sock1 = new Socket(SessionWrapper.BASE_URL, 443);
+                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, SessionWrapper.BASE_URL, 443, false);
+
+
+                    sock.setSocket(socketSSL);
+                    if(! sock.connectBlocking()){
+                        Log.v("sockett", "Failed to connect socket");
+                        throw new Exception("Error connecting to the web socket");
+                    }else{
+                        Log.v("sockett", "Connected");
+                        sock.pushMessage(message);
+                    }
+
+                }catch (Exception e){
+                    ((MainActivity)context).runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showToast(context.getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
+                        }
+                    });
+                    Log.v("taggy", "There was a problem setting up ssl websocket");
+                }
+            }
+        };
+
+        Thread thread = new Thread(r);
+        thread.start();
+
+    }
+
+    public void pushMessage(String s){
+        if(socket == null || socket.isClosed() || ! socket.isOpen()){
+            reconnectSocketAndSendMessage(s);
+        }else{
+            socket.pushMessage(s);
+        }
+    }
+
+    private void reconnectSocket(){
+        try {
+            if(socket != null && socket.isOpen()){
+                return;
+            }
+            socket = new WebSocket(currentFragment, this);
+            showToast(getResources().getString(R.string.reconnecting_to_server), Toast.LENGTH_SHORT);
+            setupSSL(this, socket);
+            // TODO Reload messages
+        }catch (URISyntaxException e){
+            Log.v("taggy","Error with uri when creating socket");
+        }
+    }
+
+
+    private void reconnectSocketAndSendMessage(String message){
+        try {
+            if(socket != null && socket.isOpen()){
+                    return;
+            }
+            socket = new WebSocket(currentFragment, this);
+            showToast(getResources().getString(R.string.reconnecting_to_server), Toast.LENGTH_SHORT);
+            setupSSLAndSendMessage(this, socket,message);
+            // TODO Reload messages
+        }catch (URISyntaxException e){
+            Log.v("taggy","Error with uri when creating socket");
+        }
+    }
+
+    public void showToast(String message, int length){
+        if (mostRecentToast != null && mostRecentToast.getView().isShown()){
+            mostRecentToast.cancel();
+        }
+        mostRecentToast = Toast.makeText(this, message, length);
+        mostRecentToast.show();
     }
 
     /***************************************************/

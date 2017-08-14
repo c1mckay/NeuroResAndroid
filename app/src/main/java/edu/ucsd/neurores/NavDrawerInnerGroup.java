@@ -46,7 +46,6 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
 
     public void setIsExpanded(boolean expanded){
         isExpanded = expanded;
-        Log.v("taggy", getName() + " is expanded: " + isExpanded);
     }
 
     public boolean getIsExpanded(){

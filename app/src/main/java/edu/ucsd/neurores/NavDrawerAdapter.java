@@ -2,6 +2,7 @@ package edu.ucsd.neurores;
 
 import android.content.Context;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -197,7 +199,13 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     userTextView.setText(name);
                     userView.setTag(R.id.USER, id);
 
-                    userView.findViewById(R.id.nav_row_status_image_view).setVisibility(View.INVISIBLE);
+                    //userView.findViewById(R.id.nav_row_status_image_view).setVisibility(View.INVISIBLE);
+                    ImageView onlineImage = (ImageView) userView.findViewById(R.id.nav_row_status_image_view);
+                    if(onlineImage != null && u.isOnline()){
+                        Log.v("taggy", u.getName() + " is online");
+                        onlineImage.setImageResource(R.drawable.online);
+                        child.invalidate();
+                    }
 
                     u.v = userView;
                 }
@@ -249,12 +257,23 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         dataSetChanged();
     }
 
-    private void dataSetChanged(){
+    public void dataSetChanged(){
         activity.runOnUiThread(new Runnable(){
             public void run(){
                 notifyDataSetChanged();
             }
         });
+    }
+
+    private void sort(List<NavDrawerItem> list, int group){
+        HashMap<Long, Conversation> conversations = activity.currentConversations;
+        for(int i = 0; i < list.size(); i ++){
+            Conversation conversation = conversations.get(list.get(i).getID());
+            if(conversation != null && conversation.hasOnlineUser()){
+                moveConversationToFirstPosition(group, conversation);
+                i--;
+            }
+        }
     }
 
 
@@ -286,7 +305,8 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         List group = getGroup(groupPosition);
         group.remove(conversation);
         group.add(0, conversation);
-        notifyDataSetChanged();
+        //notifyDataSetChanged();
+        dataSetChanged();
     }
 
     public void moveConversationToPrivate(Conversation conversation){

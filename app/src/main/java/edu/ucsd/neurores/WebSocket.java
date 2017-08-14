@@ -92,7 +92,9 @@ public class WebSocket extends WebSocketClient {
     }
 
     public void onError(Exception ex) {
-        mFrag.errorVisMessage(ex.getLocalizedMessage());
+        if(mFrag != null){
+            mFrag.errorVisMessage(ex.getLocalizedMessage());
+        }
     }
 
     public void pushMessage(String message){
@@ -164,5 +166,9 @@ public class WebSocket extends WebSocketClient {
                 }
             }
         });
+    }
+
+    public void updateFrag(MainFragment fragment){
+        mFrag = fragment;
     }
 }
