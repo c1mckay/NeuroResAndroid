@@ -61,8 +61,6 @@ public class MainActivity extends AppCompatActivity
     private NavDrawerAdapter navDrawerAdapter;
     // The list view in the Navigation Drawer
     private ExpandableListView drawerListView;
-    // The input for messages at the bottom of the screen
-    private EditText messageEditText;
     // The fragment that holds the messages of the selected user
     private MainFragment currentFragment;
     /* Request for when the search activity is launched by clicking "Search"
@@ -83,12 +81,10 @@ public class MainActivity extends AppCompatActivity
     Toast mostRecentToast;
 
     private WebSocket socket;
-    boolean isPaused;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         // Check for the login Token
         if(getToken() == null || ! isConnectedToNetwork()){
@@ -115,8 +111,7 @@ public class MainActivity extends AppCompatActivity
 
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
-        isPaused = false;
-        messageEditText = (EditText) findViewById(R.id.message_edit_text);
+
 
 
         // Set the fragment
@@ -153,24 +148,6 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
 
         // Setup the button used to send messages
-        final Button messageSendButton = (Button) findViewById(R.id.message_send_button);
-        messageSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // The text in the input field
-                String newMessage = messageEditText.getText().toString();
-                //Only send the message if it is not empty
-                if(! newMessage.equals("") && currentFragment.conversation != null){
-                    //currentFragment.pushMessage(newMessage);
-                    pushMessage(newMessage);
-                    setKeyboardPushing();
-                    messageEditText.setText("");
-                    scrollToMostRecentMessage();
-                }
-                //messageEditText.clearFocus();
-
-            }
-        });
 
         loadData();
     }
@@ -184,7 +161,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onPause() {
-        isPaused = true;
         closeSocket();
         super.onPause();
     }
@@ -335,7 +311,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         // Check if the main fragment needs to be changed
-        isPaused = false;
         if(needToChangeFragment){
             if(selectedConversation.v == null) {
                 // Add a view to the navigation bar for the new user
@@ -347,9 +322,12 @@ public class MainActivity extends AppCompatActivity
             }
             changeFragment();
             needToChangeFragment = false;
+        }else if(currentFragment != null){
+            //TODO checkForNewMessages();
+            changeFragment();
         }
         connectSocket();
-        //TODO checkForNewMessages();
+
         super.onResume();
         hideSoftKeyboard();
     }
@@ -499,7 +477,6 @@ public class MainActivity extends AppCompatActivity
             selectedConversation.select();
         }
         // Reset the input fields and hide it
-        messageEditText.setText("");
         hideSoftKeyboard();
 
         changeFragment();
@@ -664,7 +641,7 @@ public class MainActivity extends AppCompatActivity
      * Hides the soft keyboard
      */
     public void hideSoftKeyboard() {
-        if(getCurrentFocus()!=null) {
+        if(getCurrentFocus()!= null) {
             InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
         }
@@ -843,8 +820,8 @@ public class MainActivity extends AppCompatActivity
 
         getSupportActionBar().hide();
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.GONE);
-        findViewById(R.id.message_edit_text).setVisibility(View.GONE);
-        findViewById(R.id.message_send_button).setVisibility(View.GONE);
+        //findViewById(R.id.message_edit_text).setVisibility(View.GONE);
+        //findViewById(R.id.message_send_button).setVisibility(View.GONE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
     }
 
@@ -853,8 +830,8 @@ public class MainActivity extends AppCompatActivity
 
         getSupportActionBar().show();
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
-        findViewById(R.id.message_edit_text).setVisibility(View.VISIBLE);
-        findViewById(R.id.message_send_button).setVisibility(View.VISIBLE);
+        //findViewById(R.id.message_edit_text).setVisibility(View.VISIBLE);
+        //findViewById(R.id.message_send_button).setVisibility(View.VISIBLE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
     }
 
@@ -1019,21 +996,16 @@ public class MainActivity extends AppCompatActivity
         drawerListView.invalidateViews();
     }
 
-    public void scrollToMostRecentMessage(){
-        currentFragment.scrollToBottom();
-    }
-
 
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
     @Override
     public void onDrawerSlide(View drawerView, float slideOffset) {
-
+        hideSoftKeyboard();
     }
 
     @Override
     public void onDrawerOpened(View drawerView) {
-        hideSoftKeyboard();
     }
 
     @Override

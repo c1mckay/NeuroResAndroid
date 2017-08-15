@@ -1,5 +1,6 @@
 package edu.ucsd.neurores;
 
+import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,6 +14,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
@@ -58,6 +62,7 @@ public class MainFragment extends Fragment{
     WebSocket socket;
     Toast mostRecentToast;
     private volatile boolean isLoading;
+    MainActivity mainActivity = null;
 
     public MainFragment() {
         // Required empty public constructor
@@ -70,6 +75,7 @@ public class MainFragment extends Fragment{
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_main, container, false);
+        mainActivity = (MainActivity) getActivity();
         recyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
         swipeRefreshLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -80,6 +86,7 @@ public class MainFragment extends Fragment{
             }
         });
 
+        /*
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -87,13 +94,26 @@ public class MainFragment extends Fragment{
                 hideSoftKeyboard();
             }
         });
+        */
+
+        recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, final int oldLeft, final int oldTop, int oldRight, final int oldBottom) {
+                if ( bottom < oldBottom) {
+                    recyclerView.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+                        }
+                    }, 100);
+                }
+            }
+        });
         /* Initialize */
         isLoading = true;
         mostRecentToast = null;
         messageList = new MessageList();
-        messageAdapter = new MessageAdapter(messageList);
-        // TODO https://stackoverflow.com/questions/27841740/how-to-know-whether-a-recyclerview-linearlayoutmanager-is-scrolled-to-top-or-b
-        // or recyclerView.canScrollVertically(posiitons)
+        messageAdapter = new MessageAdapter(mainActivity, messageList);
 
         //Add onboarding message
         if(! hasConversation()){
@@ -111,28 +131,29 @@ public class MainFragment extends Fragment{
         recyclerView.scrollToPosition(messageList.size() - 1);
 
         //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-
+        setupSendMessageButton(v);
 
         return v;
     }
     
     /**
      * The conversation details to load
-     * @param c the conversation to query the server for
+     * @param conversation the conversation to query the server for
      */
-    public void loadMessages(final Context context, final Conversation c, final HashMap<Long, User> users){
+    public void loadMessages(final Context context, final Conversation conversation, final HashMap<Long, User> users){
         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         formatter.setTimeZone(TimeZone.getDefault());
         //should actually queue the messages at this point
-        if(c == null){
+        if(conversation == null){
             Log.v("taggy", "Conversation is null");
             return;
         }
-        SessionWrapper.GetConversationData(context, c.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
+        SessionWrapper.GetConversationData(context, conversation.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 updateMessageView(context, s, users);
                 ((MainActivity)getActivity()).showMainElements();
+                dismissNotifications(context, conversation);
             }
 
             @Override
@@ -407,4 +428,31 @@ public class MainFragment extends Fragment{
     public boolean canScroll(){
         return recyclerView.canScrollVertically(1) || recyclerView.canScrollVertically(-1);
     }
+
+    private void setupSendMessageButton(final View parent){
+        final Button messageSendButton = (Button) parent.findViewById(R.id.message_send_button);
+        messageSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText messageEditText = (EditText) parent.findViewById(R.id.message_edit_text);
+                // The text in the input field
+                String newMessage = messageEditText.getText().toString();
+                //Only send the message if it is not empty
+                if(! newMessage.equals("")){
+                    //currentFragment.pushMessage(newMessage);
+                    mainActivity.pushMessage(newMessage);
+                    messageEditText.setText("");
+                    scrollToBottom();
+                }
+                //messageEditText.clearFocus();
+
+            }
+        });
+    }
+
+    private void dismissNotifications(Context context, Conversation conversation){
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel((int)((long)conversation.getID()));
+    }
+
 }

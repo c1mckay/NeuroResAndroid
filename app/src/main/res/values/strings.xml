@@ -40,6 +40,7 @@
     <string name="no_connection">No internet connection. Try again</string>
     <string name="connecting_to_server">Error connecting to the server</string>
     <string name="no_internet_connection_login">No internet connection. Please reconnect before signing in</string>
+    <string name="message_copied">Message copied to clipboard</string>
 
 
     <string-array name="sub_menus">
