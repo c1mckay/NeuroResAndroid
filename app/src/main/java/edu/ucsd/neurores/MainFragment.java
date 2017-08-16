@@ -10,13 +10,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Layout;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
@@ -58,11 +61,13 @@ public class MainFragment extends Fragment{
     public SimpleDateFormat formatter;
 
     SwipeRefreshLayout swipeRefreshLayout;
+    Button messageSendButton;
+    EditText messageEditText;
 
     WebSocket socket;
     Toast mostRecentToast;
     private volatile boolean isLoading;
-    MainActivity mainActivity = null;
+    MainActivity mainActivity;
 
     public MainFragment() {
         // Required empty public constructor
@@ -115,13 +120,16 @@ public class MainFragment extends Fragment{
         messageList = new MessageList();
         messageAdapter = new MessageAdapter(mainActivity, messageList);
 
+        messageSendButton = (Button) v.findViewById(R.id.message_send_button);
+        messageEditText = (EditText) v.findViewById(R.id.message_edit_text);
+
         //Add onboarding message
         if(! hasConversation()){
-            addMessage("", getActivity().getResources().getString(R.string.onboardingMessage), System.currentTimeMillis(),true);
+            addMessage("", mainActivity.getResources().getString(R.string.onboardingMessage), System.currentTimeMillis(),true);
         }
 
 
-        RecyclerView.LayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
+        RecyclerView.LayoutManager rvLayoutManager = new LinearLayoutManager(mainActivity);
         recyclerView.setLayoutManager(rvLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(messageAdapter);
@@ -130,7 +138,6 @@ public class MainFragment extends Fragment{
         // Scroll to the bottom of the list
         recyclerView.scrollToPosition(messageList.size() - 1);
 
-        //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         setupSendMessageButton(v);
 
         return v;
@@ -152,8 +159,7 @@ public class MainFragment extends Fragment{
             @Override
             public void onComplete(String s) {
                 updateMessageView(context, s, users);
-                ((MainActivity)getActivity()).showMainElements();
-                dismissNotifications(context, conversation);
+                mainActivity.dismissNotifications(conversation.getID());
             }
 
             @Override
@@ -212,7 +218,7 @@ public class MainFragment extends Fragment{
         SessionWrapper.markConversationSeen(context, conversation.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
-                ((MainActivity)getActivity()).moveConversationToPrivate(conversation);
+                mainActivity.moveConversationToPrivate(conversation);
             }
 
             @Override
@@ -257,7 +263,7 @@ public class MainFragment extends Fragment{
      */
     private void displayMessages(final boolean scrollToBottom){
         //messageList.add(username, message, System.currentTimeMillis());
-        getActivity().runOnUiThread(new Runnable() {
+        mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 messageAdapter.notifyDataSetChanged();
@@ -267,6 +273,7 @@ public class MainFragment extends Fragment{
                         @Override
                         public void run() {
                             recyclerView.scrollToPosition(messageList.size() - 1);
+                            mainActivity.showMainElements();
                         }
                     },100);
                 }
@@ -276,7 +283,6 @@ public class MainFragment extends Fragment{
     }
 
     public void onResume(){
-        //setupSocket(getActivity());
         super.onResume();
     }
 
@@ -368,43 +374,6 @@ public class MainFragment extends Fragment{
         }
     }
 
-    public void hideSoftKeyboard() {
-        if(getActivity() != null && getActivity().getCurrentFocus()!= null) {
-            InputMethodManager inputMethodManager = (InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE);
-            inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
-        }
-    }
-
-    public void pushMessage(String s){
-            if(socket == null || socket.isClosed() || ! socket.isOpen()){
-                reconnectSocketAndSendMessage(s);
-            }else{
-                socket.pushMessage(s);
-            }
-    }
-
-
-    private void reconnectSocketAndSendMessage(String message){
-        try {
-            socket = new WebSocket(this, (MainActivity) getActivity());
-            showToast(getContext().getResources().getString(R.string.reconnecting_to_server), Toast.LENGTH_SHORT);
-            setupSSLAndSendMessage(getActivity(), socket,message);
-        }catch (URISyntaxException e){
-            Log.v("taggy","Error with uri when creating socket");
-        }
-    }
-
-    public void setupSocket(MainActivity mainActivity){
-        try {
-            if(socket == null || socket.isClosed() || ! socket.isOpen()){
-                socket = new WebSocket(this, mainActivity);
-                setupSSL(mainActivity, socket);
-            }
-        }catch (URISyntaxException e){
-            Log.v("taggy","Error with uri when creating socket");
-        }
-    }
-
     public boolean isAtBottom(){
         return ! recyclerView.canScrollVertically(1);
     }
@@ -430,29 +399,35 @@ public class MainFragment extends Fragment{
     }
 
     private void setupSendMessageButton(final View parent){
-        final Button messageSendButton = (Button) parent.findViewById(R.id.message_send_button);
         messageSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EditText messageEditText = (EditText) parent.findViewById(R.id.message_edit_text);
-                // The text in the input field
-                String newMessage = messageEditText.getText().toString();
-                //Only send the message if it is not empty
-                if(! newMessage.equals("")){
-                    //currentFragment.pushMessage(newMessage);
-                    mainActivity.pushMessage(newMessage);
-                    messageEditText.setText("");
-                    scrollToBottom();
-                }
-                //messageEditText.clearFocus();
+            sendMessage();
+            }
+        });
 
+        messageEditText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEND) {
+                    sendMessage();
+                    return true;
+                }
+                return false;
             }
         });
     }
 
-    private void dismissNotifications(Context context, Conversation conversation){
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel((int)((long)conversation.getID()));
+    private void sendMessage(){
+        // The text in the input field
+        String newMessage = messageEditText.getText().toString();
+        //Only send the message if it is not empty
+        if(! newMessage.equals("")){
+            mainActivity.pushMessage(newMessage);
+            messageEditText.setText("");
+            scrollToBottom();
+        }
     }
 
 }

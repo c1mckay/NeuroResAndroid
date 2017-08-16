@@ -12,7 +12,6 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.List;
 
 public class WebSocket extends WebSocketClient {
 
@@ -44,6 +43,10 @@ public class WebSocket extends WebSocketClient {
             if(jo.has("userStatusUpdate") && jo.getBoolean("userStatusUpdate")){
                 updateUserStatus(jo);
                 return;
+            }
+
+            if(! mainActivity.screenIsOn){
+                mainActivity.queueToast("New Message");
             }
             if(jo.getLong("conv_id") != mFrag.conversation.getID()){
                 long conversationID = jo.getLong("conv_id");
@@ -81,13 +84,29 @@ public class WebSocket extends WebSocketClient {
                     notifyUserOfNewMessage(userID);
                 }
             }
+            markAsSeen(mFrag.conversation.getID());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
+    private void markAsSeen(long conversationID) {
+        SessionWrapper.markConversationSeen(mainActivity, conversationID, mFrag.getToken(), new SessionWrapper.OnCompleteListener() {
+            @Override
+            public void onComplete(String s) {
+                // TODO Check response for success
+            }
+
+            @Override
+            public void onError(String s) {
+
+            }
+        });
+    }
+
 
     public void onClose(int code, String reason, boolean remote) {
+        Log.v("sockett", "onClose()");
         mFrag.errorVisMessage(reason);
     }
 
@@ -112,9 +131,7 @@ public class WebSocket extends WebSocketClient {
         if(jo.has("activeUsers")){
             try{
                 JSONArray onlineUsers = jo.getJSONArray("activeUsers");
-                for( int i = 0; i < onlineUsers.length(); i++){
-                    ((MainActivity)mFrag.getActivity()).updateUserOnline(onlineUsers.getLong(i), true);
-                }
+                setOnlineStatusOfUsers(onlineUsers);
             }catch(JSONException e){
                 e.printStackTrace();
             }
@@ -135,6 +152,23 @@ public class WebSocket extends WebSocketClient {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void setOnlineStatusOfUsers(JSONArray onlineUsers){
+        try{
+            for(User user : mainActivity.userList.values()){
+                boolean isOnline = false;
+                for( int i = 0; i < onlineUsers.length(); i++){
+                    if((long)user.getID() == (long)onlineUsers.getLong(i)){
+                        isOnline = true;
+                    }
+                }
+                ((MainActivity)mFrag.getActivity()).updateUserOnline(user.getID(), isOnline);
+            }
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+
     }
 
     private void moveConversationToUnread(final Conversation conversation){

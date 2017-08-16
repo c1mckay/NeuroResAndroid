@@ -1,8 +1,11 @@
 package edu.ucsd.neurores;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -19,11 +22,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -81,11 +80,14 @@ public class MainActivity extends AppCompatActivity
     Toast mostRecentToast;
 
     private WebSocket socket;
+    private BroadcastReceiver screenStateReceiver;
+    boolean isPaused;
+    boolean screenIsOn;
+    String queuedToastMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Check for the login Token
         if(getToken() == null || ! isConnectedToNetwork()){
             Intent i = new Intent(this, LoginActivity.class);
@@ -104,19 +106,18 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         /*Initialize */
+        isPaused = false;
+        screenIsOn = true;
+        queuedToastMessage = null;
         // TODO Reconnect socket when screen wakes from idle
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         //pm.isDeviceIdleMode();
         //pm.isInteractive();
 
+        registerReceiverForScreen();
+
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
-
-
-
-        // Set the fragment
-        //currentFragment = startMainFragment();
-
 
 
         // Setup the toolbar
@@ -152,6 +153,55 @@ public class MainActivity extends AppCompatActivity
         loadData();
     }
 
+    private void registerReceiverForScreen() {
+       screenStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                switch(intent.getAction()){
+                    case Intent.ACTION_SCREEN_ON:
+                        onScreenTurnedOn();
+                        break;
+                    case Intent.ACTION_SCREEN_OFF:
+                        onScreenTurnedOff();
+                        break;
+                }
+
+            }
+        };
+        IntentFilter screenStateFilter = new IntentFilter();
+        screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
+        screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(screenStateReceiver, screenStateFilter);
+    }
+
+    private void onScreenTurnedOn(){
+        screenIsOn = true;
+        if(! isPaused){
+            connectSocket();
+            reloadCurrentFragment();
+            showQueuedToast();
+        }
+    }
+
+    private void onScreenTurnedOff(){
+        screenIsOn = false;
+    }
+
+    private void showQueuedToast(){
+        if(queuedToastMessage != null){
+            showToast(queuedToastMessage, Toast.LENGTH_SHORT);
+            queuedToastMessage = null;
+        }
+    }
+
+    private void unregisterReceiverForScreen(){
+        try{
+            unregisterReceiver(screenStateReceiver);
+        }catch (IllegalArgumentException e){
+            // Receiver is not registered. Not a problem
+        }
+    }
+
     private boolean isConnectedToNetwork() {
         final ConnectivityManager conMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
@@ -161,13 +211,17 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onPause() {
+        isPaused = true;
         closeSocket();
+        hideMainElements();
+        hideSoftKeyboard();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         closeSocket();
+        unregisterReceiverForScreen();
         super.onDestroy();
     }
 
@@ -310,6 +364,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
+        hideMainElements();
+        isPaused = false;
         // Check if the main fragment needs to be changed
         if(needToChangeFragment){
             if(selectedConversation.v == null) {
@@ -323,8 +379,8 @@ public class MainActivity extends AppCompatActivity
             changeFragment();
             needToChangeFragment = false;
         }else if(currentFragment != null){
-            //TODO checkForNewMessages();
-            changeFragment();
+            reloadCurrentFragment();
+            updateNavDrawer();
         }
         connectSocket();
 
@@ -518,12 +574,18 @@ public class MainActivity extends AppCompatActivity
         updateFrag();
     }
 
+    private void reloadCurrentFragment(){
+        if(currentFragment != null){
+            hideMainElements();
+            changeFragment();
+        }
+    }
+
     private void updateFrag(){
         if(socket != null){
             socket.updateFrag(currentFragment);
         }
     }
-
 
     /**
      * Change the messages in the fragment to be the messages of selectedUser
@@ -691,6 +753,47 @@ public class MainActivity extends AppCompatActivity
         //addConversation(UNREAD_MENU_GROUP, new User(this, 63L, hardCodedPrivate[7]));
 
 
+    }
+
+    private void updateNavDrawer(){
+        SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
+            public void onComplete(String s) {
+                if(s == null){
+                    //indicates the http request returned null, and something went wrong. have them login again
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                    return;
+                }
+                List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
+
+                //called update conversation without the context
+                //needs to be connected here now
+                for(Conversation c: conversations){
+                    c.setContext(MainActivity.this);
+                }
+
+                List<Conversation> newConversations = new ArrayList<Conversation>();
+                for( Conversation conversation : conversations){
+                    if(conversation.getNumOfUnseen() > 0){
+                        Conversation actualConversation = currentConversations.get(conversation.getID());
+                        if(actualConversation == null){
+                            newConversations.add(conversation);
+                        }else{
+                            actualConversation.setNumOfUnseen(conversation.getNumOfUnseen());
+                            moveConversationToUnread(actualConversation);
+                        }
+                    }
+                }
+                populateUnread(newConversations);
+
+            }
+
+            @Override
+            public void onError(String s) {
+
+            }
+        });
     }
 
     public void onUsersLoaded(List<User> users){
@@ -996,6 +1099,17 @@ public class MainActivity extends AppCompatActivity
         drawerListView.invalidateViews();
     }
 
+    public void dismissNotifications(long conversationID){
+        if(! isPaused){
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel((int) conversationID);
+        }
+    }
+
+    public void queueToast(String s){
+        queuedToastMessage = s;
+    }
+
 
     /***** Methods for listening for the navigation drawer opening/closing *****/
 
@@ -1026,12 +1140,19 @@ public class MainActivity extends AppCompatActivity
 
     private void connectSocket(){
         try{
-            Log.v("sockett", "Closing socket!");
+            if(socket != null && socket.isOpen()){
+                return;
+            }
+            closeSocket();
+            if(currentFragment == null){
+                Log.v("sockett", "Error: Trying to create a socket with a null fragment");
+                return;
+            }
             socket = new WebSocket(currentFragment, this);
             setupSSL(this, socket);
         }catch (URISyntaxException e){
-            Log.v("sockett", "The socket failed to intially connect: " + e.getMessage());
-            socket = null;
+            Log.v("sockett", "The socket failed to connect: " + e.getMessage());
+            closeSocket();
         }
     }
 
@@ -1114,49 +1235,50 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void pushMessage(String s){
+    public void pushMessage(String message){
         if(socket == null || socket.isClosed() || ! socket.isOpen()){
-            reconnectSocketAndSendMessage(s);
+            connectSocketAndSendMessage(message);
         }else{
-            socket.pushMessage(s);
-        }
-    }
-
-    private void reconnectSocket(){
-        try {
-            if(socket != null && socket.isOpen()){
+            if(currentFragment == null){
+                Log.v("taggy", "currentfragment is null when trying to send message");
                 return;
             }
-            socket = new WebSocket(currentFragment, this);
-            showToast(getResources().getString(R.string.reconnecting_to_server), Toast.LENGTH_SHORT);
-            setupSSL(this, socket);
-            // TODO Reload messages
-        }catch (URISyntaxException e){
-            Log.v("taggy","Error with uri when creating socket");
+            socket.pushMessage(message);
         }
     }
 
 
-    private void reconnectSocketAndSendMessage(String message){
+
+
+    private void connectSocketAndSendMessage(String message){
         try {
             if(socket != null && socket.isOpen()){
-                    return;
+                socket.pushMessage(message);
+                return;
             }
+            closeSocket();
             socket = new WebSocket(currentFragment, this);
             showToast(getResources().getString(R.string.reconnecting_to_server), Toast.LENGTH_SHORT);
             setupSSLAndSendMessage(this, socket,message);
-            // TODO Reload messages
         }catch (URISyntaxException e){
             Log.v("taggy","Error with uri when creating socket");
         }
     }
 
-    public void showToast(String message, int length){
-        if (mostRecentToast != null && mostRecentToast.getView().isShown()){
-            mostRecentToast.cancel();
-        }
-        mostRecentToast = Toast.makeText(this, message, length);
-        mostRecentToast.show();
+    public void showToast( final String message,final int length){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(! isPaused){
+                    if (mostRecentToast != null && mostRecentToast.getView().isShown()){
+                        mostRecentToast.cancel();
+                    }
+                    mostRecentToast = Toast.makeText(MainActivity.this, message, length);
+                    mostRecentToast.show();
+                }
+            }
+        });
+
     }
 
     /***************************************************/
