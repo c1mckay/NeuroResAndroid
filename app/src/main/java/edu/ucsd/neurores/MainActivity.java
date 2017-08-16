@@ -342,7 +342,7 @@ public class MainActivity extends AppCompatActivity
                         if(userList.containsKey(l)){
                             newConversation.addUser(userList.get(l));
                         }else{
-                            Log.v("tag", "Error: User with id of " + l + " was said to be in conv "
+                            Log.v("warning", "Error: User with id of " + l + " was said to be in conv "
                                     + searchedID + " but was not found in list of users");
                         }
                     }
@@ -379,7 +379,7 @@ public class MainActivity extends AppCompatActivity
             changeFragment();
             needToChangeFragment = false;
         }else if(currentFragment != null){
-            reloadCurrentFragment();
+            //reloadCurrentFragment();
             updateNavDrawer();
         }
         connectSocket();
@@ -576,8 +576,14 @@ public class MainActivity extends AppCompatActivity
 
     private void reloadCurrentFragment(){
         if(currentFragment != null){
-            hideMainElements();
-            changeFragment();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    hideMainElements();
+                    changeFragment();
+                    drawerListView.invalidateViews();
+                }
+            });
         }
     }
 
@@ -757,35 +763,43 @@ public class MainActivity extends AppCompatActivity
 
     private void updateNavDrawer(){
         SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
-            public void onComplete(String s) {
-                if(s == null){
-                    //indicates the http request returned null, and something went wrong. have them login again
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(i);
-                    finish();
-                    return;
-                }
-                List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
-
-                //called update conversation without the context
-                //needs to be connected here now
-                for(Conversation c: conversations){
-                    c.setContext(MainActivity.this);
-                }
-
-                List<Conversation> newConversations = new ArrayList<Conversation>();
-                for( Conversation conversation : conversations){
-                    if(conversation.getNumOfUnseen() > 0){
-                        Conversation actualConversation = currentConversations.get(conversation.getID());
-                        if(actualConversation == null){
-                            newConversations.add(conversation);
-                        }else{
-                            actualConversation.setNumOfUnseen(conversation.getNumOfUnseen());
-                            moveConversationToUnread(actualConversation);
+            public void onComplete(final String s) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(s == null){
+                            //indicates the http request returned null, and something went wrong. have them login again
+                            Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivity(i);
+                            finish();
+                            return;
                         }
+                        List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
+
+                        //called update conversation without the context
+                        //needs to be connected here now
+                        for(Conversation c: conversations){
+                            c.setContext(MainActivity.this);
+                        }
+
+                        List<Conversation> newConversations = new ArrayList<Conversation>();
+                        for( Conversation conversation : conversations){
+                            if(conversation.getNumOfUnseen() > 0){
+                                Conversation actualConversation = currentConversations.get(conversation.getID());
+                                if(actualConversation == null){
+                                    newConversations.add(conversation);
+                                }else{
+                                    actualConversation.setNumOfUnseen(conversation.getNumOfUnseen());
+                                    moveConversationToUnread(actualConversation);
+                                }
+                            }
+                        }
+                        populateUnread(newConversations);
+                        reloadCurrentFragment();
+                        printNavDrawer();
                     }
-                }
-                populateUnread(newConversations);
+                });
+
 
             }
 
@@ -884,9 +898,9 @@ public class MainActivity extends AppCompatActivity
                 Log.v("tag", c.getName() + ":" + c.getID() + " has no users");
             }
         }
-        for(Conversation c : conversations){
-            currentConversations.put(c.getID(), c);
-            addToNavBar(UNREAD_MENU_GROUP, c);
+        for(Conversation conversation : conversations){
+            currentConversations.put(conversation.getID(), conversation);
+            addToNavBar(UNREAD_MENU_GROUP, conversation);
         }
 
         moveOnlineConversationsUp(conversations, UNREAD_MENU_GROUP);
@@ -1088,15 +1102,25 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void moveConversationToPrivate(Conversation conversation){
-        navDrawerAdapter.moveConversationToPrivate(conversation);
-        conversation.setNumOfUnseen(0);
-        drawerListView.invalidateViews();
+    public void moveConversationToPrivate(final Conversation conversation){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                navDrawerAdapter.moveConversationToPrivate(conversation);
+                conversation.setNumOfUnseen(0);
+                drawerListView.invalidateViews();
+            }
+        });
     }
 
-    public void moveConversationToUnread(Conversation conversation){
-        navDrawerAdapter.moveConversationToUnread(conversation);
-        drawerListView.invalidateViews();
+    public void moveConversationToUnread(final Conversation conversation){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                navDrawerAdapter.moveConversationToUnread(conversation);
+                drawerListView.invalidateViews();
+            }
+        });
     }
 
     public void dismissNotifications(long conversationID){
@@ -1295,5 +1319,9 @@ public class MainActivity extends AppCompatActivity
         }else{
             dropdown.setVisibility(View.GONE);
         }
+    }
+
+    public void printNavDrawer(){
+        navDrawerAdapter.printLists();
     }
 }

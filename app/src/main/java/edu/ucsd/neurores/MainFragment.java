@@ -423,7 +423,7 @@ public class MainFragment extends Fragment{
         // The text in the input field
         String newMessage = messageEditText.getText().toString();
         //Only send the message if it is not empty
-        if(! newMessage.equals("")){
+        if(! newMessage.equals("") && mainActivity.selectedConversation != null){
             mainActivity.pushMessage(newMessage);
             messageEditText.setText("");
             scrollToBottom();

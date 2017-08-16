@@ -435,7 +435,7 @@ public class SessionWrapper{
             User u = userList.get(userID);
             currentConversation.addUser(u);
           }else{
-            Log.v("taggy", "User with id " + userID + " in a conversation but not in the user list");
+            Log.v("warning", "User with id " + userID + " in a conversation but not in the user list");
           }
         }
         conversationList.add(currentConversation);

@@ -202,7 +202,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                     //userView.findViewById(R.id.nav_row_status_image_view).setVisibility(View.INVISIBLE);
                     ImageView onlineImage = (ImageView) userView.findViewById(R.id.nav_row_status_image_view);
                     if(onlineImage != null && u.isOnline()){
-                        Log.v("taggy", u.getName() + " is online");
                         onlineImage.setImageResource(R.drawable.online);
                         child.invalidate();
                     }
@@ -349,5 +348,31 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
     public void toggleIsExpanded(int childPosition){
         NavDrawerInnerGroup inner = staffMenu.get(childPosition);
         inner.setIsExpanded(! inner.getIsExpanded());
+    }
+
+    public void printLists(){
+        Log.v("taggy", "Unread:");
+        printList(UNREAD_GROUP);
+        Log.v("taggy", "Private:");
+        printList(PRIVATE_GROUP);
+        Log.v("taggy", "\n");
+    }
+
+    private void printList(int groupID){
+        switch(groupID){
+            case UNREAD_GROUP:
+                for(NavDrawerItem item : unreadMenu){
+                    Conversation conversation = (Conversation) item;
+                    Log.v("taggy", conversation.getName());
+                }
+                break;
+
+            case PRIVATE_GROUP:
+                for(NavDrawerItem item : privateMenu){
+                    Conversation conversation = (Conversation) item;
+                    Log.v("taggy", conversation.getName());
+                }
+                break;
+        }
     }
 }
