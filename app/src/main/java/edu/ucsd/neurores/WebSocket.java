@@ -40,7 +40,7 @@ public class WebSocket extends WebSocketClient {
         Log.v("sockett", message);
         try {
             jo = new JSONObject(message);
-            if(jo.has("userStatusUpdate") && jo.getBoolean("userStatusUpdate")){
+            if(isUserStatusUpdate(jo)){
                 updateUserStatus(jo);
                 return;
             }
@@ -48,46 +48,67 @@ public class WebSocket extends WebSocketClient {
             if(! mainActivity.screenIsOn){
                 mainActivity.queueToast("New Message");
             }
-            if(jo.getLong("conv_id") != mFrag.conversation.getID()){
-                long conversationID = jo.getLong("conv_id");
-                HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
 
-                if(currentConversations.containsKey(conversationID)){
+            long conversationID = jo.getLong("conv_id");
+            long userID = jo.getLong("from");
+            if(userIsNotViewingThisConversation(conversationID)){
+                //long conversationID = jo.getLong("conv_id");
+                HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
+                boolean conversationExists = currentConversations.containsKey(conversationID);
+
+                if(conversationExists){
                     moveConversationToUnread(currentConversations.get(conversationID));
                 }else{
                     createConversation(conversationID);
                 }
-                long userID = jo.getLong("from");
+
                 notifyUserOfNewMessage(userID);
                 return;
             }
+
             message = jo.getString("text");
             String from = mFrag.conversation.getUser(jo.getLong("from"));
             if(from == null)
                 from = "";//this should just a message I sent, an echo.
             long time = System.currentTimeMillis();
             boolean isAtBottom = mFrag.isAtBottom();
-            if(isAtBottom){
-                if(mFrag.isLoading()){
-                    mFrag.addTempMessage(from,message,time);
-                }else{
-                    mFrag.addMessage(from,message,time, true);
-                }
-            }else{
-                if(mFrag.isLoading()){
-                    mFrag.addTempMessage(from,message,time);
-                }else{
-                    mFrag.addMessage(from,message,time, false);
-                }
-                long userID = jo.getLong("from");
-                if(userID != mainActivity.loggedInUser.getID()){
-                    notifyUserOfNewMessage(userID);
-                }
-            }
+            displayMessage(from, message, time, isAtBottom, userID);
             markAsSeen(mFrag.conversation.getID());
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    private void displayMessage(String from, String message, long time, boolean isAtBottom, long userID){
+        if(isAtBottom){
+            if(mFrag.isLoading()){
+                mFrag.addTempMessage(from,message,time);
+            }else{
+                mFrag.addMessage(from,message,time, true);
+            }
+        }else{
+            if(mFrag.isLoading()){
+                mFrag.addTempMessage(from,message,time);
+            }else{
+                mFrag.addMessage(from,message,time, false);
+            }
+            if(userID != mainActivity.loggedInUser.getID()){
+                notifyUserOfNewMessage(userID);
+            }
+        }
+    }
+
+    private boolean isUserStatusUpdate(JSONObject jo){
+        try{
+            return jo.has("userStatusUpdate") && jo.getBoolean("userStatusUpdate");
+        }catch(JSONException e){
+            Log.v("sockett", "Failed reading json in isUserStatusUpdate()");
+            return false;
+        }
+    }
+
+    private boolean userIsNotViewingThisConversation(long conversationID){
+        return conversationID != mFrag.conversation.getID();
     }
 
     private void markAsSeen(long conversationID) {

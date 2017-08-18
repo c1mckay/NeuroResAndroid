@@ -7,10 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.pdf.PdfRenderer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -88,69 +88,64 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Check for the login Token
+
+
         if(getToken() == null || ! isConnectedToNetwork()){
-            Intent i = new Intent(this, LoginActivity.class);
-            startActivity(i);
-            finish();
+            goToLogin();
             return;
         }
-        if(FirebaseInstanceId.getInstance().getToken() != null)
-            Log.d("token", FirebaseInstanceId.getInstance().getToken());
 
+        logFireBaseToken();
 
         if(getIntent().hasExtra(CONVERSATION_ID)){
             setPreviousConversationID(getIntent().getLongExtra(CONVERSATION_ID, -1));
         }
 
         setContentView(R.layout.activity_main);
-
-        /*Initialize */
-        isPaused = false;
-        screenIsOn = true;
-        queuedToastMessage = null;
-        // TODO Reconnect socket when screen wakes from idle
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        //pm.isDeviceIdleMode();
-        //pm.isInteractive();
-
+        initializeVariables();
         registerReceiverForScreen();
+        setupToolbar();
+        initializeDrawer();
+        loadData();
+    }
 
-        currentConversations = new HashMap<>();
-        userList = new HashMap<>();
-
-
-        // Setup the toolbar
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        // Set the navigation bar text to be the empty string
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        getSupportActionBar().setTitle(getResources().getString(R.string.welcome));
-
-        // Get a reference to the list view that holds the main data in the
-        // navigation drawer
+    private void initializeDrawer() {
         drawerListView = (ExpandableListView) findViewById(R.id.nav_view);
-        // Setup the adapter used to populate the list navigation drawer
         navDrawerAdapter = new NavDrawerAdapter(this);
         drawerListView.setAdapter(navDrawerAdapter);
 
-
-        // Expand the lists on start
         for (int i = 0; i < navDrawerAdapter.getGroupCount(); i++){
             drawerListView.expandGroup(i);
         }
 
-        // Set up the drawer and its listeners
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         drawer.addDrawerListener(this);
         toggle.syncState();
+    }
 
-        // Setup the button used to send messages
+    private void setupToolbar() {
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if(getSupportActionBar() != null){
+            getSupportActionBar().setDisplayShowTitleEnabled(true);
+            getSupportActionBar().setTitle(getResources().getString(R.string.welcome));
+        }
+    }
 
-        loadData();
+    private void initializeVariables() {
+        isPaused = false;
+        screenIsOn = true;
+        queuedToastMessage = null;
+        currentConversations = new HashMap<>();
+        userList = new HashMap<>();
+    }
+
+    private void logFireBaseToken() {
+        if(FirebaseInstanceId.getInstance().getToken() != null)
+            Log.d("token", FirebaseInstanceId.getInstance().getToken());
     }
 
     private void registerReceiverForScreen() {
@@ -214,7 +209,6 @@ public class MainActivity extends AppCompatActivity
         isPaused = true;
         closeSocket();
         hideMainElements();
-        hideSoftKeyboard();
         super.onPause();
     }
 
@@ -225,7 +219,7 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
     }
 
-    public void setupMainElements(){
+    public void setupFragmentAndSocket(){
         setInitialFragment();
         connectSocket();
     }
@@ -729,15 +723,11 @@ public class MainActivity extends AppCompatActivity
     private void loadData(){
         hideMainElements();
         // Load data from server
-        Log.v("contextp", "Loading data");
         SessionWrapper.UpdateUsers(this, getToken(), new SessionWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
-                    //indicates the http request returned null, and something went wrong. have them login again
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(i);
-                    finish();
+                    goToLogin();
                     return;
                 }
                 List<User> users = SessionWrapper.GetUserList(s);
@@ -768,10 +758,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void run() {
                         if(s == null){
-                            //indicates the http request returned null, and something went wrong. have them login again
-                            Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                            startActivity(i);
-                            finish();
+                            goToLogin();
                             return;
                         }
                         List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
@@ -795,6 +782,7 @@ public class MainActivity extends AppCompatActivity
                             }
                         }
                         populateUnread(newConversations);
+                        moveAllOnlineConversationsUp();
                         reloadCurrentFragment();
                         printNavDrawer();
                     }
@@ -816,20 +804,19 @@ public class MainActivity extends AppCompatActivity
             u.setContext(this);
             if(u.getName().equals(username)){
                 loggedInUser = u;
-                TextView nameInSettingsView = (TextView) findViewById(R.id.username_in_settings_text_view);
-                nameInSettingsView.setText(loggedInUser.getName());
+                setNameInNavDrawer();
             }
         }
 
         populateStaff(users);
+        initializeConversations();
+    }
 
+    private void initializeConversations() {
         SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
-                    //indicates the http request returned null, and something went wrong. have them login again
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(i);
-                    finish();
+                    goToLogin();
                     return;
                 }
                 List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
@@ -849,6 +836,11 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+    }
+
+    private void setNameInNavDrawer() {
+        TextView nameInSettingsView = (TextView) findViewById(R.id.username_in_settings_text_view);
+        nameInSettingsView.setText(loggedInUser.getName());
     }
 
     public void populateStaff(List<User> users){
@@ -915,6 +907,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void moveAllOnlineConversationsUp(){
+        moveOnlineConversationsUp(navDrawerAdapter.getOnlineInGroup(UNREAD_MENU_GROUP), UNREAD_MENU_GROUP);
+        moveOnlineConversationsUp(navDrawerAdapter.getOnlineInGroup(PRIVATE_MENU_GROUP), PRIVATE_MENU_GROUP);
+    }
+
     public void populateConversations(List<Conversation> conversations){
         List<Conversation> unreadConversations = new ArrayList<Conversation>();
         List<Conversation> privateConversations = new ArrayList<Conversation>();
@@ -932,13 +929,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void hideMainElements(){
+        hideSoftKeyboard();
         findViewById(R.id.loading_logo_image_view).setVisibility(View.VISIBLE);
 
-
-        getSupportActionBar().hide();
+        if(getSupportActionBar() != null){
+            getSupportActionBar().hide();
+        }
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.GONE);
-        //findViewById(R.id.message_edit_text).setVisibility(View.GONE);
-        //findViewById(R.id.message_send_button).setVisibility(View.GONE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
     }
 
@@ -947,14 +944,11 @@ public class MainActivity extends AppCompatActivity
 
         getSupportActionBar().show();
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
-        //findViewById(R.id.message_edit_text).setVisibility(View.VISIBLE);
-        //findViewById(R.id.message_send_button).setVisibility(View.VISIBLE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
     }
 
     public void onLoadComplete(){
-        setupMainElements();
-        //showMainElements();
+        setupFragmentAndSocket();
         if(isNewUser()){
             DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
             drawer.openDrawer(GravityCompat.START);
@@ -970,9 +964,12 @@ public class MainActivity extends AppCompatActivity
         editor.putLong(PREV_CONVERSATION_ID , -1);
         editor.commit();
 
-        Intent i = new Intent(this, LoginActivity.class);
+        goToLogin();
+    }
+
+    public  void viewPDF(View v){
+        Intent i = new Intent(this, PDFActivity.class);
         startActivity(i);
-        finish();
     }
 
     public void updateMostRecentConversation(long conversationID){
@@ -989,19 +986,16 @@ public class MainActivity extends AppCompatActivity
                 if(userList.containsKey(userID)){
                     User u = userList.get(userID);
                     u.setIsOnline(isOnline);
-                    updateGroup(userID, isOnline, PRIVATE_MENU_GROUP);
-                    updateGroup(userID, isOnline, UNREAD_MENU_GROUP);
+                    updateGroup(userID, PRIVATE_MENU_GROUP);
+                    updateGroup(userID, UNREAD_MENU_GROUP);
                     updateGroupStaff(userID, isOnline);
                 }
+                moveAllOnlineConversationsUp();
             }
         });
 
     }
 
-    private void checkForNewMessages(){
-        checkCurrentConversationForNewMessages();
-        checkAllConversationsForNewMessages();
-    }
 
     private void checkCurrentConversationForNewMessages(){
         if( currentFragment != null && ! currentFragment.isLoading()){
@@ -1029,10 +1023,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void checkAllConversationsForNewMessages(){
-
-    }
-
     private Conversation findConversationWithUser(long userID, int groupID){
         for(int i = 0; i < navDrawerAdapter.getChildrenCount(groupID); i++) {
             NavDrawerItem item = navDrawerAdapter.getChild(groupID, i);
@@ -1052,7 +1042,7 @@ public class MainActivity extends AppCompatActivity
         return null;
     }
 
-    private void updateGroup(final long userID, final boolean isOnline, final int groupID){
+    private void updateGroup(final long userID, final int groupID){
 
             Conversation conversation = findConversationWithUser(userID, groupID);
 
@@ -1289,6 +1279,17 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+    /***************************************************/
+
+    private void goToLogin(){
+        closeSocket();
+        Intent i = new Intent(this, LoginActivity.class);
+        startActivity(i);
+        finish();
+    }
+
+
     public void showToast( final String message,final int length){
         runOnUiThread(new Runnable() {
             @Override
@@ -1305,12 +1306,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    /***************************************************/
-
-
-    private void print(String s){
-        Log.v("tag", s);
-    }
 
     public void toggleSettings(View view) {
         View dropdown = findViewById(R.id.settings_menu_dropdown);

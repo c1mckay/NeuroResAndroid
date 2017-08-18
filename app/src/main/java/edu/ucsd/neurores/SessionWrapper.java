@@ -69,27 +69,6 @@ public class SessionWrapper{
      */
   //I dont think you can/are supposed to do HTTP requests on the main thread
   static String getLoginToken(Context context, String username){
-
-    /*
-    try {
-      TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
-      KeyStore ks = KeyStore.getInstance("BKS");
-      //FileInputStream in = new FileInputStream("C:\\Users\\tbpetersen\\AndroidStudioProjects\\MyApplication\\app\\src\\main\\res\\raw\\neurores.bks");
-      InputStream in = context.getResources().openRawResource(R.raw.neurores);
-      ks.load(in, context.getApplicationContext().getResources().getString(R.string.bks_password).toCharArray());
-      in.close();
-      tmf.init(ks);
-      TrustManager[] tms = tmf.getTrustManagers();
-      SSLContext sslContext = SSLContext.getInstance("SSL");
-      sslContext.init(null, tms, null);
-      SSLContext.setDefault(sslContext);
-      Log.v("taggy","did the stuff");
-    }catch(Exception e){
-      Log.v("taggy","failed to do test stuff:\n" + e.getMessage());
-    }
-    */
-
-
     List<Pair<String,String>> headers = new ArrayList<>();
       headers.add(new Pair<>("auth", username));
 
@@ -219,68 +198,6 @@ public class SessionWrapper{
       e.printStackTrace();
       return null;
     }
-
-
-    /*
-
-    try{
-      Log.v("taggy", "Making the request");
-
-      URL url = new URL(BASE_URL + endpoint);
-      HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-      Log.v("taggy", "Made the connection");
-
-      con.setRequestMethod(requestType);
-      Log.v("taggy", "Setting request type");
-      if(requestType.equalsIgnoreCase("post")){
-          con.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
-      }
-      Log.v("taggy", "Set request properties");
-
-      for(Pair p : headers){
-          con.setRequestProperty((String)p.first, (String)p.second);
-      }
-
-      Log.v("taggy", "Set headers");
-
-      con.setUseCaches(false);
-      con.setDoOutput(true);
-      con.setDoInput(true);
-
-
-      if(data != null){
-        try {
-          writeData(data, con);
-        }catch(Exception e){
-          Log.v("taggy", e.getMessage());
-        }
-      }
-      Log.v("taggy", "Trying for response");
-
-      code = con.getResponseCode();
-      Log.v("taggy", "Got response");
-      message = con.getResponseMessage();
-      Log.v("tag", code + "");
-      if(code == 200){
-        InputStream is = con.getInputStream();
-        int readByte;
-        String body = "";
-        while( (readByte = is.read()) != -1){
-          body += (char) readByte;
-        }
-        Log.v("tag", "Body: " + body);
-        return body;
-      }else{
-        return null;
-      }
-
-    }catch(Exception e){
-      Log.v("tag", e.toString());
-      return null;
-    }
-
-    */
-
   }
 
   public static boolean isValidJSON(String test) {
@@ -448,11 +365,4 @@ public class SessionWrapper{
 
     return conversationList;
   }
-
-  private void pushConversationMessages(JSONObject jo){
-
-  }
-
-
-
 }

@@ -4,7 +4,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,13 +14,8 @@ import android.widget.Toast;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.TreeSet;
 
 
 /**
@@ -37,14 +31,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
     /* The minimum amount of minutes that must pass until timestamps are shown again */
     private static int MIN_MINUTES = 5;
 
-    private Context context;
+    private MainActivity mainActivity;
 
     /**
      * Single argument ctor
      * @param messageList the list that the messages will be stored in
      */
-    public MessageAdapter(Context context, MessageList messageList){
-        this.context = context;
+    public MessageAdapter(MainActivity context, MessageList messageList){
+        this.mainActivity = context;
         this.messageList = messageList;
     }
 
@@ -73,10 +67,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             view.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipboardManager clipboard = (ClipboardManager) mainActivity.getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText("simple text", messageText.getText().toString());
                     clipboard.setPrimaryClip(clip);
-                    Toast.makeText(context, R.string.message_copied, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mainActivity, R.string.message_copied, Toast.LENGTH_SHORT).show();
                     return true;
                 }
             });
@@ -102,26 +96,27 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             holder.time.setText(message.getTimeString(Message.SHORT));
         }
 
-        boolean currentUserSaidThis = message.getOwner().length() != 0;
-        holder.singleMessageContainer.setGravity(currentUserSaidThis ? Gravity.LEFT : Gravity.RIGHT);
-        holder.messageText.setBackgroundResource(currentUserSaidThis ? R.drawable.balloon_incoming_normal : R.drawable.balloon_outgoing_normal);
+
+        holder.singleMessageContainer.setGravity(otherUserSentMessage(message) ? Gravity.LEFT : Gravity.RIGHT);
+        holder.messageText.setBackgroundResource(otherUserSentMessage(message) ? R.drawable.balloon_incoming_normal : R.drawable.balloon_outgoing_normal);
 
         int paddingTop = holder.messageText.getPaddingTop();
         int paddingBottom = holder.messageText.getPaddingBottom();
         int paddingRight = holder.messageText.getPaddingRight();
         int paddingLeft = holder.messageText.getPaddingLeft();
 
-        int switcher;
-        if(!currentUserSaidThis) {
+        if(!otherUserSentMessage(message)) {
             holder.rightView.setVisibility(View.GONE);
         }else {
-            switcher = paddingRight;
             paddingRight = paddingLeft;
-            //paddingLeft = switcher;
             holder.leftView.setVisibility(View.GONE);
         }
-        // Hardcode the padding on the left
-        paddingLeft = 21;
+
+        if(otherUserSentMessage(message)){
+            paddingLeft = 30;
+        }else{
+            paddingLeft = 10;
+        }
 
         holder.messageText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
     }
@@ -177,5 +172,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
 
     public boolean shouldShowTimestamp(Message m){
         return true;
+    }
+
+    private boolean otherUserSentMessage(Message message){
+        return message.getOwner().length() != 0;
     }
 }

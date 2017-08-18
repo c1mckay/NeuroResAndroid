@@ -318,12 +318,25 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
         if(! privateGroup.contains(conversation)){
             if(conversation.hasOnlineUser()){
+                Log.v("taggy","Has online user");
                 privateGroup.add(0, conversation);
             }else{
+                Log.v("taggy","Does not have online user");
                 privateGroup.add(conversation);
             }
         }
         notifyDataSetChanged();
+    }
+
+    public List<Conversation> getOnlineInGroup(int group){
+        List<Conversation> newList = new ArrayList<Conversation>();
+        List<Conversation> backingList = getGroup(group);
+        for(Conversation conversation : backingList){
+            if(conversation.hasOnlineUser()){
+                newList.add(conversation);
+            }
+        }
+        return newList;
     }
 
     public void moveConversationToUnread(Conversation conversation){
