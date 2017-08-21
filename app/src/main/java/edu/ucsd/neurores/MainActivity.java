@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity
     boolean isPaused;
     boolean screenIsOn;
     String queuedToastMessage;
+    private TextView toolbarTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,8 +131,12 @@ public class MainActivity extends AppCompatActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if(getSupportActionBar() != null){
-            getSupportActionBar().setDisplayShowTitleEnabled(true);
-            getSupportActionBar().setTitle(getResources().getString(R.string.welcome));
+            //getSupportActionBar().setDisplayShowTitleEnabled(true);
+            //getSupportActionBar().setTitle(getResources().getString(R.string.welcome));
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            toolbarTitle = (TextView) toolbar.findViewById(R.id.toolbar_title);
+            toolbarTitle.setText(getResources().getString(R.string.welcome));
+
         }
     }
 
@@ -301,7 +306,11 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
+        switch (id){
+            case R.id.action_pdf_activity:
+                viewPDF();
+                break;
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -557,7 +566,8 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.commit();
         //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
         currentFragment.loadMessages(this,selectedConversation, userList);
-        getSupportActionBar().setTitle(selectedConversation.getName());
+        //getSupportActionBar().setTitle(selectedConversation.getName());
+        toolbarTitle.setText(selectedConversation.getName());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -620,7 +630,10 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.commit();
         //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
         currentFragment.loadMessages(this, selectedConversation, userList);
-        getSupportActionBar().setTitle(selectedConversation.getName());
+        if(getSupportActionBar() != null){
+            //getSupportActionBar().setTitle(selectedConversation.getName());
+            toolbarTitle.setText(selectedConversation.getName());
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -941,7 +954,9 @@ public class MainActivity extends AppCompatActivity
     public void showMainElements(){
         findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
 
-        getSupportActionBar().show();
+        if(getSupportActionBar() != null){
+            getSupportActionBar().show();
+        }
         findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
     }
@@ -966,7 +981,7 @@ public class MainActivity extends AppCompatActivity
         goToLogin();
     }
 
-    public  void viewPDF(View v){
+    public  void viewPDF(){
         Intent i = new Intent(this, PDFActivity.class);
         startActivity(i);
     }

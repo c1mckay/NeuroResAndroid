@@ -175,6 +175,7 @@ public class SearchActivity extends AppCompatActivity {
         searchView.setIconifiedByDefault(false);
         searchView.setFocusable(true);
         searchView.setIconified(false);
+        searchView.requestFocus();
 
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){

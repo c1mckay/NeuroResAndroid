@@ -55,16 +55,6 @@
                 android:textColor="@color/white"
                 android:gravity="right"
                 android:textSize="20sp"
-                android:onClick="viewPDF"
-                android:text="View PDF"/>
-
-            <TextView
-                android:layout_marginRight="20sp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:gravity="right"
-                android:textSize="20sp"
                 android:onClick="logout"
                 android:text="@string/logout"/>
 
