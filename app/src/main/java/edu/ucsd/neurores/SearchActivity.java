@@ -172,9 +172,9 @@ public class SearchActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.search, menu);
 
         SearchView searchView = (SearchView) menu.findItem(R.id.action_search_search_activity).getActionView();
-        searchView.setIconifiedByDefault(true);
+        searchView.setIconifiedByDefault(false);
         searchView.setFocusable(true);
-        searchView.setIconified(true);
+        searchView.setIconified(false);
 
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){

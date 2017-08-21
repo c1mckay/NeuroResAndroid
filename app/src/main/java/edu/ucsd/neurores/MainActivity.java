@@ -11,6 +11,7 @@ import android.graphics.pdf.PdfRenderer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -88,7 +89,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
 
         if(getToken() == null || ! isConnectedToNetwork()){
             goToLogin();
@@ -901,7 +901,6 @@ public class MainActivity extends AppCompatActivity
     private void moveOnlineConversationsUp(List<Conversation> conversations, int group){
         for(Conversation c : conversations){
             if(c.hasOnlineUser()){
-                Log.v("taggy", "moving up");
                 navDrawerAdapter.moveConversationToFirstPosition(group, c);
             }
         }

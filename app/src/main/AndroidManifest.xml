@@ -49,6 +49,7 @@
             android:windowSoftInputMode="adjustResize|stateHidden"></activity>
         <activity
             android:name=".SearchActivity"
+            android:windowSoftInputMode="stateVisible"
             android:screenOrientation="portrait" />
         <activity android:name=".PDFActivity"></activity>
     </application>
