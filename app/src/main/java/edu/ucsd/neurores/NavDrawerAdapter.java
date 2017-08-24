@@ -6,7 +6,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,71 +21,67 @@ import java.util.List;
  * Created by tbpetersen on 2/23/2017.
  */
 
-public class NavDrawerAdapter extends BaseExpandableListAdapter {
+//TODO moveConversationToPrivate does not work when private and staff are both open
+//TODO Check notifications, find in pdf
+public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
     private static final int UNREAD_GROUP = 0;
     private static final int STAFF_GROUP = 1;
     private static final int PRIVATE_GROUP = 2;
 
-    private static final int NUM_OF_SUBMENUS = 3;
+    private List<Group<NavDrawerItem>> groups;
 
-
-    private List<NavDrawerItem> unreadMenu;
-    private List<NavDrawerItem> privateMenu;
-    private List<NavDrawerInnerGroup> staffMenu;
+    //private List<NavDrawerItem> unreadMenu;
+    //private List<NavDrawerItem> privateMenu;
+    //private List<NavDrawerInnerGroup> staffMenu;
 
     private MainActivity activity;
 
     NavDrawerAdapter(MainActivity activity){
 
         this.activity = activity;
-        unreadMenu = new ArrayList<NavDrawerItem>();
-        privateMenu = new ArrayList<NavDrawerItem>();
-        staffMenu = new ArrayList<NavDrawerInnerGroup>();
+        //unreadMenu = new ArrayList<NavDrawerItem>();
+        //privateMenu = new ArrayList<NavDrawerItem>();
+        //staffMenu = new ArrayList<NavDrawerInnerGroup>();
+
+        groups = new ArrayList<Group<NavDrawerItem>>();
+
+        groups.add(new Group<NavDrawerItem>(UNREAD_GROUP));
+        groups.add(new Group<NavDrawerItem>(STAFF_GROUP));
+        groups.add(new Group<NavDrawerItem>(PRIVATE_GROUP));
+
 
     }
 
     @Override
     public int getGroupCount() {
-        return NUM_OF_SUBMENUS;
+        return getVisibleGroups().size();
     }
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        List group = getGroup(groupPosition);
+        Group<NavDrawerItem> group = getGroup(groupPosition);
         return group.size();
     }
 
     @Override
-    public List getGroup(int groupPosition) {
-        List group = null;
-        switch(groupPosition){
-            case UNREAD_GROUP:
-                group = unreadMenu;
-                break;
-            case PRIVATE_GROUP:
-                group = privateMenu;
-                break;
-            case STAFF_GROUP:
-                group = staffMenu;
-                break;
-        }
-        return group;
+    public Group<NavDrawerItem> getGroup(int groupPosition) {
+        return getVisibleGroups().get(groupPosition);
     }
 
     @Override
     public NavDrawerItem getChild(int groupPosition, int childPosition) {
-        return (NavDrawerItem) getGroup(groupPosition).get(childPosition);
+        return getGroup(groupPosition).getItem(childPosition);
     }
 
     @Override
     public long getGroupId(int groupPosition) {
-        return 0;
+        return groupPosition;
     }
 
     @Override
     public long getChildId(int groupPosition, int childPosition) {
-        return 0;
+        return childPosition;
     }
 
     @Override
@@ -92,27 +90,30 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+    public View getGroupView(int groupPosition, boolean isExpanded, View convertView, final ViewGroup parent) {
+        Log.v("taggy", getGroup(groupPosition).size() + "");
 
-        if(convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.menu_header, parent, false);
-        }
+        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        convertView = inflater.inflate(R.layout.menu_header, parent, false);
+
+
         final View headerView = convertView;
         TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
         textView.setText(getGroupTitle(groupPosition));
         //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
         textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
 
-
-        // Assign the correct indicator (expanded or collapsed)
+        final Group<NavDrawerItem> group = getGroup(groupPosition);
         ImageView iv = (ImageView) convertView.findViewById(R.id.expander);
-            if(isExpanded){
-                iv.setImageResource(R.drawable.contrator);
-            }else{
-                iv.setImageResource(R.drawable.expander);
-            }
 
+        if(group.isExpanded()){
+            ((ExpandableListView)parent).expandGroup(groupPosition);
+            iv.setImageResource(R.drawable.contrator);
+
+        }else{
+            ((ExpandableListView)parent).collapseGroup(groupPosition);
+            iv.setImageResource(R.drawable.expander);
+        }
 
         return convertView;
     }
@@ -121,15 +122,22 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View child = null;
+        Group<NavDrawerItem> group = getGroup(groupPosition);
 
-        switch (groupPosition){
+        switch (group.getID()){
 
             case UNREAD_GROUP:
             case PRIVATE_GROUP:
+
                 child = inflater.inflate(R.layout.custom_nav_drawer_row, parent, false);
+
+
+
                 TextView userTextView = (TextView) child.findViewById(R.id.nav_row_text_view);
 
-                if(groupPosition == UNREAD_GROUP){
+                if(group.getID() == UNREAD_GROUP){
+                    //getGroup(groupPosition).setIsExpanded(true);
+                    //((ExpandableListView)parent).invalidateViews();
                     TextView notificationTextView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
                     notificationTextView.setVisibility(View.VISIBLE);
                     Conversation conversation = (Conversation) getChild(groupPosition, childPosition);
@@ -170,6 +178,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
                 break;
 
             case STAFF_GROUP:
+
                 child = inflater.inflate(R.layout.inner_list, parent, false);
 
                 TextView departmentTextView = (TextView) child.findViewById(R.id.department_text_view);
@@ -226,7 +235,8 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
 
     public String getGroupTitle(int groupPosition){
         String title = "";
-        switch(groupPosition){
+        Group group = getGroup(groupPosition);
+        switch(group.getID()){
             case UNREAD_GROUP:
                 title = "Unread";
                 break;
@@ -240,19 +250,10 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         return title;
     }
 
-    public void addConversation(int groupPosition, Conversation c){
-        List<NavDrawerItem> group = null;
-
-        switch(groupPosition){
-            case UNREAD_GROUP:
-                group = unreadMenu;
-                group.add(c);
-                break;
-            case PRIVATE_GROUP:
-                group = privateMenu;
-                group.add(c);
-                break;
-        }
+    public void addConversation(int groupID, Conversation c){
+        //List<NavDrawerItem> group = null;
+        Group<NavDrawerItem> group = getGroupByID(groupID);
+        group.addItem(c);
 
         dataSetChanged();
     }
@@ -265,74 +266,100 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         });
     }
 
-    private void sort(List<NavDrawerItem> list, int group){
-        HashMap<Long, Conversation> conversations = activity.currentConversations;
-        for(int i = 0; i < list.size(); i ++){
-            Conversation conversation = conversations.get(list.get(i).getID());
-            if(conversation != null && conversation.hasOnlineUser()){
-                moveConversationToFirstPosition(group, conversation);
-                i--;
-            }
-        }
-    }
-
 
     public void addDepartment(String name){
-        NavDrawerInnerGroup newGroup = new NavDrawerInnerGroup(activity, name);
-        staffMenu.add(newGroup);
-        dataSetChanged();
+        Group<NavDrawerItem> staffGroup = getGroupByID(STAFF_GROUP);
+        if(staffGroup != null){
+            NavDrawerInnerGroup newGroup = new NavDrawerInnerGroup(activity, name);
+            staffGroup.addItem(newGroup);
+            dataSetChanged();
+        }else{
+            Log.v("taggy", "Staff gorup could not be found while trying to add department");
+        }
+
     }
 
     public void addUserToDepartment(String departmentName, User newUser){
-        NavDrawerInnerGroup depart = null;
-        for(NavDrawerInnerGroup g: staffMenu){
-            if(g.getName().equals(departmentName)){
-                depart = g;
-                break;
+        Group<NavDrawerItem> staffGroup = getGroupByID(STAFF_GROUP);
+        if(staffGroup != null){
+            for(int i = 0; i < staffGroup.size(); i++){
+                NavDrawerInnerGroup innerGroup = (NavDrawerInnerGroup) staffGroup.getItem(i);
+                if(innerGroup.getName().equals(departmentName)){
+                    innerGroup.addChild(newUser);
+                    dataSetChanged();
+                    return;
+                }
             }
         }
-
-        if(depart == null){
-            //This should not happen
-            return;
-        }
-
-        depart.addChild(newUser);
-        dataSetChanged();
     }
 
-    public void moveConversationToFirstPosition (int groupPosition, Conversation conversation){
-        List group = getGroup(groupPosition);
-        group.remove(conversation);
-        group.add(0, conversation);
-        //notifyDataSetChanged();
+    public void moveConversationToFirstPosition (int groupID, Conversation conversation){
+        Group group = getGroupByID(groupID);
+        group.moveItemToFirstPosition(conversation);
         dataSetChanged();
     }
 
     public void moveConversationToPrivate(Conversation conversation){
-        List<Conversation> unreadGroup = getGroup(UNREAD_GROUP);
-        List<Conversation> privateGroup = getGroup(PRIVATE_GROUP);
+        Group<NavDrawerItem> unreadGroup = getGroupByID(UNREAD_GROUP);
+        Group<NavDrawerItem> privateGroup = getGroupByID(PRIVATE_GROUP);
+
+
+        if(unreadGroup == null || privateGroup == null){
+            Log.v("error", "Could not move conversation to private");
+            return;
+        }
+
 
         if(unreadGroup.contains(conversation)){
-            unreadGroup.remove(conversation);
+            unreadGroup.removeItem(conversation);
+        }else{
+            Log.v("error", "Conversation to move is not in unread");
         }
 
         if(! privateGroup.contains(conversation)){
             if(conversation.hasOnlineUser()){
                 Log.v("taggy","Has online user");
-                privateGroup.add(0, conversation);
+                privateGroup.addItem(0, conversation);
             }else{
                 Log.v("taggy","Does not have online user");
-                privateGroup.add(conversation);
+                privateGroup.addItem(conversation);
             }
         }
-        notifyDataSetChanged();
+
+        dataSetChanged();
     }
 
-    public List<Conversation> getOnlineInGroup(int group){
+    public void moveConversationToUnread(Conversation conversation){
+        Group<NavDrawerItem> unreadGroup = getGroupByID(UNREAD_GROUP);
+        Group<NavDrawerItem> privateGroup = getGroupByID(PRIVATE_GROUP);
+
+        if(unreadGroup == null || privateGroup == null){
+            Log.v("error", "Could not move conversation to unread");
+            return;
+        }
+
+
+        if(privateGroup.contains(conversation)){
+            privateGroup.removeItem(conversation);
+        }
+
+        if(! unreadGroup.contains(conversation)){
+            if(conversation.hasOnlineUser()){
+                unreadGroup.addItem(0, conversation);
+            }else{
+                unreadGroup.addItem(conversation);
+            }
+        }
+
+        dataSetChanged();
+    }
+
+
+    public List<Conversation> getOnlineInGroup(int groupID){
         List<Conversation> newList = new ArrayList<Conversation>();
-        List<Conversation> backingList = getGroup(group);
-        for(Conversation conversation : backingList){
+        Group<NavDrawerItem> backingList = getGroupByID(groupID);
+        for(int i = 0; i < backingList.size(); i++){
+            Conversation conversation = (Conversation) backingList.getItem(i);
             if(conversation.hasOnlineUser()){
                 newList.add(conversation);
             }
@@ -340,27 +367,9 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
         return newList;
     }
 
-    public void moveConversationToUnread(Conversation conversation){
-        List<Conversation> unreadGroup = getGroup(UNREAD_GROUP);
-        List<Conversation> privateGroup = getGroup(PRIVATE_GROUP);
-
-        if(privateGroup.contains(conversation)){
-            privateGroup.remove(conversation);
-        }
-
-        if(! unreadGroup.contains(conversation)){
-            if(conversation.hasOnlineUser()){
-                unreadGroup.add(0, conversation);
-            }else{
-                unreadGroup.add(conversation);
-            }
-        }
-
-        notifyDataSetChanged();
-    }
-
     public void toggleIsExpanded(int childPosition){
-        NavDrawerInnerGroup inner = staffMenu.get(childPosition);
+        Group<NavDrawerItem> staffGroup = getGroupByID(STAFF_GROUP);
+        NavDrawerInnerGroup inner = (NavDrawerInnerGroup) staffGroup.getItem(childPosition);
         inner.setIsExpanded(! inner.getIsExpanded());
     }
 
@@ -373,20 +382,45 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter {
     }
 
     private void printList(int groupID){
-        switch(groupID){
-            case UNREAD_GROUP:
-                for(NavDrawerItem item : unreadMenu){
-                    Conversation conversation = (Conversation) item;
-                    Log.v("taggy", conversation.getName());
-                }
-                break;
-
-            case PRIVATE_GROUP:
-                for(NavDrawerItem item : privateMenu){
-                    Conversation conversation = (Conversation) item;
-                    Log.v("taggy", conversation.getName());
-                }
-                break;
+        Group<NavDrawerItem> group = getGroupByID(groupID);
+        for(int i =0; i < group.size(); i++){
+            Conversation conversation = (Conversation) group.getItem(i);
+            Log.v("taggy", conversation.toString());
         }
     }
+
+    private Group<NavDrawerItem> getGroupByID(int groupID){
+        for(Group<NavDrawerItem> g : groups){
+            if(groupID == g.getID()){
+                return g;
+            }
+        }
+        return null;
+    }
+
+    private List<Group<NavDrawerItem>> getVisibleGroups(){
+        List<Group<NavDrawerItem>> visibleGroups = new ArrayList<Group<NavDrawerItem>>();
+        for(Group g : groups){
+            if(g.isVisible()){
+                visibleGroups.add(g);
+            }
+        }
+        return visibleGroups;
+    }
+
+    public int getGroupPosition(int groupID){
+        List<Group<NavDrawerItem>> visibleGroups = getVisibleGroups();
+        for(int i = 0; i < visibleGroups.size(); i++){
+            if(visibleGroups.get(i).getID() == groupID){
+                return i;
+            }
+        }
+        Log.v("error", "Group with id " + groupID + " is not currently visible");
+        return -1;
+    }
+
+    public boolean groupIsVisible(int groupID){
+        return getGroupByID(groupID).isVisible();
+    }
+
 }

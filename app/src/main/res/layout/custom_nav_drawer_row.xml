@@ -7,7 +7,6 @@
     android:layout_gravity="start"
     android:background="@color/colorPrimary"
     android:weightSum="10"
-    android:onClick="onViewClicked"
     android:paddingTop="3dp"
     android:paddingBottom="3dp">
 

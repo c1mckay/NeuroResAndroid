@@ -51,4 +51,9 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
     public boolean getIsExpanded(){
         return isExpanded;
     }
+
+    @Override
+    public String toString(){
+        return getName();
+    }
 }

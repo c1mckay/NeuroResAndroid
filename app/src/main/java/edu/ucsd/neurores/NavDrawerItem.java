@@ -42,4 +42,5 @@ abstract class NavDrawerItem {
     public void setContext(Context context) {
         this.c = context;
     }
+
 }

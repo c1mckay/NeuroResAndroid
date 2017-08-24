@@ -24,6 +24,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,8 +46,9 @@ import java.util.TreeSet;
 
 import javax.net.ssl.SSLSocket;
 
+//TODO Only invalidate the views of the group that changes
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener {
+        implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, ExpandableListView.OnGroupClickListener, ExpandableListView.OnChildClickListener {
 
     public static final int UNREAD_MENU_GROUP = 0;
     public static final int STAFF_MENU_GROUP = 1;
@@ -96,11 +98,16 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        Log.v("taggy", "got token");
+
         logFireBaseToken();
 
         if(getIntent().hasExtra(CONVERSATION_ID)){
             setPreviousConversationID(getIntent().getLongExtra(CONVERSATION_ID, -1));
+            Log.v("taggy", "previous set");
         }
+
+
 
         setContentView(R.layout.activity_main);
         initializeVariables();
@@ -114,6 +121,8 @@ public class MainActivity extends AppCompatActivity
         drawerListView = (ExpandableListView) findViewById(R.id.nav_view);
         navDrawerAdapter = new NavDrawerAdapter(this);
         drawerListView.setAdapter(navDrawerAdapter);
+        drawerListView.setOnGroupClickListener(this);
+        drawerListView.setOnChildClickListener(this);
 
         for (int i = 0; i < navDrawerAdapter.getGroupCount(); i++){
             drawerListView.expandGroup(i);
@@ -225,6 +234,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void setupFragmentAndSocket(){
+        invalidateNavigationDrawer();
         setInitialFragment();
         connectSocket();
     }
@@ -545,9 +555,9 @@ public class MainActivity extends AppCompatActivity
      * Add a view to the navigation drawer for the newUser
      * @param conversation the user to have a view added for
      */
-    private void addToNavBar(int groupPosition, Conversation conversation){
-        navDrawerAdapter.addConversation(groupPosition, conversation);
-        drawerListView.expandGroup(groupPosition);
+    private void addToNavBar(int groupID, Conversation conversation){
+        navDrawerAdapter.addConversation(groupID, conversation);
+        //drawerListView.expandGroup(getGroupPosition(groupID));
         drawerListView.invalidateViews();
 
         //userList.put(cogetID(), newUser);
@@ -565,7 +575,7 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
         //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
-        currentFragment.loadMessages(this,selectedConversation, userList);
+        currentFragment.loadMessages(this, selectedConversation, userList);
         //getSupportActionBar().setTitle(selectedConversation.getName());
         toolbarTitle.setText(selectedConversation.getName());
 
@@ -604,8 +614,10 @@ public class MainActivity extends AppCompatActivity
         long conversationID;
         if(hasOngoingConversations() && ! hasPreviousConversation()){
             conversationID = getFirstConversationID();
+            Log.v("taggy", "Has ongoing");
         }else{
             conversationID = getPreviousConversationID();
+            Log.v("taggy", "Got previous");
         }
 
         if(isNewUser() || conversationID == -1){
@@ -618,6 +630,7 @@ public class MainActivity extends AppCompatActivity
 
         selectedConversation = currentConversations.get(conversationID);
         if(selectedConversation == null){
+            Log.v("taggy", "Selected conversation was not there");
             logout(null);
             finish();
             return;
@@ -639,6 +652,7 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         //RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
         //recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+        invalidateNavigationDrawer();
     }
 
     private long getFirstConversationID(){
@@ -725,7 +739,7 @@ public class MainActivity extends AppCompatActivity
 
     private void addDepartment(String name){
         navDrawerAdapter.addDepartment(name);
-        drawerListView.expandGroup(STAFF_MENU_GROUP);
+        //drawerListView.expandGroup(getGroupPosition(STAFF_MENU_GROUP));
     }
 
     private void addUserToDepartment(String departmentName, User newUser){
@@ -911,10 +925,10 @@ public class MainActivity extends AppCompatActivity
         moveOnlineConversationsUp(conversations, UNREAD_MENU_GROUP);
     }
 
-    private void moveOnlineConversationsUp(List<Conversation> conversations, int group){
+    private void moveOnlineConversationsUp(List<Conversation> conversations, int groupID){
         for(Conversation c : conversations){
             if(c.hasOnlineUser()){
-                navDrawerAdapter.moveConversationToFirstPosition(group, c);
+                navDrawerAdapter.moveConversationToFirstPosition(groupID, c);
             }
         }
     }
@@ -1038,8 +1052,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private Conversation findConversationWithUser(long userID, int groupID){
-        for(int i = 0; i < navDrawerAdapter.getChildrenCount(groupID); i++) {
-            NavDrawerItem item = navDrawerAdapter.getChild(groupID, i);
+        for(int i = 0; i < navDrawerAdapter.getChildrenCount(getGroupPosition(groupID)); i++) {
+            NavDrawerItem item = navDrawerAdapter.getChild(getGroupPosition(groupID), i);
 
             Conversation conversation = currentConversations.get(item.getID());
             boolean isConversation = true;
@@ -1057,7 +1071,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateGroup(final long userID, final int groupID){
-
+            if(! navDrawerAdapter.groupIsVisible(groupID)){
+                return;
+            }
             Conversation conversation = findConversationWithUser(userID, groupID);
 
             /*
@@ -1107,14 +1123,20 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void moveConversationToPrivate(final Conversation conversation){
+        navDrawerAdapter.moveConversationToPrivate(conversation);
+        conversation.setNumOfUnseen(0);
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                navDrawerAdapter.moveConversationToPrivate(conversation);
-                conversation.setNumOfUnseen(0);
+                // Hacky work around
+                //drawerListView.setAdapter(navDrawerAdapter);
+                Log.v("taggy", "Num of children after: " + navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)));
                 drawerListView.invalidateViews();
+                Log.v("taggy", "Num of children after: " + navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)));
             }
         });
+
     }
 
     public void moveConversationToUnread(final Conversation conversation){
@@ -1148,6 +1170,15 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onDrawerOpened(View drawerView) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                navDrawerAdapter.notifyDataSetChanged();
+            }
+        });
+        Log.v("taggy", "\n\n");
+        Log.v("taggy", navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)) + " children");
+        Log.v("taggy", navDrawerAdapter.getGroup(getGroupPosition(PRIVATE_MENU_GROUP)).toString());
     }
 
     @Override
@@ -1332,5 +1363,35 @@ public class MainActivity extends AppCompatActivity
 
     public void printNavDrawer(){
         navDrawerAdapter.printLists();
+    }
+
+    public int getGroupPosition(int groupID){
+        return navDrawerAdapter.getGroupPosition(groupID);
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //No call for super(). Bug on API Level > 11.
+    }
+
+    public void invalidateNavigationDrawer(){
+        drawerListView.invalidateViews();
+    }
+
+
+    @Override
+    public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+        Group group = navDrawerAdapter.getGroup(groupPosition);
+        group.setIsExpanded(! group.isExpanded());
+        navDrawerAdapter.dataSetChanged();
+        return false;
+    }
+
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+        Log.v("taggy", "Num of children before: " + navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)));
+        onViewClicked(v);
+        return true;
     }
 }
