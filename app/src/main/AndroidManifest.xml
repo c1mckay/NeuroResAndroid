@@ -52,6 +52,7 @@
             android:windowSoftInputMode="stateVisible"
             android:screenOrientation="portrait" />
         <activity android:name=".PDFActivity"></activity>
+
     </application>
 
 </manifest>

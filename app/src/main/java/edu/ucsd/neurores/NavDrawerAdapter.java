@@ -216,6 +216,13 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                         child.invalidate();
                     }
 
+                    userView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            activity.onViewClicked(v    );
+                        }
+                    });
+
                     u.v = userView;
                 }
 

@@ -23,6 +23,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
@@ -93,6 +95,8 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+
         if(getToken() == null || ! isConnectedToNetwork()){
             goToLogin();
             return;
@@ -155,6 +159,8 @@ public class MainActivity extends AppCompatActivity
         queuedToastMessage = null;
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     private void logFireBaseToken() {
@@ -162,7 +168,8 @@ public class MainActivity extends AppCompatActivity
             Log.d("token", FirebaseInstanceId.getInstance().getToken());
     }
 
-    private void registerReceiverForScreen() {
+        private void registerReceiverForScreen() {
+        /*
        screenStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -181,6 +188,7 @@ public class MainActivity extends AppCompatActivity
         screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
         registerReceiver(screenStateReceiver, screenStateFilter);
+        */
     }
 
     private void onScreenTurnedOn(){
@@ -419,7 +427,7 @@ public class MainActivity extends AppCompatActivity
      */
     public void onViewClicked(View v) {
         //Get the id of the user that was clicked on
-
+        Log.v("taggy", "click");
         if(v.getTag(R.id.CONVERSATION) != null){
             onConversationClick(v, (Long) v.getTag(R.id.CONVERSATION));
         }else if(v.getTag(R.id.USER) != null){
@@ -665,7 +673,7 @@ public class MainActivity extends AppCompatActivity
 
     private long getFirstPrivateConversationID(){
         if(getNumOfPrivateConversations() > 0){
-            NavDrawerItem item = navDrawerAdapter.getChild(PRIVATE_MENU_GROUP, 0);
+            NavDrawerItem item = navDrawerAdapter.getChild(getGroupPosition(PRIVATE_MENU_GROUP), 0);
             return item.getID();
         }else{
          return -1;
@@ -674,7 +682,7 @@ public class MainActivity extends AppCompatActivity
 
     private long getFirstUnreadConversationID(){
         if(getNumOfUnreadConversations() > 0){
-            NavDrawerItem item = navDrawerAdapter.getChild(UNREAD_MENU_GROUP, 0);
+            NavDrawerItem item = navDrawerAdapter.getChild(getGroupPosition(UNREAD_MENU_GROUP), 0);
             return item.getID();
         }else{
             return -1;
@@ -682,11 +690,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private int getNumOfPrivateConversations(){
-        return navDrawerAdapter.getChildrenCount(PRIVATE_MENU_GROUP);
+        return navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP));
     }
 
     private int getNumOfUnreadConversations(){
-        return navDrawerAdapter.getChildrenCount(UNREAD_MENU_GROUP);
+        return navDrawerAdapter.getChildrenCount(getGroupPosition(UNREAD_MENU_GROUP));
     }
 
     private int getTotalNumOfConversations(){
@@ -1131,9 +1139,7 @@ public class MainActivity extends AppCompatActivity
             public void run() {
                 // Hacky work around
                 //drawerListView.setAdapter(navDrawerAdapter);
-                Log.v("taggy", "Num of children after: " + navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)));
                 drawerListView.invalidateViews();
-                Log.v("taggy", "Num of children after: " + navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)));
             }
         });
 
@@ -1390,8 +1396,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-        Log.v("taggy", "Num of children before: " + navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)));
         onViewClicked(v);
         return true;
+    }
+
+    public void onNetworkDisconnected(){
+        Log.v("taggy", "got it");
     }
 }

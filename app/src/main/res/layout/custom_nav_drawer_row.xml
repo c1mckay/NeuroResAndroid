@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="start"
     android:background="@color/colorPrimary"
-    android:weightSum="10"
     android:paddingTop="3dp"
     android:paddingBottom="3dp">
 
     <ImageView
         android:id="@+id/nav_row_status_image_view"
+        android:layout_centerVertical="true"
         android:layout_width="10sp"
         android:layout_height="10sp"
         android:src="@drawable/offline"
@@ -19,28 +19,30 @@
         android:layout_marginRight="@dimen/nav_drawer_user_margin_left"
         android:layout_marginEnd="@dimen/nav_drawer_user_margin_left"
         android:layout_marginLeft="@dimen/nav_drawer_user_margin_left"
+        android:layout_alignParentLeft="true"
         android:layout_marginStart="@dimen/nav_drawer_user_margin_left"/>
 
     <TextView
-        android:id="@+id/nav_row_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="9"
-        android:textColor="@color/white"
-        android:textSize="@dimen/nav_drawer_row_user_text_size"
-        android:gravity="center_vertical"
-        android:layout_marginStart="1dp"
-        android:layout_marginLeft="1dp"/>
-
-    <TextView
         android:id="@+id/nav_row_notification_text_view"
+        android:layout_centerVertical="true"
         android:layout_width="15dp"
         android:layout_height="15dp"
         android:textColor="@color/yellow"
-        android:layout_weight="1"
-        android:layout_gravity="center"
         android:layout_marginEnd="15sp"
         android:layout_marginRight="15sp"
+        android:layout_alignParentRight="true"
         android:visibility="invisible"/>
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/nav_row_text_view"
+        android:text="Test name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="@dimen/nav_drawer_row_user_text_size"
+        android:gravity="center_vertical"
+        android:layout_alignTop="@+id/nav_row_status_image_view"
+        android:layout_toRightOf="@+id/nav_row_status_image_view"
+        android:layout_toEndOf="@+id/nav_row_status_image_view" />
+
+</RelativeLayout>
