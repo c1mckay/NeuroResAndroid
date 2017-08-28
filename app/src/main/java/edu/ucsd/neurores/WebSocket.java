@@ -128,6 +128,7 @@ public class WebSocket extends WebSocketClient {
 
     public void onClose(int code, String reason, boolean remote) {
         Log.v("sockett", "onClose()");
+        mainActivity.onSocketDisconnected();
         mFrag.errorVisMessage(reason);
     }
 

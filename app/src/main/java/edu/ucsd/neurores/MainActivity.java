@@ -385,8 +385,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
-        hideMainElements();
         isPaused = false;
+        hideMainElements();
         // Check if the main fragment needs to be changed
         if(needToChangeFragment){
             if(selectedConversation.v == null) {
@@ -998,6 +998,7 @@ public class MainActivity extends AppCompatActivity
         editor.putString(LoginActivity.TOKEN, null);
         editor.putString(LoginActivity.NAME , null);
         editor.putLong(PREV_CONVERSATION_ID , -1);
+        closeSocket();
         editor.commit();
 
         goToLogin();
@@ -1176,15 +1177,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onDrawerOpened(View drawerView) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                navDrawerAdapter.notifyDataSetChanged();
-            }
-        });
-        Log.v("taggy", "\n\n");
-        Log.v("taggy", navDrawerAdapter.getChildrenCount(getGroupPosition(PRIVATE_MENU_GROUP)) + " children");
-        Log.v("taggy", navDrawerAdapter.getGroup(getGroupPosition(PRIVATE_MENU_GROUP)).toString());
+
     }
 
     @Override
@@ -1205,7 +1198,8 @@ public class MainActivity extends AppCompatActivity
 
     private void connectSocket(){
         try{
-            if(socket != null && socket.isOpen()){
+            if(socket != null && ! socket.isClosed() && socket.isOpen()){
+                Log.v("sockett", "Socket is still open. Done");
                 return;
             }
             closeSocket();
@@ -1217,6 +1211,22 @@ public class MainActivity extends AppCompatActivity
             setupSSL(this, socket);
         }catch (URISyntaxException e){
             Log.v("sockett", "The socket failed to connect: " + e.getMessage());
+            closeSocket();
+        }
+    }
+
+    private void forceSocketReconnect(){
+        try{
+            Log.v("sockett", "Forcing reconnect");
+            closeSocket();
+            if(currentFragment == null){
+                Log.v("sockett", "Error: Trying to create a socket with a null fragment");
+                return;
+            }
+            socket = new WebSocket(currentFragment, this);
+            setupSSL(this, socket);
+        }catch (URISyntaxException e){
+            Log.v("sockett", "The socket failed to forcibly connect: " + e.getMessage());
             closeSocket();
         }
     }
@@ -1302,10 +1312,11 @@ public class MainActivity extends AppCompatActivity
 
     public void pushMessage(String message){
         if(socket == null || socket.isClosed() || ! socket.isOpen()){
+            Log.v("sockett", "Socket is not in working condition while trying to send message. Reconnecting and resending message");
             connectSocketAndSendMessage(message);
         }else{
             if(currentFragment == null){
-                Log.v("taggy", "currentfragment is null when trying to send message");
+                Log.v("sockett", "currentfragment is null when trying to send message");
                 return;
             }
             socket.pushMessage(message);
@@ -1400,7 +1411,15 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void onNetworkDisconnected(){
-        Log.v("taggy", "got it");
+    public void onSocketDisconnected(){
+        //TODO
+        /*
+        Log.v("sockett", "onSocketDisconnected");
+        if(! isPaused){
+            forceSocketReconnect();
+        }else{
+            Log.v("sockett", "activity is paused, not connecting socket");
+        }
+        */
     }
 }
