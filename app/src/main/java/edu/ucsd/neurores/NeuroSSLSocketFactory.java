@@ -6,9 +6,6 @@ import android.util.Log;
 import java.io.InputStream;
 import java.security.KeyStore;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-
 /**
  * Created by tbpetersen on 7/25/2017.
  */

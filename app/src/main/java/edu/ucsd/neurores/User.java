@@ -1,7 +1,6 @@
 package edu.ucsd.neurores;
 
 import android.content.Context;
-import android.view.View;
 
 /**
  * Created by tbpetersen on 3/2/2017.

@@ -1,7 +1,5 @@
 package edu.ucsd.neurores;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,10 +54,7 @@ public class Group <T>{
     }
 
     public void removeItem(T item){
-        Log.d("taggy", "Before: " + group.size() );
         group.remove(item);
-        Log.d("taggy", "After: " + group.size() );
-
     }
 
     public void removeItem(int position){

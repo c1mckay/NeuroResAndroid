@@ -5,28 +5,23 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.pdf.PdfRenderer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
+import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -48,7 +43,6 @@ import java.util.TreeSet;
 
 import javax.net.ssl.SSLSocket;
 
-//TODO Only invalidate the views of the group that changes
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, ExpandableListView.OnGroupClickListener, ExpandableListView.OnChildClickListener {
 
@@ -350,8 +344,8 @@ public class MainActivity extends AppCompatActivity
 
                 // Deselect the previously selected user (change the background
                 // color and selectedUser)
-                if(selectedConversation != null && selectedConversation.v != null){
-                    selectedConversation.v.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                if(selectedConversation != null){
+                    selectedConversation.select();
                 }
 
             /* Set selectedUser */
@@ -369,12 +363,8 @@ public class MainActivity extends AppCompatActivity
                     }
                     currentConversations.put(searchedID, newConversation);
                     selectedConversation = newConversation;
-                    //addToNavBar(PRIVATE_MENU_GROUP, newConversation);
                 }
-                //userList.put(selectedUser.id, selectedUser);
-                //}else{
-                //selectedUser = userList.get(searchedID);
-                //}
+
                 // Tell the main activity that the fragment needs to be changed
                 needToChangeFragment = true;
             }
@@ -389,13 +379,13 @@ public class MainActivity extends AppCompatActivity
         hideMainElements();
         // Check if the main fragment needs to be changed
         if(needToChangeFragment){
-            if(selectedConversation.v == null) {
+            if(selectedConversation.viewInNavDrawer == null) {
                 // Add a view to the navigation bar for the new user
                 addToNavBar(PRIVATE_MENU_GROUP, selectedConversation);
             }else{
                 // Highlight the view that is already in the nav bar
                 selectedConversation.select();
-                //selectedUser.v.setBackgroundColor(getResources().getColor(R.color.selected));
+                //selectedUser.viewInNavDrawer.setBackgroundColor(getResources().getColor(R.color.selected));
             }
             changeFragment();
             needToChangeFragment = false;
@@ -427,7 +417,6 @@ public class MainActivity extends AppCompatActivity
      */
     public void onViewClicked(View v) {
         //Get the id of the user that was clicked on
-        Log.v("taggy", "click");
         if(v.getTag(R.id.CONVERSATION) != null){
             onConversationClick(v, (Long) v.getTag(R.id.CONVERSATION));
         }else if(v.getTag(R.id.USER) != null){
@@ -442,7 +431,7 @@ public class MainActivity extends AppCompatActivity
     private void onUserClick(long user_id){
         for(Conversation c: currentConversations.values()){
             if(c.getNumberOfUsers() == 1 && c.getUserAtIndex(0).getID() == user_id){
-                onConversationClick(c.v, c.getID());
+                onConversationClick(c.viewInNavDrawer, c.getID());
                 return;
             }
         }
@@ -481,7 +470,7 @@ public class MainActivity extends AppCompatActivity
                     addToNavBar(groupID, conversation);
 
                     if(changeFragment){
-                        onConversationClick(conversation.v, conversation.getID());
+                        onConversationClick(conversation.viewInNavDrawer, conversation.getID());
                     }
                     Log.v("taggy", "done creating");
 
@@ -542,7 +531,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onConversationClick(View v, long conversation_id){
-        NavDrawerItem c = currentConversations.get(conversation_id);
+        if(selectedConversation.getID() == conversation_id){
+            closeDrawer();
+            return;
+        }
+
         if(currentConversations.containsKey(conversation_id)){ //a conversation was clicked, and we're about to load it
             //Deselect previous
             if(selectedConversation != null){
@@ -550,7 +543,7 @@ public class MainActivity extends AppCompatActivity
             }
             // Select clicked on user
             selectedConversation = currentConversations.get(conversation_id);;
-            selectedConversation.v = v;
+            selectedConversation.viewInNavDrawer = v;
             selectedConversation.select();
         }
         // Reset the input fields and hide it
@@ -565,10 +558,7 @@ public class MainActivity extends AppCompatActivity
      */
     private void addToNavBar(int groupID, Conversation conversation){
         navDrawerAdapter.addConversation(groupID, conversation);
-        //drawerListView.expandGroup(getGroupPosition(groupID));
         drawerListView.invalidateViews();
-
-        //userList.put(cogetID(), newUser);
     }
 
     /**
@@ -582,18 +572,20 @@ public class MainActivity extends AppCompatActivity
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
-        //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
         currentFragment.loadMessages(this, selectedConversation, userList);
-        //getSupportActionBar().setTitle(selectedConversation.getName());
         toolbarTitle.setText(selectedConversation.getName());
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        closeDrawer();
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
         recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
 
         updateMostRecentConversation(selectedConversation.getID());
         updateFrag();
+    }
+
+    private void closeDrawer() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
     }
 
     private void reloadCurrentFragment(){
@@ -638,7 +630,7 @@ public class MainActivity extends AppCompatActivity
 
         selectedConversation = currentConversations.get(conversationID);
         if(selectedConversation == null){
-            Log.v("taggy", "Selected conversation was not there");
+            Log.v("warning", "Selected conversation was not there");
             logout(null);
             finish();
             return;
@@ -649,17 +641,14 @@ public class MainActivity extends AppCompatActivity
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, currentFragment);
         fragmentTransaction.commit();
-        //currentFragment.queueMessage(selectedConversation.name, "Messages should be loaded at this point");
         currentFragment.loadMessages(this, selectedConversation, userList);
         if(getSupportActionBar() != null){
-            //getSupportActionBar().setTitle(selectedConversation.getName());
             toolbarTitle.setText(selectedConversation.getName());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
-        //RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
-        //recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+
         invalidateNavigationDrawer();
     }
 
@@ -722,14 +711,6 @@ public class MainActivity extends AppCompatActivity
         iv.setImageResource(imageID);
     }
 
-    /**
-     * Adds a user to the hashmap containing all current conversations
-     * @param u the user to be added to the hashmap
-     */
-    public void addUserToHashTable(User u){
-        //currentConversations.put(u.id, u);
-    }
-
     public boolean isNewUser(){
         return (! hasPreviousConversation()) && (! hasOngoingConversations());
     }
@@ -747,7 +728,6 @@ public class MainActivity extends AppCompatActivity
 
     private void addDepartment(String name){
         navDrawerAdapter.addDepartment(name);
-        //drawerListView.expandGroup(getGroupPosition(STAFF_MENU_GROUP));
     }
 
     private void addUserToDepartment(String departmentName, User newUser){
@@ -777,13 +757,6 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-        // sessionWrapper.updateConversations is called at the end of onUsersLoaded
-        //(currentConversations needs to be populated before the call is made to updateConversations)
-
-        /* How to add to unread section */
-        //addConversation(UNREAD_MENU_GROUP, new User(this, 63L, hardCodedPrivate[7]));
-
-
     }
 
     private void updateNavDrawer(){
@@ -898,7 +871,6 @@ public class MainActivity extends AppCompatActivity
 
         for(User u : users){
             if(u != loggedInUser){
-                //currentConversations.put(u.id, u);
                 addUserToDepartment(u.userType, u);
             }
         }
@@ -908,7 +880,7 @@ public class MainActivity extends AppCompatActivity
     public void populatePrivate(List<Conversation> conversations){
         for(Conversation c : conversations){
             if( ! c.hasUsers()){
-                Log.v("tag", c.getName() + ":" + c.getID() + " has no users");
+                Log.v("warning", c.getName() + ":" + c.getID() + " has no users");
             }
         }
         for(Conversation c : conversations){
@@ -922,7 +894,7 @@ public class MainActivity extends AppCompatActivity
     public void populateUnread(List<Conversation> conversations){
         for(Conversation c : conversations){
             if( ! c.hasUsers()){
-                Log.v("tag", c.getName() + ":" + c.getID() + " has no users");
+                Log.v("warning", c.getName() + ":" + c.getID() + " has no users");
             }
         }
         for(Conversation conversation : conversations){
@@ -1046,7 +1018,6 @@ public class MainActivity extends AppCompatActivity
                         finish();
                         return;
                     }
-                    //TODO: Append any new messages to the current conversatoin and update any unread messages
                     currentFragment.updateMessageView(getApplicationContext() ,s, userList);
 
                 }
@@ -1080,24 +1051,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateGroup(final long userID, final int groupID){
-            if(! navDrawerAdapter.groupIsVisible(groupID)){
-                return;
-            }
-            Conversation conversation = findConversationWithUser(userID, groupID);
+        if(! navDrawerAdapter.groupIsVisible(groupID)){
+            return;
+        }
+        Conversation conversation = findConversationWithUser(userID, groupID);
 
-            /*
-            if(conversation != null && conversation.v != null){
-
-                ImageView statusImage = (ImageView) conversation.v.findViewById(R.id.nav_row_status_image_view);
-                if(statusImage != null) {
-                    if (isOnline) {
-                        statusImage.setImageResource(R.drawable.online);
-                    } else {
-                        statusImage.setImageResource(R.drawable.offline);
-                    }
-                }
-            } */
-        // Updates are handeled by the navdrawer adapter now
         if(conversation != null){
             navDrawerAdapter.moveConversationToFirstPosition(groupID, conversation);
         }
@@ -1106,27 +1064,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateGroupStaff(final long userID, final boolean isOnline){
-        /*
-        User user = userList.get(userID);
-        if(user == null){
-            Log.v("taggy", "Couldn't find user");
-            return;
-        }else{
-            Log.v("taggy", "Found user: " + user.getName());
-        }
-        if(user.v != null){
-
-            ImageView statusImage = (ImageView) user.v.findViewById(R.id.nav_row_status_image_view);
-            if(statusImage != null) {
-                if (isOnline) {
-                    statusImage.setImageResource(R.drawable.online);
-                } else {
-                    statusImage.setImageResource(R.drawable.offline);
-                }
-            }
-        }
-        */
-        // Updates are handeled by the navdrawer adapter now
         drawerListView.invalidateViews();
 
     }
@@ -1138,8 +1075,6 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // Hacky work around
-                //drawerListView.setAdapter(navDrawerAdapter);
                 drawerListView.invalidateViews();
             }
         });
@@ -1414,11 +1349,11 @@ public class MainActivity extends AppCompatActivity
     public void onSocketDisconnected(){
         //TODO
         /*
-        Log.v("sockett", "onSocketDisconnected");
+        Log.viewInNavDrawer("sockett", "onSocketDisconnected");
         if(! isPaused){
             forceSocketReconnect();
         }else{
-            Log.v("sockett", "activity is paused, not connecting socket");
+            Log.viewInNavDrawer("sockett", "activity is paused, not connecting socket");
         }
         */
     }

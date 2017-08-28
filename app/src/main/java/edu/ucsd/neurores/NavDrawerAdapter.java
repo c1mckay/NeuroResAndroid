@@ -6,7 +6,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
@@ -14,15 +13,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by tbpetersen on 2/23/2017.
  */
 
-//TODO moveConversationToPrivate does not work when private and staff are both open
-//TODO Check notifications, find in pdf
 public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
     private static final int UNREAD_GROUP = 0;
@@ -31,18 +27,11 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
     private List<Group<NavDrawerItem>> groups;
 
-    //private List<NavDrawerItem> unreadMenu;
-    //private List<NavDrawerItem> privateMenu;
-    //private List<NavDrawerInnerGroup> staffMenu;
-
     private MainActivity activity;
 
     NavDrawerAdapter(MainActivity activity){
 
         this.activity = activity;
-        //unreadMenu = new ArrayList<NavDrawerItem>();
-        //privateMenu = new ArrayList<NavDrawerItem>();
-        //staffMenu = new ArrayList<NavDrawerInnerGroup>();
 
         groups = new ArrayList<Group<NavDrawerItem>>();
 
@@ -91,18 +80,22 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, final ViewGroup parent) {
-        Log.v("taggy", getGroup(groupPosition).size() + "");
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = inflater.inflate(R.layout.menu_header, parent, false);
 
-
-        final View headerView = convertView;
         TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
         textView.setText(getGroupTitle(groupPosition));
-        //textView.setTextSize(activity.getResources().getDimension(R.dimen.nav_drawer_group_text_size)); //aka the header
         textView.setPaintFlags(textView.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
 
+
+        setExpanderImage(convertView, parent, groupPosition);
+
+
+        return convertView;
+    }
+
+    private void setExpanderImage(View convertView, ViewGroup parent, int groupPosition) {
         final Group<NavDrawerItem> group = getGroup(groupPosition);
         ImageView iv = (ImageView) convertView.findViewById(R.id.expander);
 
@@ -114,8 +107,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
             ((ExpandableListView)parent).collapseGroup(groupPosition);
             iv.setImageResource(R.drawable.expander);
         }
-
-        return convertView;
     }
 
     @Override
@@ -123,6 +114,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View child = null;
         Group<NavDrawerItem> group = getGroup(groupPosition);
+        TextView userTextView = null;
 
         switch (group.getID()){
 
@@ -132,42 +124,24 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                 child = inflater.inflate(R.layout.custom_nav_drawer_row, parent, false);
 
 
-
-                TextView userTextView = (TextView) child.findViewById(R.id.nav_row_text_view);
-
                 if(group.getID() == UNREAD_GROUP){
-                    //getGroup(groupPosition).setIsExpanded(true);
-                    //((ExpandableListView)parent).invalidateViews();
-                    TextView notificationTextView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
-                    notificationTextView.setVisibility(View.VISIBLE);
-                    Conversation conversation = (Conversation) getChild(groupPosition, childPosition);
-                    if(conversation.getNumOfUnseen() == 0){
-                        notificationTextView.setVisibility(View.INVISIBLE);
-                    }else {
-                        notificationTextView.setVisibility(View.VISIBLE);
-                        if (conversation.getNumOfUnseen() > 9) {
-                            notificationTextView.setText(R.string.max_num_unread_messages);
-                        } else {
-                            notificationTextView.setText(conversation.getNumOfUnseen() + "");
-                        }
-                    }
+                    setUnreadNumber(child, groupPosition, childPosition);
                 }
 
-                Conversation convo = (Conversation) getChild(groupPosition,childPosition);
-                convo.v = child;
+                Conversation conversation = (Conversation) getChild(groupPosition,childPosition);
+                conversation.viewInNavDrawer = child;
 
-                userTextView.setText(convo.getName());
-                child.setTag(R.id.CONVERSATION, convo.getID());
+                setConversationNameAndTag(child, conversation, R.id.CONVERSATION);
 
-                if(activity.selectedConversation != null && activity.selectedConversation.getID().equals(convo.getID())){
+                if(activity.selectedConversation != null && activity.selectedConversation.getID().equals(conversation.getID())){
                     activity.selectedConversation.deselect();
-                    convo.select();
+                    conversation.select();
                 }else{
-                    convo.deselect();
+                    conversation.deselect();
                 }
 
-                if(convo.getNumberOfUsers() == 1){
-                    if(convo.getUserAtIndex(0).isOnline()){
+                if(conversation.getNumberOfUsers() == 1){
+                    if(conversation.getUserAtIndex(0).isOnline()){
                         ImageView onlineImage = (ImageView) child.findViewById(R.id.nav_row_status_image_view);
                         if(onlineImage != null){
                             onlineImage.setImageResource(R.drawable.online);
@@ -209,7 +183,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                     userTextView.setText(name);
                     userView.setTag(R.id.USER, id);
 
-                    //userView.findViewById(R.id.nav_row_status_image_view).setVisibility(View.INVISIBLE);
                     ImageView onlineImage = (ImageView) userView.findViewById(R.id.nav_row_status_image_view);
                     if(onlineImage != null && u.isOnline()){
                         onlineImage.setImageResource(R.drawable.online);
@@ -223,7 +196,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                         }
                     });
 
-                    u.v = userView;
+                    u.viewInNavDrawer = userView;
                 }
 
                 child.setTag(R.id.STAFFGROUP, childPosition);
@@ -233,6 +206,28 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
         }
         return child;
+    }
+
+    private void setConversationNameAndTag(View child, Conversation conversation, int tagID) {
+        TextView userTextView = (TextView) child.findViewById(R.id.nav_row_text_view);
+        userTextView.setText(conversation.getName());
+        child.setTag(tagID, conversation.getID());
+    }
+
+    private void setUnreadNumber(View child, int groupPosition, int childPosition) {
+        TextView notificationTextView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
+        notificationTextView.setVisibility(View.VISIBLE);
+        Conversation conversation = (Conversation) getChild(groupPosition, childPosition);
+        if(conversation.getNumOfUnseen() == 0){
+            notificationTextView.setVisibility(View.INVISIBLE);
+        }else {
+            notificationTextView.setVisibility(View.VISIBLE);
+            if (conversation.getNumOfUnseen() > 9) {
+                notificationTextView.setText(R.string.max_num_unread_messages);
+            } else {
+                notificationTextView.setText(conversation.getNumOfUnseen() + "");
+            }
+        }
     }
 
     @Override
@@ -258,7 +253,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
     }
 
     public void addConversation(int groupID, Conversation c){
-        //List<NavDrawerItem> group = null;
         Group<NavDrawerItem> group = getGroupByID(groupID);
         group.addItem(c);
 
@@ -281,7 +275,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
             staffGroup.addItem(newGroup);
             dataSetChanged();
         }else{
-            Log.v("taggy", "Staff gorup could not be found while trying to add department");
+            Log.v("warning", "Staff group could not be found while trying to add department");
         }
 
     }
@@ -301,7 +295,10 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
     }
 
     public void moveConversationToFirstPosition (int groupID, Conversation conversation){
-        Group group = getGroupByID(groupID);
+        Group<NavDrawerItem> group = getGroupByID(groupID);
+        if(group == null){
+            return;
+        }
         group.moveItemToFirstPosition(conversation);
         dataSetChanged();
     }
@@ -312,7 +309,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
 
         if(unreadGroup == null || privateGroup == null){
-            Log.v("error", "Could not move conversation to private");
+            Log.v("warning", "Could not move conversation to private");
             return;
         }
 
@@ -320,15 +317,13 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
         if(unreadGroup.contains(conversation)){
             unreadGroup.removeItem(conversation);
         }else{
-            Log.v("error", "Conversation to move is not in unread");
+            Log.v("warning", "Conversation to move is not in unread");
         }
 
         if(! privateGroup.contains(conversation)){
             if(conversation.hasOnlineUser()){
-                Log.v("taggy","Has online user");
                 privateGroup.addItem(0, conversation);
             }else{
-                Log.v("taggy","Does not have online user");
                 privateGroup.addItem(conversation);
             }
         }
@@ -402,6 +397,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                 return g;
             }
         }
+        Log.v("warning", "No group with ID " + groupID + " was found");
         return null;
     }
 

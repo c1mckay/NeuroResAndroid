@@ -24,10 +24,14 @@ public class Conversation extends NavDrawerItem{
     }
 
     public String getName() {
-        if(users == null)
+        if(users == null){
             return "Bugged out conversation";
-        if(users.size() == 1)
+        }
+
+        if(users.size() == 1){
             return users.get(0).getName();
+        }
+
         StringBuilder sb = new StringBuilder();
         for(User u: users){
             sb.append(u.getName());

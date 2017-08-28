@@ -1,7 +1,6 @@
 package edu.ucsd.neurores;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -11,16 +10,18 @@ import android.view.View;
 abstract class NavDrawerItem {
     private Long id;
     private Context c;
-    View v;
+    View viewInNavDrawer;
+    boolean isSelected;
 
 
     NavDrawerItem(Long id, Context c){
         this.id = id;
         this.c = c;
+        isSelected = false;
     }
 
     protected void setView(View v){
-        this.v = v;
+        this.viewInNavDrawer = v;
     }
 
     public Long getID() {
@@ -28,14 +29,14 @@ abstract class NavDrawerItem {
     }
 
     void select(){
-        if(v != null){
-            v.setBackgroundColor(c.getResources().getColor(R.color.selected));
+        if(viewInNavDrawer != null){
+            viewInNavDrawer.setBackgroundColor(c.getResources().getColor(R.color.selected));
         }
     }
 
     void deselect(){
-        if(v != null){
-            v.setBackgroundColor(c.getResources().getColor(R.color.colorPrimary));
+        if(viewInNavDrawer != null){
+            viewInNavDrawer.setBackgroundColor(c.getResources().getColor(R.color.colorPrimary));
         }
     }
 

@@ -1,48 +1,32 @@
 package edu.ucsd.neurores;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.util.Pair;
 
-import com.google.android.gms.common.api.Scope;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.URL;
-import java.net.HttpURLConnection;
-import java.io.InputStream;
 import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 public class SessionWrapper{
 
