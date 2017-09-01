@@ -108,7 +108,7 @@ public class WebSocket extends WebSocketClient {
     }
 
     private boolean userIsNotViewingThisConversation(long conversationID){
-        return conversationID != mFrag.conversation.getID();
+        return mFrag.conversation == null || mFrag.conversation.getID() != conversationID;
     }
 
     private void markAsSeen(long conversationID) {

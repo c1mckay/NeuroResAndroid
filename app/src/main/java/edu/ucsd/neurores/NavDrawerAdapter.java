@@ -49,6 +49,10 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
     @Override
     public int getChildrenCount(int groupPosition) {
+        if(groupPosition == -1){
+            Log.v("warning", "Trying to get groupPosition -1");
+            return 0;
+        }
         Group<NavDrawerItem> group = getGroup(groupPosition);
         return group.size();
     }

@@ -24,7 +24,7 @@ public class Conversation extends NavDrawerItem{
     }
 
     public String getName() {
-        if(users == null){
+        if(users == null || users.size() == 0){
             return "Bugged out conversation";
         }
 

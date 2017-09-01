@@ -7,6 +7,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -115,10 +117,39 @@ public class MainFragment extends Fragment{
         messageSendButton = (Button) v.findViewById(R.id.message_send_button);
         messageEditText = (EditText) v.findViewById(R.id.message_edit_text);
 
+        messageSendButton.setEnabled(false);
+
         //Add onboarding message
         if(! hasConversation()){
             addMessage("", mainActivity.getResources().getString(R.string.onboardingMessage), System.currentTimeMillis(),true);
         }
+
+        messageEditText.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                if(s.toString().trim().length()==0){
+                    messageSendButton.setEnabled(false);
+                } else {
+                    messageSendButton.setEnabled(true);
+                }
+            }
+
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // TODO Auto-generated method stub
+
+            }
+        });
 
 
         RecyclerView.LayoutManager rvLayoutManager = new LinearLayoutManager(mainActivity);

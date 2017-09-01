@@ -113,9 +113,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
         }
 
         if(otherUserSentMessage(message)){
-            paddingLeft = 30;
+            paddingLeft = mainActivity.getResources().getDimensionPixelSize(R.dimen.other_user_left_margin);
         }else{
-            paddingLeft = 10;
+            paddingLeft = mainActivity.getResources().getDimensionPixelSize(R.dimen.current_user_left_margin);
         }
 
         holder.messageText.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);

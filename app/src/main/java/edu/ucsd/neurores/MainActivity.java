@@ -429,9 +429,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onUserClick(long user_id){
-        for(Conversation c: currentConversations.values()){
-            if(c.getNumberOfUsers() == 1 && c.getUserAtIndex(0).getID() == user_id){
-                onConversationClick(c.viewInNavDrawer, c.getID());
+        for(Conversation conversation: currentConversations.values()){
+            if(conversation.getNumberOfUsers() == 1 && conversation.getUserAtIndex(0).getID() == user_id){
+                onConversationClick(conversation.viewInNavDrawer, conversation.getID());
                 return;
             }
         }
@@ -531,7 +531,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onConversationClick(View v, long conversation_id){
-        if(selectedConversation.getID() == conversation_id){
+        if(selectedConversation != null && selectedConversation.getID() == conversation_id){
             closeDrawer();
             return;
         }
@@ -593,9 +593,14 @@ public class MainActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    hideMainElements();
-                    changeFragment();
-                    drawerListView.invalidateViews();
+                    if(selectedConversation == null){
+                        showMainElements();
+                    }else{
+                        hideMainElements();
+                        changeFragment();
+                        drawerListView.invalidateViews();
+                    }
+
                 }
             });
         }
@@ -630,6 +635,10 @@ public class MainActivity extends AppCompatActivity
 
         selectedConversation = currentConversations.get(conversationID);
         if(selectedConversation == null){
+            /*
+            TODO When the user has a previous conversation stored in system prefs, but that conversation no longer exists,
+             the user is logged out (double log in required)
+            */
             Log.v("warning", "Selected conversation was not there");
             logout(null);
             finish();
