@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInstaller;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -219,6 +220,11 @@ public class MainActivity extends AppCompatActivity
         final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
 
         return activeNetwork != null && activeNetwork.isConnected();
+    }
+
+    public void checkServerIsOnline(SessionWrapper.OnCompleteListener onCompleteListener){
+        final Context context = this;
+        SessionWrapper.checkServerIsOnline(this,  onCompleteListener);
     }
 
     @Override

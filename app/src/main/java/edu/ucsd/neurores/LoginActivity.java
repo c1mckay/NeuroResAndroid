@@ -20,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -122,11 +123,25 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         Toast.makeText(this, R.string.no_internet_connection_login , Toast.LENGTH_LONG).show();
     }
 
+    private void showToast(final String message, final Context context){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(context, message , Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     private boolean isConnectedToNetwork() {
         final ConnectivityManager conMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
 
         return activeNetwork != null && activeNetwork.isConnected();
+    }
+
+    public void checkServerIsOnline(SessionWrapper.OnCompleteListener onCompleteListener){
+        final Context context = this;
+        SessionWrapper.checkServerIsOnline(this,  onCompleteListener);
     }
 
     private void removeToken(){
@@ -187,10 +202,28 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
+        final Context context = this;
         if(! isConnectedToNetwork()){
             showNoInternetConnectionToast();
             return;
         }
+
+        checkServerIsOnline(new SessionWrapper.OnCompleteListener() {
+
+            @Override
+            public void onComplete(String s) {
+                actuallyLogin();
+            }
+
+            @Override
+            public void onError(String s) {
+                showToast(getString(R.string.cannot_connect_to_server), context);
+            }
+        });
+
+    }
+
+    private void actuallyLogin(){
         Button loginButton = (Button) findViewById(R.id.email_sign_in_button);
         loginButton.setText(R.string.signing_in);
         if (mAuthTask != null) {

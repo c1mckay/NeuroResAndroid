@@ -19,8 +19,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.ConnectException;
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -37,6 +42,7 @@ public class SessionWrapper{
   public static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
   public static final String CREATE_CONVERSATION = "/start_conversation";
   public static final String MARK_SEEN = "/mark_seen";
+  public static final String SERVER_CHECK = "/";
 
   /**
    * Create a session using a valid loginToken and mainActivity
@@ -51,7 +57,6 @@ public class SessionWrapper{
    * @param username The user to get a login token for
    * @return The loginToken for the user
      */
-  //I dont think you can/are supposed to do HTTP requests on the main thread
   static String getLoginToken(Context context, String username){
     List<Pair<String,String>> headers = new ArrayList<>();
       headers.add(new Pair<>("auth", username));
@@ -69,7 +74,7 @@ public class SessionWrapper{
     if(context == null){
       Log.v("contextp", "Error getting login token");
     }
-      return request("POST", LOGIN_ENDPOINT, headers, firebaseTokenData, context);
+      return request("POST", BASE_URL,LOGIN_ENDPOINT, headers, firebaseTokenData, context);
   }
 
   public static void GetConversationData(Context context, long id, String token, OnCompleteListener ocl){
@@ -82,6 +87,10 @@ public class SessionWrapper{
 
   public static void markConversationSeen(Context context, long id, String token, OnCompleteListener ocl){
     new HTTPRequestThread(context, token, ocl).setData(Long.toString(id)).execute(MARK_SEEN);
+  }
+
+  public static void checkServerIsOnline(Context context, OnCompleteListener ocl){
+    new HTTPRequestThread(context, "", "GET", ocl).execute(SERVER_CHECK);
   }
 
   /**
@@ -110,32 +119,33 @@ public class SessionWrapper{
    * @param data the data to put into the HTTP packet
    * @return The body of the response from the server
    */
-  private static String request(String requestType, String endpoint, List<Pair<String,String>> headers, String data, Context context){
+  private static String request(String requestType, String hostName, String endpoint, List<Pair<String,String>> headers, String data, Context context){
     int code = 0;
     String message = "";
     String blankLine = "\r\n\r\n";
 
     NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
     SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-    try{
+    try {
       String request = "";
-      Socket sock = new Socket(BASE_URL, 443);
-      SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock, BASE_URL, 443, false);
+      Socket sock = new Socket();
+      sock.connect(new InetSocketAddress(hostName, 443), 1000);
+      SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock, hostName, 443, false);
       PrintWriter pw = new PrintWriter(socketSSL.getOutputStream());
       BufferedReader br = new BufferedReader(new InputStreamReader(socketSSL.getInputStream(), "UTF-8"));
 
       request += requestType + " " + endpoint + " HTTP/1.1\r\n";
       pw.print(requestType + " " + endpoint + " HTTP/1.1\r\n");
-      request += "Host: neurores.ucsd.edu\r\n";
+      request += "Host: " + hostName + "\r\n";
       request += "Connection: close\r\n";
-      pw.print("Host: neurores.ucsd.edu\r\n");
+      pw.print("Host: " + hostName + "\r\n");
       pw.print("Connection: close\r\n");
-      for(Pair<String,String> p : headers){
+      for (Pair<String, String> p : headers) {
         pw.print(p.first + ": " + p.second + "\r\n");
         request += (p.first + ": " + p.second + "\r\n");
       }
 
-      if(requestType.toLowerCase().equals("post")) {
+      if (requestType.toLowerCase().equals("post")) {
         pw.print("Content-Type: application/json\r\n");
         request += "Content-Type: application/json\r\n";
         if (data != null) {
@@ -150,32 +160,38 @@ public class SessionWrapper{
       request += "\r\n";
       pw.flush();
 
-      Log.v("requestr" , request);
+      Log.v("requestr", request);
 
       int nextChar;
       String response = "";
-      while( (nextChar = br.read()) !=  -1){
-        response += (char)nextChar;
+      while ((nextChar = br.read()) != -1) {
+        response += (char) nextChar;
       }
 
       Log.v("requestr", response + "\n");
-      if(response.contains("Content-Length: ")){
+      if (response.contains("Content-Length: ")) {
         int index = response.indexOf("Content-Length: ") + "Content-Length: ".length();
         response = response.substring(index);
-        if(! response.contains("\r\n")){
+        if (!response.contains("\r\n")) {
           throw new Exception("Malformed response");
         }
         index = response.indexOf("\r\n");
         int contentLength = Integer.parseInt(response.substring(0, index));
         response = response.substring(index + "\r\n".length() + 2);
         response = response.substring(0, contentLength);
-      }else{
+      } else {
         response = response.substring(response.indexOf(blankLine) + blankLine.length());
       }
-      if(response.toLowerCase().equals("invalid token")){
+      if (response.toLowerCase().equals("invalid token")) {
         throw new InvalidLoginTokenException("Invalid login token");
       }
-      return  response;
+      return response;
+    }catch (ConnectException e){
+      Log.v("taggy", "Socket Timeout");
+      return "SocketTimeout";
+    }catch (SocketTimeoutException e){
+      Log.v("taggy", "Socket Timeout");
+      return "SocketTimeout";
     }catch(Exception e){
       Log.v("taggy", "Fail");
       Log.v("taggy", e.getMessage());
@@ -234,6 +250,7 @@ public class SessionWrapper{
 
     // The endpoint that will be used in the request
     String token;
+    String requestType;
     OnCompleteListener ocl;
     Context context;
 
@@ -246,6 +263,14 @@ public class SessionWrapper{
       this.ocl = ocl;
       this.token = token;
       this.context = context;
+      this.requestType = "POST";
+    }
+
+    HTTPRequestThread(Context context, String token,String requestType, OnCompleteListener ocl){
+      this.ocl = ocl;
+      this.token = token;
+      this.context = context;
+      this.requestType = requestType;
     }
 
     /**
@@ -261,15 +286,19 @@ public class SessionWrapper{
       /* Add the auth header for this request */
       headers.add(new Pair<>("auth", token));
       /* Make the request */
-      return request("POST", endpoint, headers, data, context);
+
+      return request(requestType, BASE_URL,endpoint, headers, data, context);
 
     }
 
     protected void onPostExecute(String result){
-        if(ocl != null){
-          ocl.onComplete(result);
-
-        }
+      if(result != null && result.equals("SocketTimeout")){
+        ocl.onError(result);
+        return;
+      }
+      if(ocl != null){
+        ocl.onComplete(result);
+      }
     }
 
 
