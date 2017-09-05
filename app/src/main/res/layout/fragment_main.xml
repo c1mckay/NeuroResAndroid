@@ -29,25 +29,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:weightSum="100"
+                android:weightSum="1"
                 android:layout_weight="1">
 
                 <EditText
                     android:imeOptions="actionSend"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="85"
+                    android:layout_weight="1"
                     android:theme="@style/AppTheme"
                     android:id="@+id/message_edit_text"
                     android:inputType="textCapSentences"
                     android:hint="Enter message ..." />
 
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:drawableRight="@drawable/ic_menu_send"
-                    android:layout_weight="15"
-                    android:id="@+id/message_send_button"/>
+                <ImageButton
+                    android:id="@+id/message_send_button"
+                    android:src="@drawable/ic_menu_send"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
 
         </LinearLayout>
 

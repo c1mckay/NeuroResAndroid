@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,7 +56,7 @@ public class MainFragment extends Fragment{
     public SimpleDateFormat formatter;
 
     SwipeRefreshLayout swipeRefreshLayout;
-    Button messageSendButton;
+    ImageButton messageSendButton;
     EditText messageEditText;
 
     WebSocket socket;
@@ -114,7 +115,7 @@ public class MainFragment extends Fragment{
         messageList = new MessageList();
         messageAdapter = new MessageAdapter(mainActivity, messageList);
 
-        messageSendButton = (Button) v.findViewById(R.id.message_send_button);
+        messageSendButton = (ImageButton) v.findViewById(R.id.message_send_button);
         messageEditText = (EditText) v.findViewById(R.id.message_edit_text);
 
         messageSendButton.setEnabled(false);

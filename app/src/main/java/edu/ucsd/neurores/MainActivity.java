@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -154,7 +155,7 @@ public class MainActivity extends AppCompatActivity
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     private void logFireBaseToken() {
@@ -163,7 +164,6 @@ public class MainActivity extends AppCompatActivity
     }
 
         private void registerReceiverForScreen() {
-        /*
        screenStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -182,10 +182,10 @@ public class MainActivity extends AppCompatActivity
         screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
         registerReceiver(screenStateReceiver, screenStateFilter);
-        */
     }
 
     private void onScreenTurnedOn(){
+        Log.v("sockett","Screen On");
         screenIsOn = true;
         if(! isPaused){
             connectSocket();
@@ -195,6 +195,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onScreenTurnedOff(){
+        Log.v("socket","Screen Off");
         screenIsOn = false;
     }
 
@@ -1356,14 +1357,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onSocketDisconnected(){
-        //TODO
-        /*
-        Log.viewInNavDrawer("sockett", "onSocketDisconnected");
+        Log.v("taggy", "!! disconnected socket !!");
         if(! isPaused){
             forceSocketReconnect();
         }else{
-            Log.viewInNavDrawer("sockett", "activity is paused, not connecting socket");
+            Log.v("sockett", "activity is paused, not connecting socket");
         }
-        */
     }
 }
