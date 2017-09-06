@@ -40,6 +40,7 @@
     <string name="message_copied">Message copied to clipboard</string>
     <string name="send">Send</string>
     <string name="cannot_connect_to_server">Cannot connect to the server. Try again later</string>
+    <string name="disconnected_banner">Disconnected from server. Tap to reconnect</string>
 
 
     <string-array name="sub_menus">

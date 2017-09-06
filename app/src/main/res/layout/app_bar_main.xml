@@ -46,6 +46,26 @@
 
             </android.support.design.widget.AppBarLayout>
 
+            <LinearLayout
+                android:id="@+id/warning_banner"
+                android:background="@color/warning_background"
+                android:orientation="vertical"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="25sp">
+
+                <TextView
+                    android:text="@string/disconnected_banner"
+                    android:textColor="@color/warning_text"
+                    android:textSize="12sp"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+
 
             <FrameLayout
                 android:id="@+id/fragment_container"

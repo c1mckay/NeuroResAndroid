@@ -15,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -179,7 +178,7 @@ public class MainFragment extends Fragment{
             Log.v("taggy", "Conversation is null");
             return;
         }
-        SessionWrapper.GetConversationData(context, conversation.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new RequestWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 updateMessageView(context, s, users);
@@ -239,7 +238,7 @@ public class MainFragment extends Fragment{
     }
 
     public void markConversationRead(Context context, final Conversation conversation){
-        SessionWrapper.markConversationSeen(context, conversation.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.markConversationSeen(context, conversation.getID(), getToken(), new RequestWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 mainActivity.moveConversationToPrivate(conversation);
@@ -318,8 +317,8 @@ public class MainFragment extends Fragment{
                 try{
                     NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
                     org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(SessionWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, SessionWrapper.BASE_URL, 443, false);
+                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
+                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
 
 
                     sock.setSocket(socketSSL);
@@ -350,8 +349,8 @@ public class MainFragment extends Fragment{
                 try{
                     NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
                     org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(SessionWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, SessionWrapper.BASE_URL, 443, false);
+                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
+                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
 
 
                     sock.setSocket(socketSSL);

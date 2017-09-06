@@ -112,7 +112,7 @@ public class WebSocket extends WebSocketClient {
     }
 
     private void markAsSeen(long conversationID) {
-        SessionWrapper.markConversationSeen(mainActivity, conversationID, mFrag.getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.markConversationSeen(mainActivity, conversationID, mFrag.getToken(), new RequestWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 // TODO Check response for success

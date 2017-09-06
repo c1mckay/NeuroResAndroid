@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInstaller;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -22,7 +21,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
@@ -86,6 +84,7 @@ public class MainActivity extends AppCompatActivity
     boolean screenIsOn;
     String queuedToastMessage;
     private TextView toolbarTitle;
+    private LinearLayout warningBanner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,7 +155,19 @@ public class MainActivity extends AppCompatActivity
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
 
+        warningBanner = (LinearLayout) findViewById(R.id.warning_banner);
+        warningBanner.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBannerClicked();
+            }
+        });
+
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    private void onBannerClicked() {
+        connectSocket();
     }
 
     private void logFireBaseToken() {
@@ -222,9 +233,9 @@ public class MainActivity extends AppCompatActivity
         return activeNetwork != null && activeNetwork.isConnected();
     }
 
-    public void checkServerIsOnline(SessionWrapper.OnCompleteListener onCompleteListener){
+    public void checkServerIsOnline(RequestWrapper.OnCompleteListener onCompleteListener){
         final Context context = this;
-        SessionWrapper.checkServerIsOnline(this,  onCompleteListener);
+        RequestWrapper.checkServerIsOnline(this,  onCompleteListener);
     }
 
     @Override
@@ -382,8 +393,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
+        super.onResume();
+
         isPaused = false;
         hideMainElements();
+
+        if(! isConnectedToNetwork()){
+            goToLogin();
+            return;
+        }
+
         // Check if the main fragment needs to be changed
         if(needToChangeFragment){
             if(selectedConversation.viewInNavDrawer == null) {
@@ -402,7 +421,6 @@ public class MainActivity extends AppCompatActivity
         }
         connectSocket();
 
-        super.onResume();
         hideSoftKeyboard();
     }
 
@@ -448,7 +466,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){
-        SessionWrapper.CreateConversation(this, userIDs, getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.CreateConversation(this, userIDs, getToken(), new RequestWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
@@ -490,7 +508,8 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onError(String s) {
-
+                Log.v("taggy", "Error creating conversation");
+                logout(null);
             }
         });
     }
@@ -499,7 +518,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                SessionWrapper.UpdateConversations(getApplication(), getToken(), new SessionWrapper.OnCompleteListener() {
+                RequestWrapper.UpdateConversations(getApplication(), getToken(), new RequestWrapper.OnCompleteListener() {
                     @Override
                     public void onComplete(String s) {
                         if(s == null){
@@ -509,7 +528,7 @@ public class MainActivity extends AppCompatActivity
                             finish();
                             return;
                         }
-                        List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
+                        List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
 
                         // Find the newly detected conversation
                         Conversation newConversation = null;
@@ -529,7 +548,8 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onError(String s) {
-
+                        Log.v("taggy", "Error updating conversations");
+                        logout(null);
                     }
                 });
             }
@@ -754,14 +774,14 @@ public class MainActivity extends AppCompatActivity
     private void loadData(){
         hideMainElements();
         // Load data from server
-        SessionWrapper.UpdateUsers(this, getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
                     goToLogin();
                     return;
                 }
-                List<User> users = SessionWrapper.GetUserList(s);
+                List<User> users = RequestWrapper.GetUserList(s);
                 for(User u: users){
                     u.setContext(MainActivity.this);
                 }
@@ -770,13 +790,14 @@ public class MainActivity extends AppCompatActivity
 
 
             public void onError(String s) {
-
+                Log.v("taggy", "Error while loading data");
+                logout(null);
             }
         });
     }
 
     private void updateNavDrawer(){
-        SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnCompleteListener() {
             public void onComplete(final String s) {
                 runOnUiThread(new Runnable() {
                     @Override
@@ -785,7 +806,7 @@ public class MainActivity extends AppCompatActivity
                             goToLogin();
                             return;
                         }
-                        List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
+                        List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
 
                         //called update conversation without the context
                         //needs to be connected here now
@@ -817,7 +838,8 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onError(String s) {
-
+                Log.v("taggy", "Error  updating nav drawer");
+                logout(null);
             }
         });
     }
@@ -837,13 +859,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initializeConversations() {
-        SessionWrapper.UpdateConversations(this, getToken(), new SessionWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
                     goToLogin();
                     return;
                 }
-                List<Conversation> conversations = SessionWrapper.TranslateConversationMetadata(s, userList);
+                List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
 
                 //called update conversation without the context
                 //needs to be connected here now
@@ -857,7 +879,8 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onError(String s) {
-
+                Log.v("taggy", "Error initializing conversations");
+                logout(null);
             }
         });
     }
@@ -961,6 +984,26 @@ public class MainActivity extends AppCompatActivity
         ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
     }
 
+    private void hideWarningBanner(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.v("taggy", "hiding banner");
+                warningBanner.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void showWarningBanner(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.v("taggy", "showing banner");
+                warningBanner.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
     public void showMainElements(){
         findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
 
@@ -1024,7 +1067,7 @@ public class MainActivity extends AppCompatActivity
 
     private void checkCurrentConversationForNewMessages(){
         if( currentFragment != null && ! currentFragment.isLoading()){
-            SessionWrapper.GetConversationData(this, selectedConversation.getID(), getToken(), new SessionWrapper.OnCompleteListener() {
+            RequestWrapper.GetConversationData(this, selectedConversation.getID(), getToken(), new RequestWrapper.OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
                     if(s == null){
@@ -1040,7 +1083,8 @@ public class MainActivity extends AppCompatActivity
 
                 @Override
                 public void onError(String s) {
-
+                    Log.v("taggy", "Error checking for new message");
+                    logout(null);
                 }
             });
         }
@@ -1151,6 +1195,7 @@ public class MainActivity extends AppCompatActivity
         try{
             if(socket != null && ! socket.isClosed() && socket.isOpen()){
                 Log.v("sockett", "Socket is still open. Done");
+                hideWarningBanner();
                 return;
             }
             closeSocket();
@@ -1199,21 +1244,25 @@ public class MainActivity extends AppCompatActivity
                 try{
                     NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
                     org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(SessionWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, SessionWrapper.BASE_URL, 443, false);
-
+                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
+                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
 
                     sock.setSocket(socketSSL);
                     if(! sock.connectBlocking()){
-                        Log.v("sockett", "Failed to connect socket");
-                        throw new Exception("Error connecting to the web socket");
+                        if(! sock.isOpen()){
+                            Log.v("sockett", "Failed to connect socket");
+                            throw new Exception("Error connecting to the web socket");
+                        }
+                        hideWarningBanner();
                     }else{
+                        hideWarningBanner();
                         Log.v("sockett", "Connected");
                     }
 
                 }catch (Exception e){
                     showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
-                    Log.v("taggy", "There was a problem setting up ssl websocket");
+                    Log.v("sockett", "There was a problem setting up ssl websocket");
+                    e.printStackTrace();
                 }
             }
         };
@@ -1231,8 +1280,8 @@ public class MainActivity extends AppCompatActivity
                 try{
                     NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
                     org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(SessionWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, SessionWrapper.BASE_URL, 443, false);
+                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
+                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
 
 
                     sock.setSocket(socketSSL);
@@ -1241,6 +1290,7 @@ public class MainActivity extends AppCompatActivity
                         throw new Exception("Error connecting to the web socket");
                     }else{
                         Log.v("sockett", "Connected");
+                        hideWarningBanner();
                         sock.pushMessage(message);
                     }
 
@@ -1365,7 +1415,8 @@ public class MainActivity extends AppCompatActivity
     public void onSocketDisconnected(){
         Log.v("taggy", "!! disconnected socket !!");
         if(! isPaused){
-            forceSocketReconnect();
+            showWarningBanner();
+            //forceSocketReconnect();
         }else{
             Log.v("sockett", "activity is paused, not connecting socket");
         }
