@@ -118,6 +118,7 @@ public class SearchActivity extends AppCompatActivity {
                                     @Override
                                     public void onError(String s) {
                                         // An error occurred, return as cancelled
+                                        hideSoftKeyboard();
                                         Intent intent = new Intent(SearchActivity.this, MainActivity.class);
                                         setResult(Activity.RESULT_CANCELED, intent);
                                         finish();

@@ -23,6 +23,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.net.Socket;
 import java.text.ParseException;
@@ -57,6 +58,7 @@ public class MainFragment extends Fragment{
     SwipeRefreshLayout swipeRefreshLayout;
     ImageButton messageSendButton;
     EditText messageEditText;
+    TextView errorTextView;
 
     WebSocket socket;
     Toast mostRecentToast;
@@ -75,6 +77,7 @@ public class MainFragment extends Fragment{
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_main, container, false);
         mainActivity = (MainActivity) getActivity();
+        errorTextView = (TextView) v.findViewById(R.id.error_message);
         recyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
         swipeRefreshLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -182,12 +185,15 @@ public class MainFragment extends Fragment{
             @Override
             public void onComplete(String s) {
                 updateMessageView(context, s, users);
+                errorTextView.setVisibility(View.GONE);
                 mainActivity.dismissNotifications(conversation.getID());
             }
 
             @Override
             public void onError(String s) {
-
+                Log.v("taggy", "Error loading messages");
+                mainActivity.showMainElements();
+                errorTextView.setVisibility(View.VISIBLE);
             }
         });
 

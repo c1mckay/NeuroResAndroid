@@ -18,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -167,7 +168,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onBannerClicked() {
-        connectSocket();
+        RequestWrapper.OnCompleteListener ocl = new RequestWrapper.OnCompleteListener() {
+            @Override
+            public void onComplete(String s) {
+                updateNavDrawer();
+            }
+
+            @Override
+            public void onError(String s) {
+                showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
+            }
+        };
+        connectSocket(ocl);
     }
 
     private void logFireBaseToken() {
@@ -242,7 +254,7 @@ public class MainActivity extends AppCompatActivity
     protected void onPause() {
         isPaused = true;
         closeSocket();
-        hideMainElements();
+        //hideMainElements();
         super.onPause();
     }
 
@@ -353,8 +365,17 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        isPaused = false;
         // If the returning activity was the search activity
+
+        if(requestCode == SEARCH_USER_REQUEST && ! isConnectedToNetwork()){
+            showToast(getResources().getString(R.string.reconnect_to_start_conversation), Toast.LENGTH_LONG);
+            return;
+        }
+
         if(requestCode == SEARCH_USER_REQUEST && resultCode == Activity.RESULT_OK){
+
             // Get the username and id of the newly searched user
             long searchedID = data.getLongExtra("CONVERSATION_ID", -1);
             long[] userIDs = data.getLongArrayExtra("USERS_IDS");
@@ -388,7 +409,6 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -396,11 +416,12 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
 
         isPaused = false;
-        hideMainElements();
 
-        if(! isConnectedToNetwork()){
-            goToLogin();
-            return;
+        if(isConnectedToNetwork()){
+            hideMainElements();
+            hideWarningBanner();
+        }else{
+            showWarningBanner();
         }
 
         // Check if the main fragment needs to be changed
@@ -430,9 +451,13 @@ public class MainActivity extends AppCompatActivity
      * @param view the view that was clicked on
      */
     public void searchOnClick(View view) {
-        Intent startSearch = new Intent(MainActivity.this, SearchActivity.class);
-        startSearch.putExtra("token", getToken());
-        startActivityForResult(startSearch, SEARCH_USER_REQUEST);
+        if(isConnectedToNetwork()){
+            Intent startSearch = new Intent(MainActivity.this, SearchActivity.class);
+            startSearch.putExtra("token", getToken());
+            startActivityForResult(startSearch, SEARCH_USER_REQUEST);
+        }else{
+            showToast(getString(R.string.reconnect_search), Toast.LENGTH_LONG);
+        }
     }
 
     /**
@@ -509,7 +534,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onError(String s) {
                 Log.v("taggy", "Error creating conversation");
-                logout(null);
+                showToast(getString(R.string.reconnect_to_start_conversation), Toast.LENGTH_LONG);
             }
         });
     }
@@ -592,7 +617,9 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void changeFragment(){
-        hideMainElements();
+        if(isConnectedToNetwork()){
+            hideMainElements();
+        }
         currentFragment = startMainFragment();
         currentFragment.conversation = selectedConversation;
         currentFragment.userName = loggedInUser.getName();
@@ -643,16 +670,8 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void setInitialFragment(){
-        long conversationID;
-        if(hasOngoingConversations() && ! hasPreviousConversation()){
-            conversationID = getFirstConversationID();
-            Log.v("taggy", "Has ongoing");
-        }else{
-            conversationID = getPreviousConversationID();
-            Log.v("taggy", "Got previous");
-        }
 
-        if(isNewUser() || conversationID == -1){
+        if(isNewUser()){
             currentFragment = loadOnboardingFragment();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
@@ -660,13 +679,20 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        long conversationID = getConversationIDForInitialLoad();
+
+
+
         selectedConversation = currentConversations.get(conversationID);
         if(selectedConversation == null){
-            /*
-            TODO When the user has a previous conversation stored in system prefs, but that conversation no longer exists,
-             the user is logged out (double log in required)
-            */
-            Log.v("warning", "Selected conversation was not there");
+
+            if(hasPreviousConversation()){
+                setPreviousConversationID(-1);
+                setInitialFragment();
+                return;
+            }
+
+            Log.v("warning", "User has ongoing conversations and no previous conversation but cannot load the first ongoing conversation");
             logout(null);
             finish();
             return;
@@ -686,6 +712,18 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
 
         invalidateNavigationDrawer();
+    }
+
+    private long getConversationIDForInitialLoad(){
+        if(hasOngoingConversations() && ! hasPreviousConversation()){
+            Log.v("taggy", "Has ongoing");
+            return getFirstConversationID();
+        }else{
+            Log.v("taggy", "Got previous");
+            return getPreviousConversationID();
+        }
+
+
     }
 
     private long getFirstConversationID(){
@@ -797,6 +835,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateNavDrawer(){
+        Log.v("taggy", "updating nav drawer now");
         RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnCompleteListener() {
             public void onComplete(final String s) {
                 runOnUiThread(new Runnable() {
@@ -839,7 +878,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onError(String s) {
                 Log.v("taggy", "Error  updating nav drawer");
-                logout(null);
+                showMainElements();
+                //logout(null);
             }
         });
     }
@@ -988,7 +1028,6 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.v("taggy", "hiding banner");
                 warningBanner.setVisibility(View.GONE);
             }
         });
@@ -998,7 +1037,6 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.v("taggy", "showing banner");
                 warningBanner.setVisibility(View.VISIBLE);
             }
         });
@@ -1192,22 +1230,35 @@ public class MainActivity extends AppCompatActivity
     /********** Socket Methods **********/
 
     private void connectSocket(){
+        connectSocket(null);
+    }
+
+    private void connectSocket(RequestWrapper.OnCompleteListener ocl){
         try{
             if(socket != null && ! socket.isClosed() && socket.isOpen()){
                 Log.v("sockett", "Socket is still open. Done");
                 hideWarningBanner();
+                if(ocl != null){
+                    ocl.onComplete("Connected");
+                }
                 return;
             }
             closeSocket();
             if(currentFragment == null){
                 Log.v("sockett", "Error: Trying to create a socket with a null fragment");
+                if(ocl != null){
+                    ocl.onError("Error: Trying to create a socket with a null fragment");
+                }
                 return;
             }
             socket = new WebSocket(currentFragment, this);
-            setupSSL(this, socket);
+            setupSSL(this, socket,ocl);
         }catch (URISyntaxException e){
             Log.v("sockett", "The socket failed to connect: " + e.getMessage());
             closeSocket();
+            if(ocl != null){
+                ocl.onError("Socket Failed to connect");
+            }
         }
     }
 
@@ -1237,6 +1288,10 @@ public class MainActivity extends AppCompatActivity
 
 
     private void setupSSL(final Context context, final WebSocket sock){
+        setupSSL(context, sock, null);
+    }
+
+    private void setupSSL(final Context context, final WebSocket sock, final RequestWrapper.OnCompleteListener ocl){
 
         Runnable r = new Runnable() {
             @Override
@@ -1252,56 +1307,26 @@ public class MainActivity extends AppCompatActivity
                         if(! sock.isOpen()){
                             Log.v("sockett", "Failed to connect socket");
                             throw new Exception("Error connecting to the web socket");
+                        }else{
+                            hideWarningBanner();
+                            if(ocl != null){
+                                ocl.onComplete("Connected");
+                            }
                         }
-                        hideWarningBanner();
                     }else{
                         hideWarningBanner();
                         Log.v("sockett", "Connected");
+                        if(ocl != null){
+                            ocl.onComplete("Connected");
+                        }
                     }
 
                 }catch (Exception e){
-                    showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
                     Log.v("sockett", "There was a problem setting up ssl websocket");
                     e.printStackTrace();
-                }
-            }
-        };
-
-        Thread thread = new Thread(r);
-        thread.start();
-
-    }
-
-    private void setupSSLAndSendMessage(final Context context, final WebSocket sock, final String message){
-
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-                    org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
-
-
-                    sock.setSocket(socketSSL);
-                    if(! sock.connectBlocking()){
-                        Log.v("sockett", "Failed to connect socket");
-                        throw new Exception("Error connecting to the web socket");
-                    }else{
-                        Log.v("sockett", "Connected");
-                        hideWarningBanner();
-                        sock.pushMessage(message);
+                    if(ocl != null){
+                        ocl.onError("There was a problem setting up the websocket");
                     }
-
-                }catch (Exception e){
-                    ((MainActivity)context).runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            showToast(context.getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
-                        }
-                    });
-                    Log.v("taggy", "There was a problem setting up ssl websocket");
                 }
             }
         };
@@ -1311,10 +1336,21 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void pushMessage(String message){
+
+    public void pushMessage(final String message){
         if(socket == null || socket.isClosed() || ! socket.isOpen()){
             Log.v("sockett", "Socket is not in working condition while trying to send message. Reconnecting and resending message");
-            connectSocketAndSendMessage(message);
+            connectSocket(new RequestWrapper.OnCompleteListener() {
+                @Override
+                public void onComplete(String s) {
+                    //socket.pushMessage(message);
+                }
+
+                @Override
+                public void onError(String s) {
+                    showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
+                }
+            });
         }else{
             if(currentFragment == null){
                 Log.v("sockett", "currentfragment is null when trying to send message");
@@ -1323,25 +1359,6 @@ public class MainActivity extends AppCompatActivity
             socket.pushMessage(message);
         }
     }
-
-
-
-
-    private void connectSocketAndSendMessage(String message){
-        try {
-            if(socket != null && socket.isOpen()){
-                socket.pushMessage(message);
-                return;
-            }
-            closeSocket();
-            socket = new WebSocket(currentFragment, this);
-            showToast(getResources().getString(R.string.reconnecting_to_server), Toast.LENGTH_SHORT);
-            setupSSLAndSendMessage(this, socket,message);
-        }catch (URISyntaxException e){
-            Log.v("taggy","Error with uri when creating socket");
-        }
-    }
-
 
     /***************************************************/
 
@@ -1354,6 +1371,7 @@ public class MainActivity extends AppCompatActivity
 
 
     public void showToast( final String message,final int length){
+        //TODO Make custom toast
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

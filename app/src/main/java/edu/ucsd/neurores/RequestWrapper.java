@@ -27,8 +27,8 @@ import javax.net.ssl.SSLSocket;
 @SuppressWarnings("Convert2Diamond")
 
 class RequestWrapper {
-
-  private static final String BASE_URL = "neurores.ucsd.edu";private static final String LOGIN_ENDPOINT = "/login";
+  static final String BASE_URL = "neurores.ucsd.edu";
+  private static final String LOGIN_ENDPOINT = "/login";
   private static final String GET_USERS_ENDPOINT = "/users_list";
   private static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
   private static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
@@ -239,7 +239,6 @@ class RequestWrapper {
       this.data = data;
       return this;
     }
-
 
     private String request(String requestType, String hostName, String endpoint, List<Pair<String,String>> headers, String data, Context context){
       String blankLine = "\r\n\r\n";
