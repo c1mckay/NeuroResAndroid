@@ -171,6 +171,7 @@ public class MainActivity extends AppCompatActivity
         RequestWrapper.OnCompleteListener ocl = new RequestWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
+                hideMainElements();
                 updateNavDrawer();
             }
 
@@ -1014,14 +1015,20 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void hideMainElements(){
-        hideSoftKeyboard();
-        findViewById(R.id.loading_logo_image_view).setVisibility(View.VISIBLE);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                hideSoftKeyboard();
+                findViewById(R.id.loading_logo_image_view).setVisibility(View.VISIBLE);
 
-        if(getSupportActionBar() != null){
-            getSupportActionBar().hide();
-        }
-        findViewById(R.id.main_recycler_view_holder).setVisibility(View.GONE);
-        ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                if(getSupportActionBar() != null){
+                    getSupportActionBar().hide();
+                }
+                findViewById(R.id.main_recycler_view_holder).setVisibility(View.GONE);
+                ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            }
+        });
+
     }
 
     private void hideWarningBanner(){
@@ -1043,13 +1050,19 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void showMainElements(){
-        findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.loading_logo_image_view).setVisibility(View.GONE);
 
-        if(getSupportActionBar() != null){
-            getSupportActionBar().show();
-        }
-        findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
-        ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                if(getSupportActionBar() != null){
+                    getSupportActionBar().show();
+                }
+                findViewById(R.id.main_recycler_view_holder).setVisibility(View.VISIBLE);
+                ((DrawerLayout)findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+            }
+        });
+
     }
 
     public void onLoadComplete(){
@@ -1343,7 +1356,8 @@ public class MainActivity extends AppCompatActivity
             connectSocket(new RequestWrapper.OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
-                    //socket.pushMessage(message);
+                    socket.pushMessage(message);
+                    currentFragment.clearMessage();
                 }
 
                 @Override
@@ -1357,6 +1371,8 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             socket.pushMessage(message);
+            currentFragment.clearMessage();
+
         }
     }
 

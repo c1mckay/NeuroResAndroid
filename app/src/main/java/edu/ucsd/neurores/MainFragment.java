@@ -315,75 +315,6 @@ public class MainFragment extends Fragment{
         super.onResume();
     }
 
-    private void setupSSL(final Context context, final WebSocket sock){
-
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-                    org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
-
-
-                    sock.setSocket(socketSSL);
-                    if(! sock.connectBlocking()){
-                        Log.v("sockett", "Failed to connect socket");
-                        throw new Exception("Error connecting to the web socket");
-                    }else{
-                        Log.v("sockett", "Connected");
-                    }
-
-                }catch (Exception e){
-                    showToast(getContext().getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
-                    Log.v("taggy", "There was a problem setting up ssl websocket");
-                }
-            }
-        };
-
-        Thread thread = new Thread(r);
-        thread.start();
-
-    }
-
-    private void setupSSLAndSendMessage(final Context context, final WebSocket sock, final String message){
-
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-                    org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
-
-
-                    sock.setSocket(socketSSL);
-                    if(! sock.connectBlocking()){
-                        Log.v("sockett", "Failed to connect socket");
-                        throw new Exception("Error connecting to the web socket");
-                    }else{
-                        Log.v("sockett", "Connected");
-                        sock.pushMessage(message);
-                    }
-
-                }catch (Exception e){
-                    ((MainActivity)context).runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            showToast(context.getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
-                        }
-                    });
-                    Log.v("taggy", "There was a problem setting up ssl websocket");
-                }
-            }
-        };
-
-        Thread thread = new Thread(r);
-        thread.start();
-
-    }
 
     public void errorVisMessage(String s){
         Log.d("visError", s);
@@ -407,24 +338,8 @@ public class MainFragment extends Fragment{
         return ! recyclerView.canScrollVertically(1);
     }
 
-    private void scrollToShowNewMessage(){
-        recyclerView.scrollToPosition(messageAdapter.getItemCount() -1);
-    }
-
-    public void showToast(String message, int length){
-        if (mostRecentToast != null && mostRecentToast.getView().isShown()){
-            mostRecentToast.cancel();
-        }
-        mostRecentToast = Toast.makeText(getContext(), message, length);
-        mostRecentToast.show();
-    }
-
     public boolean isLoading(){
         return isLoading;
-    }
-
-    public boolean canScroll(){
-        return recyclerView.canScrollVertically(1) || recyclerView.canScrollVertically(-1);
     }
 
     private void setupSendMessageButton(final View parent){
@@ -454,9 +369,17 @@ public class MainFragment extends Fragment{
         //Only send the message if it is not empty
         if(! newMessage.equals("") && mainActivity.selectedConversation != null){
             mainActivity.pushMessage(newMessage);
-            messageEditText.setText("");
             scrollToBottom();
         }
+    }
+
+    public void clearMessage(){
+        mainActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                messageEditText.setText("");
+            }
+        });
     }
 
 }
