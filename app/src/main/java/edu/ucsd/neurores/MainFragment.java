@@ -143,14 +143,10 @@ public class MainFragment extends Fragment{
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count,
                                           int after) {
-                // TODO Auto-generated method stub
-
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                // TODO Auto-generated method stub
-
             }
         });
 
@@ -181,7 +177,7 @@ public class MainFragment extends Fragment{
             Log.v("taggy", "Conversation is null");
             return;
         }
-        RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 updateMessageView(context, s, users);
@@ -190,8 +186,13 @@ public class MainFragment extends Fragment{
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
                 Log.v("taggy", "Error loading messages");
+                if(i == 401){
+                    mainActivity.showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
+                    mainActivity.logout(null);
+                    return;
+                }
                 mainActivity.showMainElements();
                 errorTextView.setVisibility(View.VISIBLE);
             }
@@ -244,14 +245,14 @@ public class MainFragment extends Fragment{
     }
 
     public void markConversationRead(Context context, final Conversation conversation){
-        RequestWrapper.markConversationSeen(context, conversation.getID(), getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.markConversationSeen(context, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 mainActivity.moveConversationToPrivate(conversation);
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
 
             }
         });

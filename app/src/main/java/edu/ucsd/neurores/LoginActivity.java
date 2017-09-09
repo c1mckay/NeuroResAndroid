@@ -115,7 +115,7 @@ public class LoginActivity extends AppCompatActivity{
         return activeNetwork != null && activeNetwork.isConnected();
     }
 
-    public void checkServerIsOnline(RequestWrapper.OnCompleteListener onCompleteListener){
+    public void checkServerIsOnline(RequestWrapper.OnHTTPRequestCompleteListener onCompleteListener){
         RequestWrapper.checkServerIsOnline(this,  onCompleteListener);
     }
 
@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity{
         SharedPreferences sp = LoginActivity.this.getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
         editor.remove(LoginActivity.TOKEN);
-        editor.remove(LoginActivity.NAME);
+        //editor.remove(LoginActivity.NAME);
         editor.commit();
     }
 
@@ -139,7 +139,7 @@ public class LoginActivity extends AppCompatActivity{
             return;
         }
 
-        checkServerIsOnline(new RequestWrapper.OnCompleteListener() {
+        checkServerIsOnline(new RequestWrapper.OnHTTPRequestCompleteListener() {
 
             @Override
             public void onComplete(String s) {
@@ -147,7 +147,7 @@ public class LoginActivity extends AppCompatActivity{
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
                 showToast(getString(R.string.cannot_connect_to_server), context);
             }
         });
@@ -199,10 +199,9 @@ public class LoginActivity extends AppCompatActivity{
 
             String loginCredentials = email + ":";
             loginInProgress = true;
-            RequestWrapper.GetLoginToken(this, loginCredentials, new RequestWrapper.OnCompleteListener() {
+            RequestWrapper.GetLoginToken(this, loginCredentials, new RequestWrapper.OnHTTPRequestCompleteListener() {
                 @Override
                 public void onComplete(String s) {
-                    //TODO Check that s is actually a valid token
                     saveEmail(email);
                     saveToken(s);
                     loginInProgress = false;
@@ -212,7 +211,8 @@ public class LoginActivity extends AppCompatActivity{
                 }
 
                 @Override
-                public void onError(String s) {
+                public void onError(int i) {
+                    //TODO set error depending on response code
                     loginInProgress = false;
                     mEmailSignInButton.setText(R.string.log_in);
                     mPasswordView.setError(getString(R.string.error_incorrect_password));

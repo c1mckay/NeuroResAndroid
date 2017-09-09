@@ -18,7 +18,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +43,7 @@ import java.util.TreeSet;
 
 import javax.net.ssl.SSLSocket;
 
+//TODO Handle the errors in HTTP calls
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, ExpandableListView.OnGroupClickListener, ExpandableListView.OnChildClickListener {
 
@@ -91,22 +91,19 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-
-        if(getToken() == null || ! isConnectedToNetwork()){
+        if(getToken() == null ||  ! isConnectedToNetwork()){
             goToLogin();
             return;
         }
 
-        Log.v("taggy", "got token");
+        setUp();
+    }
 
-        logFireBaseToken();
-
+    private void setUp(){
         if(getIntent().hasExtra(CONVERSATION_ID)){
             setPreviousConversationID(getIntent().getLongExtra(CONVERSATION_ID, -1));
             Log.v("taggy", "previous set");
         }
-
 
 
         setContentView(R.layout.activity_main);
@@ -246,7 +243,7 @@ public class MainActivity extends AppCompatActivity
         return activeNetwork != null && activeNetwork.isConnected();
     }
 
-    public void checkServerIsOnline(RequestWrapper.OnCompleteListener onCompleteListener){
+    public void checkServerIsOnline(RequestWrapper.OnHTTPRequestCompleteListener onCompleteListener){
         final Context context = this;
         RequestWrapper.checkServerIsOnline(this,  onCompleteListener);
     }
@@ -275,6 +272,21 @@ public class MainActivity extends AppCompatActivity
     protected String getToken(){
         SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         return sPref.getString(LoginActivity.TOKEN, null);
+    }
+
+
+    public void saveBadToken(View v){
+        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString(LoginActivity.TOKEN, "This_is_a_bad_login_token");
+        editor.commit();
+    }
+
+    protected void clearToken(){
+        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove(LoginActivity.TOKEN);
+        editor.commit();
     }
 
     protected boolean hasPreviousConversation(){
@@ -492,7 +504,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){
-        RequestWrapper.CreateConversation(this, userIDs, getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.CreateConversation(this, userIDs, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
@@ -533,8 +545,13 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
                 Log.v("taggy", "Error creating conversation");
+                if(i == 401){
+                    showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
+                    logout(null);
+                    return;
+                }
                 showToast(getString(R.string.reconnect_to_start_conversation), Toast.LENGTH_LONG);
             }
         });
@@ -544,7 +561,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                RequestWrapper.UpdateConversations(getApplication(), getToken(), new RequestWrapper.OnCompleteListener() {
+                RequestWrapper.UpdateConversations(getApplication(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
                     @Override
                     public void onComplete(String s) {
                         if(s == null){
@@ -565,7 +582,7 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         if(newConversation == null){
-                            onError("conversation with ID of " + conversationID + " was not found in the list of conversations");
+                            Log.v("error ","conversation with ID of " + conversationID + " was not found in the list of conversations");
                             return;
                         }
                         Log.v("taggy", "new conversation found! Creating it");
@@ -573,7 +590,12 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     @Override
-                    public void onError(String s) {
+                    public void onError(int i) {
+                        if(i == 401){
+                            showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
+                            logout(null);
+                            return;
+                        }
                         Log.v("taggy", "Error updating conversations");
                         logout(null);
                     }
@@ -813,7 +835,7 @@ public class MainActivity extends AppCompatActivity
     private void loadData(){
         hideMainElements();
         // Load data from server
-        RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
@@ -828,8 +850,13 @@ public class MainActivity extends AppCompatActivity
             }
 
 
-            public void onError(String s) {
+            public void onError(int i) {
                 Log.v("taggy", "Error while loading data");
+                if(i == 401){
+                    showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
+                    logout(null);
+                    return;
+                }
                 logout(null);
             }
         });
@@ -837,7 +864,7 @@ public class MainActivity extends AppCompatActivity
 
     private void updateNavDrawer(){
         Log.v("taggy", "updating nav drawer now");
-        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             public void onComplete(final String s) {
                 runOnUiThread(new Runnable() {
                     @Override
@@ -877,8 +904,13 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
                 Log.v("taggy", "Error  updating nav drawer");
+                if(i == 401){
+                    showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
+                    logout(null);
+                    return;
+                }
                 showMainElements();
                 //logout(null);
             }
@@ -900,7 +932,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initializeConversations() {
-        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
                     goToLogin();
@@ -919,9 +951,13 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
                 Log.v("taggy", "Error initializing conversations");
-                logout(null);
+                if(i == 401){
+                    showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
+                    logout(null);
+                    return;
+                }
             }
         });
     }
@@ -1078,7 +1114,7 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sPref.edit();
         editor.putString(LoginActivity.TOKEN, null);
-        editor.putString(LoginActivity.NAME , null);
+        //editor.putString(LoginActivity.NAME , null);
         editor.putLong(PREV_CONVERSATION_ID , -1);
         closeSocket();
         editor.commit();
@@ -1112,33 +1148,6 @@ public class MainActivity extends AppCompatActivity
                 moveAllOnlineConversationsUp();
             }
         });
-
-    }
-
-
-    private void checkCurrentConversationForNewMessages(){
-        if( currentFragment != null && ! currentFragment.isLoading()){
-            RequestWrapper.GetConversationData(this, selectedConversation.getID(), getToken(), new RequestWrapper.OnCompleteListener() {
-                @Override
-                public void onComplete(String s) {
-                    if(s == null){
-                        //indicates the http request returned null, and something went wrong. have them login again
-                        Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                        startActivity(i);
-                        finish();
-                        return;
-                    }
-                    currentFragment.updateMessageView(getApplicationContext() ,s, userList);
-
-                }
-
-                @Override
-                public void onError(String s) {
-                    Log.v("taggy", "Error checking for new message");
-                    logout(null);
-                }
-            });
-        }
 
     }
 

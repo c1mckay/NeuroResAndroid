@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,7 +55,7 @@ public class SearchActivity extends AppCompatActivity {
         // Token for calls to server
         final String token = getIntent().getStringExtra("token");
         // Get all the users. Update the arrayList "users". Set up the search adapter
-        RequestWrapper.UpdateUsers(getApplicationContext(), token, new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.UpdateUsers(getApplicationContext(), token, new RequestWrapper.OnHTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 try {
@@ -92,7 +93,7 @@ public class SearchActivity extends AppCompatActivity {
                             if(user != null){
                                 ArrayList<Long> usersInConv = new ArrayList<Long>();
                                 usersInConv.add(user.getID());
-                                RequestWrapper.CreateConversation(getApplicationContext(), usersInConv, token, new RequestWrapper.OnCompleteListener() {
+                                RequestWrapper.CreateConversation(getApplicationContext(), usersInConv, token, new RequestWrapper.OnHTTPRequestCompleteListener() {
                                     @Override
                                     public void onComplete(String s) {
                                         try{
@@ -111,12 +112,12 @@ public class SearchActivity extends AppCompatActivity {
                                             hideSoftKeyboard();
                                             finish();
                                         }catch(Exception e){
-                                            onError("Failed conversion from JSON string to JSON object");
+                                            Log.v("error","Failed conversion from JSON string to JSON object");
                                         }
                                     }
 
                                     @Override
-                                    public void onError(String s) {
+                                    public void onError(int i) {
                                         // An error occurred, return as cancelled
                                         hideSoftKeyboard();
                                         Intent intent = new Intent(SearchActivity.this, MainActivity.class);
@@ -147,7 +148,7 @@ public class SearchActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
                 userArrayList.add("There was an error loading data from the server");
             }
         });

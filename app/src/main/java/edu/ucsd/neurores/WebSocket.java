@@ -28,11 +28,13 @@ public class WebSocket extends WebSocketClient {
         JSONObject jo = new JSONObject();
         try {
             jo.put("greeting", mFrag.getToken());
+            //TODO Check if socket connection is actually accepted (is not accepted when token is bad)
         } catch (JSONException e) {
             e.printStackTrace();
         }
         send(jo.toString());
         //pushMessage("hello");
+
     }
 
     public void onMessage(String message) {
@@ -112,19 +114,18 @@ public class WebSocket extends WebSocketClient {
     }
 
     private void markAsSeen(long conversationID) {
-        RequestWrapper.markConversationSeen(mainActivity, conversationID, mFrag.getToken(), new RequestWrapper.OnCompleteListener() {
+        RequestWrapper.markConversationSeen(mainActivity, conversationID, mFrag.getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 // TODO Check response for success
             }
 
             @Override
-            public void onError(String s) {
+            public void onError(int i) {
 
             }
         });
     }
-
 
     public void onClose(int code, String reason, boolean remote) {
         Log.v("sockett", "onClose()");
@@ -133,6 +134,7 @@ public class WebSocket extends WebSocketClient {
     }
 
     public void onError(Exception ex) {
+        Log.v("sockett", ex.getMessage());
         if(mFrag != null){
             mFrag.errorVisMessage(ex.getLocalizedMessage());
         }

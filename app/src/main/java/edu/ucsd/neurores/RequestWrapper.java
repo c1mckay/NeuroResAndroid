@@ -40,8 +40,14 @@ class RequestWrapper {
   private static final String POST_REQUEST = "POST";
   private static final String GET_REQUEST = "GET";
 
+  static final String ERROR_UNAUTHORIZED = "unauthorized";
+  static final String ERROR_BAD_REQUEST = "bad request";
+  static final String ERROR_INTERNAL_SERVER = "internal server error";
 
-  static void GetLoginToken(Context context, String loginCredentials, OnCompleteListener ocl){
+
+
+
+  static void GetLoginToken(Context context, String loginCredentials, final OnHTTPRequestCompleteListener ocl){
     String firebaseTokenData = getFirebaseTokenData();
 
     HTTPRequestThread requestThread = new HTTPRequestThread(context, loginCredentials, POST_REQUEST, ocl);
@@ -49,28 +55,28 @@ class RequestWrapper {
     requestThread.execute(LOGIN_ENDPOINT);
   }
 
-  static void GetConversationData(Context context, long id, String token, OnCompleteListener ocl){
+  static void GetConversationData(Context context, long id, String token, OnHTTPRequestCompleteListener ocl){
     new HTTPRequestThread(context, token,POST_REQUEST, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
   }
 
-  static void CreateConversation(Context context, List<Long> users, String token, OnCompleteListener ocl){
+  static void CreateConversation(Context context, List<Long> users, String token, OnHTTPRequestCompleteListener ocl){
     new HTTPRequestThread(context, token,POST_REQUEST, ocl).setData(new JSONArray(users).toString()).execute(CREATE_CONVERSATION);
   }
 
-  static void markConversationSeen(Context context, long id, String token, OnCompleteListener ocl){
+  static void markConversationSeen(Context context, long id, String token, OnHTTPRequestCompleteListener ocl){
     new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(MARK_SEEN);
   }
 
-  static void checkServerIsOnline(Context context, OnCompleteListener ocl){
+  static void checkServerIsOnline(Context context, OnHTTPRequestCompleteListener ocl){
     new HTTPRequestThread(context, "", GET_REQUEST, ocl).execute(SERVER_CHECK);
   }
 
-  static void UpdateUsers(Context context, String token, OnCompleteListener oci){
+  static void UpdateUsers(Context context, String token, OnHTTPRequestCompleteListener oci){
     HTTPRequestThread httpRequestThread = new HTTPRequestThread(context, token, POST_REQUEST, oci);
     httpRequestThread.execute(GET_USERS_ENDPOINT);
   }
 
-  static void  UpdateConversations(Context context, String token, OnCompleteListener oci){
+  static void  UpdateConversations(Context context, String token, OnHTTPRequestCompleteListener oci){
     new HTTPRequestThread(context, token, POST_REQUEST, oci).execute(CONVERSATIONS_ENDPOINT);
   }
 
@@ -165,6 +171,11 @@ class RequestWrapper {
     void onError(String s);
   }
 
+  interface OnHTTPRequestCompleteListener{
+    void onComplete(String s);
+    void onError(int i);
+  }
+
   /*************************************************************************************************
    * Class for doing async HTTP requests. The thread will request data form the server and then
    * call the appropriate method for mainActivity (mainActivity is a listener) For example,
@@ -175,20 +186,22 @@ class RequestWrapper {
 
     private String token;
     private String requestType;
-    private OnCompleteListener ocl;
+    private OnHTTPRequestCompleteListener ocl;
     private Context context;
     private boolean requestFailed;
+    private int resultCode;
     private List<Pair<String, String>> headers;
 
 
 
-    HTTPRequestThread(Context context, String token,String requestType, OnCompleteListener ocl){
+    HTTPRequestThread(Context context, String token,String requestType, OnHTTPRequestCompleteListener ocl){
       this.ocl = ocl;
       this.token = token;
       this.context = context;
       this.requestType = requestType;
       this.requestFailed = false;
       this.headers = new ArrayList<Pair<String, String>>();
+      this.resultCode = -1;
 
       addAuthHeader();
     }
@@ -208,7 +221,7 @@ class RequestWrapper {
 
     protected void onPostExecute(String result){
       if(requestFailed){
-        ocl.onError(result);
+        ocl.onError(resultCode);
       }else{
         ocl.onComplete(result);
       }
@@ -264,7 +277,7 @@ class RequestWrapper {
           request += (p.first + ": " + p.second + "\r\n");
         }
 
-        if (requestType.toLowerCase().equals("post")) {
+        if (requestType.toUpperCase().equals(POST_REQUEST)) {
           pw.print("Content-Type: application/json\r\n");
           request += "Content-Type: application/json\r\n";
           if (data != null) {
@@ -288,6 +301,12 @@ class RequestWrapper {
         }
 
         Log.v("requestr", response + "\n");
+
+        resultCode = getResponseCode(response);
+        if(resultCode > 300){
+          throw new HTTPRequestException();
+        }
+
         if (response.contains("Content-Length: ")) {
           int index = response.indexOf("Content-Length: ") + "Content-Length: ".length();
           response = response.substring(index);
@@ -302,13 +321,17 @@ class RequestWrapper {
           response = response.substring(response.indexOf(blankLine) + blankLine.length());
         }
         if (response.toLowerCase().equals("invalid token")) {
-          throw new InvalidLoginTokenException("Invalid login token");
+          throw new UnauthorizedException("Invalid login token");
         }
         return response;
-      }catch (ConnectException e){
-        Log.v("taggy", "Socket Timeout");
+      }catch (HTTPRequestException e){
+        Log.v("taggy", "HttpRequestException");
         setFailure(true);
-        return "SocketTimeout";
+        return getErrorString(resultCode);
+      }catch (ConnectException e){
+        Log.v("taggy", "Connect exception");
+        setFailure(true);
+        return "Connect exception";
       }catch(Exception e){
         Log.v("taggy", "Fail");
         Log.v("taggy", e.getMessage());
@@ -316,6 +339,47 @@ class RequestWrapper {
         setFailure(true);
         return null;
       }
+    }
+
+    private int getResponseCode(String response) {
+      int index = response.indexOf(" ");
+      if(index == -1){
+        return 0;
+      }
+      response = response.substring(index + 1);
+
+      index = response.indexOf(" ");
+      if(index == -1){
+        return 0;
+      }
+      response = response.substring(0, index);
+
+      try{
+        return Integer.parseInt(response);
+      }catch (NumberFormatException e){
+        return 0;
+      }
+    }
+
+    private String getErrorString(int responseCode){
+      String error = "";
+
+      switch (responseCode){
+        case 400:
+          error = ERROR_BAD_REQUEST;
+          break;
+        case 401:
+          error = ERROR_UNAUTHORIZED;
+          break;
+        case 500:{
+          error = ERROR_INTERNAL_SERVER;
+          break;
+        }
+        default:
+          error = "Unknown error: " + responseCode;
+      }
+
+      return error;
     }
   }
 

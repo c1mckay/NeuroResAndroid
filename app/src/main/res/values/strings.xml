@@ -39,10 +39,11 @@
     <string name="no_internet_connection_login">No internet connection. Please reconnect before signing in</string>
     <string name="message_copied">Message copied to clipboard</string>
     <string name="send">Send</string>
-    <string name="cannot_connect_to_server">Cannot connect to the server. Try again later</string>
+    <string name="cannot_connect_to_server">Cannot connect to the server. Server may be down</string>
     <string name="disconnected_banner">Disconnected from server. Tap to reconnect</string>
     <string name="reconnect_search">Reconnect to the server to search</string>
     <string name="reconnect_to_start_conversation">Reconnect to the server before starting a new conversation</string>
+    <string name="cred_expired">Credentials have expired</string>
 
 
     <string-array name="sub_menus">
