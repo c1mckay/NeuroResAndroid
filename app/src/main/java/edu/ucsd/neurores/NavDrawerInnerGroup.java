@@ -16,7 +16,7 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
     private boolean isExpanded;
 
     NavDrawerInnerGroup(Context context, String name){
-        super(null, context);
+        super(0, context);
         this.name = name;
         this.context = context;
         this.isExpanded = false;

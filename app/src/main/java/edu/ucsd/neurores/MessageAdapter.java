@@ -175,6 +175,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
     }
 
     private boolean otherUserSentMessage(Message message){
-        return message.getOwner().length() != 0;
+        return message.getSender().length() != 0;
     }
 }

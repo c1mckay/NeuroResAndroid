@@ -136,9 +136,9 @@ class RequestWrapper {
         JSONObject currentConversationObject = conversationJSONObject.getJSONObject(conversationId);
         String stringUnseen = currentConversationObject.getString("unseen_count");
         if(stringUnseen.equals("null")){
-          currentConversation.setNumOfUnseen(0);
+          currentConversation.setNumOfUnread(0);
         }else{
-          currentConversation.setNumOfUnseen(Integer.parseInt(stringUnseen));
+          currentConversation.setNumOfUnread(Integer.parseInt(stringUnseen));
         }
 
         JSONArray currentArray = currentConversationObject.getJSONArray("members");

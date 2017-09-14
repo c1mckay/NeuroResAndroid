@@ -12,7 +12,7 @@ import java.util.List;
 
 public class Conversation extends NavDrawerItem{
     private List<User> users;
-    private int numOfUnseen;
+    private int numOfUnread;
 
     Conversation(long id, Context c){
         super(id, c);
@@ -47,7 +47,7 @@ public class Conversation extends NavDrawerItem{
 
     public String getUser(long from) {
         for(User u: users){
-            if(u.getID().equals(from))
+            if(u.getID() == from)
                 return u.getName();
         }
         return null;
@@ -63,12 +63,16 @@ public class Conversation extends NavDrawerItem{
         }
     }
 
-    public int getNumOfUnseen(){
-        return numOfUnseen;
+    public int getNumOfUnread(){
+        return numOfUnread;
     }
 
-    public void setNumOfUnseen(int numOfUnseen){
-        this.numOfUnseen = numOfUnseen;
+    public boolean hasUnreadMessages(){
+        return numOfUnread > 0;
+    }
+
+    public void setNumOfUnread(int numOfUnread){
+        this.numOfUnread = numOfUnread;
     }
 
     public List<Long> getUserIDs(){

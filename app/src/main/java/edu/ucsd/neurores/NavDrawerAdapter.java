@@ -137,7 +137,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
                 setConversationNameAndTag(child, conversation, R.id.CONVERSATION);
 
-                if(activity.selectedConversation != null && activity.selectedConversation.getID().equals(conversation.getID())){
+                if(activity.selectedConversation != null && activity.selectedConversation.getID() == conversation.getID()){
                     activity.selectedConversation.deselect();
                     conversation.select();
                 }else{
@@ -222,14 +222,14 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
         TextView notificationTextView = (TextView) child.findViewById(R.id.nav_row_notification_text_view);
         notificationTextView.setVisibility(View.VISIBLE);
         Conversation conversation = (Conversation) getChild(groupPosition, childPosition);
-        if(conversation.getNumOfUnseen() == 0){
+        if(conversation.getNumOfUnread() == 0){
             notificationTextView.setVisibility(View.INVISIBLE);
         }else {
             notificationTextView.setVisibility(View.VISIBLE);
-            if (conversation.getNumOfUnseen() > 9) {
+            if (conversation.getNumOfUnread() > 9) {
                 notificationTextView.setText(R.string.max_num_unread_messages);
             } else {
-                notificationTextView.setText(conversation.getNumOfUnseen() + "");
+                notificationTextView.setText(conversation.getNumOfUnread() + "");
             }
         }
     }
@@ -244,13 +244,13 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
         Group group = getGroup(groupPosition);
         switch(group.getID()){
             case UNREAD_GROUP:
-                title = "Unread";
+                title = activity.getResources().getString(R.string.unread_menu_title);
                 break;
             case PRIVATE_GROUP:
-                title = "Private";
+                title = activity.getResources().getString(R.string.private_menu_title);
                 break;
             case STAFF_GROUP:
-                title = "Staff";
+                title = activity.getResources().getString(R.string.staff_menu_title);
                 break;
         }
         return title;

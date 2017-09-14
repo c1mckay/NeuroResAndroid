@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.stetho.Stetho;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
@@ -86,6 +87,8 @@ public class MainActivity extends AppCompatActivity
     String queuedToastMessage;
     private TextView toolbarTitle;
     private LinearLayout warningBanner;
+
+    MessageDatabaseHelper messageDatabaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +155,10 @@ public class MainActivity extends AppCompatActivity
         queuedToastMessage = null;
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
+        messageDatabaseHelper = new MessageDatabaseHelper(this);
+        //This is used to view the sql data base by going to chrome://inspect on a browser
+        Stetho.initializeWithDefaults(this);
+
 
         warningBanner = (LinearLayout) findViewById(R.id.warning_banner);
         warningBanner.setOnClickListener(new View.OnClickListener() {
@@ -274,13 +281,6 @@ public class MainActivity extends AppCompatActivity
         return sPref.getString(LoginActivity.TOKEN, null);
     }
 
-
-    public void saveBadToken(View v){
-        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString(LoginActivity.TOKEN, "This_is_a_bad_login_token");
-        editor.commit();
-    }
 
     protected void clearToken(){
         SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
@@ -526,7 +526,7 @@ public class MainActivity extends AppCompatActivity
                         if(id != loggedInUser.getID())
                             conversation.addUser(userList.get(id));
                     }
-                    conversation.setNumOfUnseen(numOfUnseen);
+                    conversation.setNumOfUnread(numOfUnseen);
                     currentConversations.put(conversation.getID(), conversation);
                     Log.v("tag2","Size: " + currentConversations.size());
                     Log.v("taggy", "Adding to nav bar");
@@ -833,7 +833,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void loadData(){
+        final MainActivity mainActivity = this;
         hideMainElements();
+        final MessageDatabaseHelper helper = new MessageDatabaseHelper(mainActivity);
         // Load data from server
         RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
 
@@ -843,6 +845,7 @@ public class MainActivity extends AppCompatActivity
                     return;
                 }
                 List<User> users = RequestWrapper.GetUserList(s);
+                helper.insertUsers(users);
                 for(User u: users){
                     u.setContext(MainActivity.this);
                 }
@@ -856,6 +859,12 @@ public class MainActivity extends AppCompatActivity
                     showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
                     logout(null);
                     return;
+                }else if(helper.getUserListJSON() != null){
+                    List<User> users = RequestWrapper.GetUserList(helper.getUserListJSON());
+                    for(User u: users){
+                        u.setContext(MainActivity.this);
+                    }
+                    onUsersLoaded(users);
                 }
                 logout(null);
             }
@@ -883,12 +892,12 @@ public class MainActivity extends AppCompatActivity
 
                         List<Conversation> newConversations = new ArrayList<Conversation>();
                         for( Conversation conversation : conversations){
-                            if(conversation.getNumOfUnseen() > 0){
+                            if(conversation.getNumOfUnread() > 0){
                                 Conversation actualConversation = currentConversations.get(conversation.getID());
                                 if(actualConversation == null){
                                     newConversations.add(conversation);
                                 }else{
-                                    actualConversation.setNumOfUnseen(conversation.getNumOfUnseen());
+                                    actualConversation.setNumOfUnread(conversation.getNumOfUnread());
                                     moveConversationToUnread(actualConversation);
                                 }
                             }
@@ -1039,7 +1048,7 @@ public class MainActivity extends AppCompatActivity
         List<Conversation> privateConversations = new ArrayList<Conversation>();
 
         for(Conversation conversation : conversations){
-            if(conversation.getNumOfUnseen() > 0){
+            if(conversation.getNumOfUnread() > 0){
                 unreadConversations.add(conversation);
             }else{
                 privateConversations.add(conversation);
@@ -1190,7 +1199,7 @@ public class MainActivity extends AppCompatActivity
 
     public void moveConversationToPrivate(final Conversation conversation){
         navDrawerAdapter.moveConversationToPrivate(conversation);
-        conversation.setNumOfUnseen(0);
+        conversation.setNumOfUnread(0);
 
         runOnUiThread(new Runnable() {
             @Override
@@ -1463,5 +1472,22 @@ public class MainActivity extends AppCompatActivity
         }else{
             Log.v("sockett", "activity is paused, not connecting socket");
         }
+    }
+
+    /**************************************************
+     * Dev functions
+     */
+
+
+    public void saveBadToken(View v){
+        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString(LoginActivity.TOKEN, "This_is_a_bad_login_token");
+        editor.commit();
+    }
+
+
+    public void logDB(View v){
+        Log.v("taggy",messageDatabaseHelper.getUserListJSON());
     }
 }

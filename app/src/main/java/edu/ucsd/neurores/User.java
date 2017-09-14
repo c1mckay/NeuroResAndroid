@@ -2,11 +2,14 @@ package edu.ucsd.neurores;
 
 import android.content.Context;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by tbpetersen on 3/2/2017.
  */
 
 public class User extends NavDrawerItem{
+    long id;
     String userType;
     private String name;
     private boolean isOnline;

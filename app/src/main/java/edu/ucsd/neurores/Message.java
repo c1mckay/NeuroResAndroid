@@ -7,9 +7,11 @@ package edu.ucsd.neurores;
 import android.util.Log;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Represents a message from a user. Contains a user's name, message text
@@ -19,20 +21,46 @@ public class Message {
     public static int SHORT = 0;
 
     private static String SHORT_DATE_FORMAT = "MMM d',' h:mm a";
-    private String owner;
+    private String sender;
     private String messageText;
     private long time;
+    private long messageID;
+    private long conversationID;
+    private long senderID;
 
-    /**
-     * Public constructor
-     * @param owner the owner of the message
-     * @param messageText the message text
-     * @param time the time the message was sent
-     */
-    public Message(String owner, String messageText, long time){
-        this.owner = owner;
+    public Message(String sender, String messageText, long time){
+        this.sender = sender;
         this.messageText = messageText;
         this.time = time;
+        messageID = -1;
+        conversationID = -1;
+        senderID = -1;
+    }
+
+    public Message(long messageID, long conversationID, long senderID, String messageText, long time){
+        this.messageID = messageID;
+        this.senderID = senderID;
+        this.messageText = messageText;
+        this.time = time;
+        this.conversationID = conversationID;
+        this.sender = "unknown";
+    }
+
+    public Message(long messageID, long conversationID, long senderID, String messageText, String timeStringDBFormat){
+        this.messageID = messageID;
+        this.senderID = senderID;
+        this.messageText = messageText;
+        this.conversationID = conversationID;
+        this.sender = "unknown";
+
+        long time;
+        try{
+            time = getFormatter().parse(timeStringDBFormat).getTime();
+            this.time = time;
+        }catch(ParseException e){
+            Log.v("error", "time could not be converted: " + timeStringDBFormat);
+            this.time = -1;
+        }
     }
 
     /*****  Getters and setters for variables *****/
@@ -44,12 +72,24 @@ public class Message {
         this.messageText = messageText;
     }
 
-    public String getOwner() {
-        return owner;
+    public String getSender() {
+        return sender;
     }
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    public long getSenderID(){
+        return senderID;
+    }
+
+    public long getMessageID(){
+        return messageID;
+    }
+
+    public long getConversationID(){
+        return conversationID;
     }
 
     public long getTime() {
@@ -79,9 +119,23 @@ public class Message {
         return timeString;
     }
 
+    public String toString(){
+        return "Owner: " + sender + "\n" +
+                "Text: " + messageText + "\n" +
+                "Time: " + time + "\n";
+    }
+
+    public String getTimeStringFormattedForDB(){
+        return getFormatter().format(new Date(getTime()));
+    }
+
+    public static SimpleDateFormat getFormatter(){
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        formatter.setTimeZone(TimeZone.getDefault());
+        return formatter;
+    }
+
     public void logMessageInfo(){
-        Log.v("tag", "Owner: " + owner + "\n" +
-                      "Text: " + messageText + "\n" +
-                      "Time: " + time + "\n");
+        Log.v("tag", toString());
     }
 }

@@ -82,6 +82,7 @@ public class WebSocket extends WebSocketClient {
     }
 
     private void displayMessage(String from, String message, long time, boolean isAtBottom, long userID){
+        //TODO Insert message into database
         if(isAtBottom){
             if(mFrag.isLoading()){
                 mFrag.addTempMessage(from,message,time);
@@ -199,7 +200,7 @@ public class WebSocket extends WebSocketClient {
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                conversation.setNumOfUnseen(conversation.getNumOfUnseen() + 1);
+                conversation.setNumOfUnread(conversation.getNumOfUnread() + 1);
                 mainActivity.moveConversationToUnread(conversation);
             }
         });

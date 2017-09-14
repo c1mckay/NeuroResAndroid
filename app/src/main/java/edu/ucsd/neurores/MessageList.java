@@ -17,7 +17,7 @@ public class MessageList {
     }
 
     public void add(Message message){
-        String user = message.getOwner();
+        String user = message.getSender();
         if(user == null)
             throw new NullPointerException();
         if(user.equals(lastUser) && mostRecentMessageWasWithinFiveMin(message))
