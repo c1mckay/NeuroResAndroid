@@ -7,6 +7,6 @@
     <color name="white">#FFFFFF</color>
     <color name="light_grey">#B6B1A9</color>
     <color name="selected">#006A96</color>
-    <color name="warning_background">#fcf8e3</color>
-    <color name="warning_text">#8a6d3b</color>
+    <color name="warning_background">#CC0000</color>
+    <color name="warning_text">#FFFFFF</color>
 </resources>

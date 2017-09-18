@@ -162,7 +162,7 @@ public class MainFragment extends Fragment{
         RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
-                List<Message> messages = JSONConverter.getMessageListJSON(s, users);
+                List<Message> messages = JSONConverter.toMessageList(s, users);
                 helper.insertMessages(messages);
                 updateMessageView(context, messages);
                 errorTextView.setVisibility(View.GONE);
@@ -179,9 +179,9 @@ public class MainFragment extends Fragment{
                 }
 
                 MessageDatabaseHelper messageDatabaseHelper = new MessageDatabaseHelper(mainActivity);
-                String databaseJSON = messageDatabaseHelper.getConversationJSON(conversation.getID());
+                String databaseJSON = messageDatabaseHelper.getMessagesJSON(conversation.getID());
                 if( databaseJSON!= null){
-                    List<Message> messages = JSONConverter.getMessageListJSON(databaseJSON, users);
+                    List<Message> messages = JSONConverter.toMessageList(databaseJSON, users);
                     updateMessageView(context, messages);
                     errorTextView.setVisibility(View.GONE);
                     mainActivity.dismissNotifications(conversation.getID());
@@ -192,9 +192,6 @@ public class MainFragment extends Fragment{
                 errorTextView.setVisibility(View.VISIBLE);
             }
         });
-
-        //messageAdapter.notifyDataSetChanged();
-
     }
 
     public void updateMessageView(Context context, List<Message> messages){
@@ -223,6 +220,7 @@ public class MainFragment extends Fragment{
             @Override
             public void onComplete(String s) {
                 mainActivity.moveConversationToPrivate(conversation);
+                mainActivity.messageDatabaseHelper.insertConversation(conversation);
             }
 
             @Override

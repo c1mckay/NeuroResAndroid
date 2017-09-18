@@ -93,8 +93,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initializeVariables();
 
-        if(getToken() == null ||  ! isConnectedToNetwork()){
+        if(getToken() == null ||  (! isConnectedToNetwork() && messageDatabaseHelper.databaseIsEmpty())){
             goToLogin();
             return;
         }
@@ -109,8 +111,6 @@ public class MainActivity extends AppCompatActivity
         }
 
 
-        setContentView(R.layout.activity_main);
-        initializeVariables();
         registerReceiverForScreen();
         setupToolbar();
         initializeDrawer();
@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
         messageDatabaseHelper = new MessageDatabaseHelper(this);
+
         //This is used to view the sql data base by going to chrome://inspect on a browser
         Stetho.initializeWithDefaults(this);
 
@@ -426,14 +427,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
-        super.onResume();
-
+        hideMainElements();
         isPaused = false;
 
+        super.onResume();
+
+
         if(isConnectedToNetwork()){
-            hideMainElements();
             hideWarningBanner();
         }else{
+            showMainElements();
             showWarningBanner();
         }
 
@@ -516,6 +519,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 try {
+                    //TODO Use jsonconverter
                     JSONObject jo = new JSONObject(s);
                     JSONArray users = jo.getJSONArray("user_ids");
                     long id = jo.getLong("conv_id");
@@ -528,9 +532,13 @@ public class MainActivity extends AppCompatActivity
                     }
                     conversation.setNumOfUnread(numOfUnseen);
                     currentConversations.put(conversation.getID(), conversation);
-                    Log.v("tag2","Size: " + currentConversations.size());
                     Log.v("taggy", "Adding to nav bar");
                     addToNavBar(groupID, conversation);
+
+                    long conversationID = conversation.getID();
+                    List<Long> members = conversation.getUserIDs();
+                    long unseen = conversation.getNumOfUnread();
+                    messageDatabaseHelper.insertConversation(conversationID, members, -1, unseen);
 
                     if(changeFragment){
                         onConversationClick(conversation.viewInNavDrawer, conversation.getID());
@@ -571,7 +579,7 @@ public class MainActivity extends AppCompatActivity
                             finish();
                             return;
                         }
-                        List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
+                        List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
                         // Find the newly detected conversation
                         Conversation newConversation = null;
@@ -835,7 +843,6 @@ public class MainActivity extends AppCompatActivity
     private void loadData(){
         final MainActivity mainActivity = this;
         hideMainElements();
-        final MessageDatabaseHelper helper = new MessageDatabaseHelper(mainActivity);
         // Load data from server
         RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
 
@@ -844,11 +851,8 @@ public class MainActivity extends AppCompatActivity
                     goToLogin();
                     return;
                 }
-                List<User> users = RequestWrapper.GetUserList(s);
-                helper.insertUsers(users);
-                for(User u: users){
-                    u.setContext(MainActivity.this);
-                }
+                List<User> users = JSONConverter.toUserList(s, mainActivity);
+                messageDatabaseHelper.insertUsers(users);
                 onUsersLoaded(users);
             }
 
@@ -859,12 +863,13 @@ public class MainActivity extends AppCompatActivity
                     showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
                     logout(null);
                     return;
-                }else if(helper.getUserListJSON() != null){
-                    List<User> users = RequestWrapper.GetUserList(helper.getUserListJSON());
+                }else if(messageDatabaseHelper.getUserListJSON() != null){
+                    List<User> users = messageDatabaseHelper.getUserList();
                     for(User u: users){
                         u.setContext(MainActivity.this);
                     }
                     onUsersLoaded(users);
+                    return;
                 }
                 logout(null);
             }
@@ -872,7 +877,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateNavDrawer(){
-        Log.v("taggy", "updating nav drawer now");
         RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             public void onComplete(final String s) {
                 runOnUiThread(new Runnable() {
@@ -882,7 +886,7 @@ public class MainActivity extends AppCompatActivity
                             goToLogin();
                             return;
                         }
-                        List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
+                        List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
                         //called update conversation without the context
                         //needs to be connected here now
@@ -902,10 +906,10 @@ public class MainActivity extends AppCompatActivity
                                 }
                             }
                         }
+                        messageDatabaseHelper.insertConversations(conversations);
                         populateUnread(newConversations);
                         moveAllOnlineConversationsUp();
                         reloadCurrentFragment();
-                        printNavDrawer();
                     }
                 });
 
@@ -941,13 +945,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initializeConversations() {
+        final MainActivity mainActivity = this;
         RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
                     goToLogin();
                     return;
                 }
-                List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
+                List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
                 //called update conversation without the context
                 //needs to be connected here now
@@ -955,6 +960,7 @@ public class MainActivity extends AppCompatActivity
                     c.setContext(MainActivity.this);
                 }
                 populateConversations(conversations);
+                messageDatabaseHelper.insertConversations(conversations);
 
                 onLoadComplete();
             }
@@ -966,6 +972,11 @@ public class MainActivity extends AppCompatActivity
                     showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
                     logout(null);
                     return;
+                }
+                List<Conversation> conversations = messageDatabaseHelper.getConversationsList(mainActivity);
+                if(conversations != null){
+                    populateConversations(conversations);
+                    onLoadComplete();
                 }
             }
         });
@@ -1488,6 +1499,10 @@ public class MainActivity extends AppCompatActivity
 
 
     public void logDB(View v){
-        Log.v("taggy",messageDatabaseHelper.getUserListJSON());
+        List<Conversation> conversations = messageDatabaseHelper.getConversationsList(this);
+
+        for(Conversation conversation : conversations){
+            Log.v("taggy", conversation.toString());
+        }
     }
 }

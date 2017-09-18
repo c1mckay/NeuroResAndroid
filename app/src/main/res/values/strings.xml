@@ -44,6 +44,7 @@
     <string name="reconnect_search">Reconnect to the server to search</string>
     <string name="reconnect_to_start_conversation">Reconnect to the server before starting a new conversation</string>
     <string name="cred_expired">Credentials have expired</string>
+    <string name="hippa_statement">hippa statement</string>
 
 
 </resources>

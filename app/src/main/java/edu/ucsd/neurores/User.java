@@ -9,7 +9,6 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class User extends NavDrawerItem{
-    long id;
     String userType;
     private String name;
     private boolean isOnline;
