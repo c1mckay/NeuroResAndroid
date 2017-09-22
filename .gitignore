@@ -13,3 +13,4 @@ app/app.iml
 local.properties
 app/google-services.json
 *.rawproto
+app/app-release.apk
