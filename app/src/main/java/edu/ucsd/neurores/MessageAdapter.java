@@ -3,6 +3,7 @@ package edu.ucsd.neurores;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -51,6 +52,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MyViewHo
             super(view);
             owner = (TextView) view.findViewById(R.id.owner);
             messageText = (TextView) view.findViewById(R.id.messageText);
+            //messageText.setTextColor(Color.parseColor("#FFFFFF"));
             leftView = view.findViewById(R.id.message_left_space);
             rightView = view.findViewById(R.id.message_right_space);
             time = (TextView) view.findViewById(R.id.time);
