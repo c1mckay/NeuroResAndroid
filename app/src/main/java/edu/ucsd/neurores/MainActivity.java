@@ -185,6 +185,8 @@ public class MainActivity extends AppCompatActivity
                 showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
             }
         };
+
+
         connectSocket(ocl);
     }
 
@@ -648,6 +650,7 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void changeFragment(){
+
         if(isConnectedToNetwork()){
             hideMainElements();
         }
@@ -1145,6 +1148,10 @@ public class MainActivity extends AppCompatActivity
     public  void viewPDF(){
         Intent i = new Intent(this, PDFActivity.class);
         startActivity(i);
+        //TODO Display PDF in fragment instead of activity
+        //android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        //fragmentTransaction.replace(R.id.fragment_container, new PDFFragment());
+        //fragmentTransaction.commit();
     }
 
     public void updateMostRecentConversation(long conversationID){

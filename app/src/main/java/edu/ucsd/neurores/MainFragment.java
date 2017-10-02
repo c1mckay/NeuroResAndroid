@@ -112,8 +112,10 @@ public class MainFragment extends Fragment{
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-                if(s.toString().trim().length()==0){
+                if(messageEditText.getText().length() == 500){
+                    mainActivity.showToast("Maximum message length is 500 characters", Toast.LENGTH_LONG);
+                }
+                if(s.toString().trim().length() == 0){
                     messageSendButton.setEnabled(false);
                 } else {
                     messageSendButton.setEnabled(true);

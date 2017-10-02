@@ -11,6 +11,7 @@ import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.HashMap;
 
 public class WebSocket extends WebSocketClient {
@@ -40,42 +41,52 @@ public class WebSocket extends WebSocketClient {
     public void onMessage(String message) {
         JSONObject jo = null;
         Log.v("sockett", message);
+
         try {
             jo = new JSONObject(message);
             if(isUserStatusUpdate(jo)){
                 updateUserStatus(jo);
                 return;
-            }
+            }else if(false){
+                // TODO Wipe thread
+                return;
+            }else{
 
-            if(! mainActivity.screenIsOn){
-                mainActivity.queueToast("New Message");
-            }
-
-            long conversationID = jo.getLong("conv_id");
-            long userID = jo.getLong("from");
-            if(userIsNotViewingThisConversation(conversationID)){
-                //long conversationID = jo.getLong("conv_id");
-                HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
-                boolean conversationExists = currentConversations.containsKey(conversationID);
-
-                if(conversationExists){
-                    moveConversationToUnread(currentConversations.get(conversationID));
-                }else{
-                    createConversation(conversationID);
+                if(! mainActivity.screenIsOn){
+                    mainActivity.queueToast("New Message");
                 }
 
-                notifyUserOfNewMessage(userID);
-                return;
+                long conversationID = jo.getLong("conv_id");
+                long fromID = jo.getLong("from");
+                String messageText = jo.getString("text");
+                int messageID = Integer.parseInt(jo.getString("mID"));
+                long time = System.currentTimeMillis();
+                String timeString = Message.getFormatter().format(new Date(time));
+
+                mainActivity.messageDatabaseHelper.insertMessage(messageID, messageText, conversationID, fromID, timeString);
+                if(userIsNotViewingThisConversation(conversationID)){
+                    //long conversationID = jo.getLong("conv_id");
+                    HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
+                    boolean conversationExists = currentConversations.containsKey(conversationID);
+
+                    if(conversationExists){
+                        moveConversationToUnread(currentConversations.get(conversationID));
+                    }else{
+                        createConversation(conversationID);
+                    }
+
+                    notifyUserOfNewMessage(fromID);
+                    return;
+                }
+
+                String from = mFrag.conversation.getUser(fromID);
+                if(from == null)
+                    from = "";//this should just a message I sent, an echo.
+                boolean isAtBottom = mFrag.isAtBottom();
+                displayMessage(from, messageText, time, isAtBottom, fromID);
+                markAsSeen(mFrag.conversation.getID());
             }
 
-            message = jo.getString("text");
-            String from = mFrag.conversation.getUser(jo.getLong("from"));
-            if(from == null)
-                from = "";//this should just a message I sent, an echo.
-            long time = System.currentTimeMillis();
-            boolean isAtBottom = mFrag.isAtBottom();
-            displayMessage(from, message, time, isAtBottom, userID);
-            markAsSeen(mFrag.conversation.getID());
         } catch (JSONException e) {
             e.printStackTrace();
         }
