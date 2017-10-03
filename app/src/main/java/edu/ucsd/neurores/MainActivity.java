@@ -11,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
+import com.facebook.stetho.inspector.elements.android.MethodInvoker;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity
     // The list view in the Navigation Drawer
     private ExpandableListView drawerListView;
     // The fragment that holds the messages of the selected user
-    private MainFragment currentFragment;
+    private Fragment currentFragment;
     /* Request for when the search activity is launched by clicking "Search"
        in the navigation drawer */
     private int SEARCH_USER_REQUEST = 1;
@@ -366,7 +368,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         switch (id){
             case R.id.action_pdf_activity:
-                viewPDF();
+                viewPDF(null);
                 break;
         }
 
@@ -654,20 +656,36 @@ public class MainActivity extends AppCompatActivity
         if(isConnectedToNetwork()){
             hideMainElements();
         }
-        currentFragment = startMainFragment();
-        currentFragment.conversation = selectedConversation;
-        currentFragment.userName = loggedInUser.getName();
-        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
-        fragmentTransaction.commit();
-        currentFragment.loadMessages(this, selectedConversation, userList);
-        toolbarTitle.setText(selectedConversation.getName());
+
+        if(selectedConversation != null){
+            currentFragment = startMainFragment();
+
+            MainFragment mainFragment = (MainFragment) currentFragment;
+
+            mainFragment.conversation = selectedConversation;
+            mainFragment.userName = loggedInUser.getName();
+            android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+            fragmentTransaction.commit();
+            mainFragment.loadMessages(this, selectedConversation, userList);
+            toolbarTitle.setText(selectedConversation.getName());
+            RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+            if(recyclerView != null){
+                recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+            }
+            updateMostRecentConversation(selectedConversation.getID());
+        }else{
+            Log.v("taggy", "Showing pdf");
+            currentFragment = new PDFFragment();
+            android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+            fragmentTransaction.commit();
+            toolbarTitle.setText("PDF");
+            showMainElements();
+        }
+
 
         closeDrawer();
-        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
-        recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
-
-        updateMostRecentConversation(selectedConversation.getID());
         updateFrag();
     }
 
@@ -731,13 +749,19 @@ public class MainActivity extends AppCompatActivity
             finish();
             return;
         }
+
+        assert currentFragment instanceof MainFragment;
+
         currentFragment = startMainFragment();
-        currentFragment.conversation = selectedConversation;
-        currentFragment.userName = loggedInUser.getName();
+
+        MainFragment mainFragment = (MainFragment) currentFragment;
+
+        mainFragment.conversation = selectedConversation;
+        mainFragment.userName = loggedInUser.getName();
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+        fragmentTransaction.replace(R.id.fragment_container, mainFragment);
         fragmentTransaction.commit();
-        currentFragment.loadMessages(this, selectedConversation, userList);
+        mainFragment.loadMessages(this, selectedConversation, userList);
         if(getSupportActionBar() != null){
             toolbarTitle.setText(selectedConversation.getName());
         }
@@ -1145,13 +1169,13 @@ public class MainActivity extends AppCompatActivity
         goToLogin();
     }
 
-    public  void viewPDF(){
-        Intent i = new Intent(this, PDFActivity.class);
-        startActivity(i);
+    public  void viewPDF(View v){
+        //Intent i = new Intent(this, PDFActivity.class);
+        //startActivity(i);
         //TODO Display PDF in fragment instead of activity
-        //android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.replace(R.id.fragment_container, new PDFFragment());
-        //fragmentTransaction.commit();
+        selectedConversation.deselect();
+        selectedConversation = null;
+        changeFragment();
     }
 
     public void updateMostRecentConversation(long conversationID){
@@ -1387,13 +1411,20 @@ public class MainActivity extends AppCompatActivity
 
 
     public void pushMessage(final String message){
+        if(! (currentFragment instanceof MainFragment)){
+            Log.v("taggy", "Trying to push message when current fragment is not MainFragment");
+            return;
+        }
+
+        final MainFragment mainFragment = (MainFragment) currentFragment;
+
         if(socket == null || socket.isClosed() || ! socket.isOpen()){
             Log.v("sockett", "Socket is not in working condition while trying to send message. Reconnecting and resending message");
             connectSocket(new RequestWrapper.OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
                     socket.pushMessage(message);
-                    currentFragment.clearMessage();
+                    mainFragment.clearMessage();
                 }
 
                 @Override
@@ -1407,7 +1438,7 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             socket.pushMessage(message);
-            currentFragment.clearMessage();
+            mainFragment.clearMessage();
 
         }
     }

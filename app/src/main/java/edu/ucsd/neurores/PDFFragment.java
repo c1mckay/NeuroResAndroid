@@ -46,6 +46,7 @@ public class PDFFragment extends Fragment{
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_pdf, container, false);
+        /*
         ActionBar actionBar = ((MainActivity)getActivity()).getSupportActionBar();
         if(actionBar != null){
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -53,6 +54,7 @@ public class PDFFragment extends Fragment{
         }else{
             Log.v("taggy", "No action bar");
         }
+        */
 
         pdfView = (PDFView) v.findViewById(R.id.pdf_view);
         pdfView.fromAsset("ucsdreshandbook_2017_2018.pdf").load();
