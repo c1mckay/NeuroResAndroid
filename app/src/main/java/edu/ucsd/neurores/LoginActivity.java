@@ -84,8 +84,7 @@ public class LoginActivity extends AppCompatActivity{
 
         showLastUserSignedIn();
         removeToken();
-        //mLoginFormView = findViewById(R.id.login_form);
-        //mProgressView = findViewById(R.id.login_progress);
+        showToast(getString(R.string.hippa_statement), this);
     }
 
     private void showLastUserSignedIn() {

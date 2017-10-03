@@ -20,19 +20,10 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.w3c.dom.Text;
-
-import java.net.Socket;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TimeZone;
-
-import javax.net.ssl.SSLSocket;
 
 
 /**
@@ -88,16 +79,6 @@ public class MainFragment extends Fragment{
             }
         });
 
-        /*
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                hideSoftKeyboard();
-            }
-        });
-        */
-
         recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, final int oldLeft, final int oldTop, int oldRight, final int oldBottom) {
@@ -131,8 +112,10 @@ public class MainFragment extends Fragment{
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-                if(s.toString().trim().length()==0){
+                if(messageEditText.getText().length() == 500){
+                    mainActivity.showToast("Maximum message length is 500 characters", Toast.LENGTH_LONG);
+                }
+                if(s.toString().trim().length() == 0){
                     messageSendButton.setEnabled(false);
                 } else {
                     messageSendButton.setEnabled(true);
@@ -170,6 +153,7 @@ public class MainFragment extends Fragment{
      * @param conversation the conversation to query the server for
      */
     public void loadMessages(final Context context, final Conversation conversation, final HashMap<Long, User> users){
+        final MessageDatabaseHelper helper = new MessageDatabaseHelper(context);
         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         formatter.setTimeZone(TimeZone.getDefault());
         //should actually queue the messages at this point
@@ -180,7 +164,9 @@ public class MainFragment extends Fragment{
         RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
-                updateMessageView(context, s, users);
+                List<Message> messages = JSONConverter.toMessageList(s, users);
+                helper.insertMessages(messages);
+                updateMessageView(context, messages);
                 errorTextView.setVisibility(View.GONE);
                 mainActivity.dismissNotifications(conversation.getID());
             }
@@ -193,55 +179,42 @@ public class MainFragment extends Fragment{
                     mainActivity.logout(null);
                     return;
                 }
+
+                MessageDatabaseHelper messageDatabaseHelper = new MessageDatabaseHelper(mainActivity);
+                String databaseJSON = messageDatabaseHelper.getMessagesJSON(conversation.getID());
+                if( databaseJSON!= null){
+                    List<Message> messages = JSONConverter.toMessageList(databaseJSON, users);
+                    updateMessageView(context, messages);
+                    errorTextView.setVisibility(View.GONE);
+                    mainActivity.dismissNotifications(conversation.getID());
+                    return;
+                }
+
                 mainActivity.showMainElements();
                 errorTextView.setVisibility(View.VISIBLE);
             }
         });
-
-        //messageAdapter.notifyDataSetChanged();
-
     }
 
-    public void updateMessageView(Context context, String s, HashMap<Long, User> users){
-        Log.v("tag",s);
-        try{
-            JSONArray jMessages = new JSONArray(s);
-            JSONObject jo;
-            long user_id;
-            String userName;
-            User u;
-            Date d;
-            for(int i = 0; i < jMessages.length(); i++){
-                jo = jMessages.getJSONObject(i);
-                user_id = jo.getLong("sender");
-                d = formatter.parse(jo.getString("date"));
-                // TODO Work with timeszones
-                d = new Date(d.getTime() - (1000 * 60 * 60 * 7));
-                u = users.get(user_id);
-                if(u == null)
-                    userName = "";
-                else
-                    userName = u.getName();
-                //Log.viewInNavDrawer("taggy", userName + ": " +  jo.getString("text"));
-                addMessage(userName, jo.getString("text"), d.getTime(),true);
-            }
-            while(temp.size() > 0){
-                addMessage(temp.get(0), true);
-                temp.remove(0);
-            }
-            isLoading = false;
-            displayMessages(true);
-        }catch(JSONException e){
-            Log.v("taggy", "There was a json error");
-            e.printStackTrace();
-        }catch(ParseException e){
-            Log.v("taggy", "There was a parse error");
-            e.printStackTrace();
-        }
-        if(conversation.getNumOfUnseen() > 0){
-            markConversationRead(context, conversation);
+    public void updateMessageView(Context context, List<Message> messages){
+        for(int i = 0; i < messages.size(); i ++){
+            Message message = messages.get(i);
+            addMessage(message,true);
         }
 
+        addMessagesFromTemp();
+        isLoading = false;
+        displayMessages(true);
+        if(conversation.hasUnreadMessages()){
+            markConversationRead(context, conversation);
+        }
+    }
+
+    private void addMessagesFromTemp() {
+        while(temp.size() > 0){
+            addMessage(temp.get(0), true);
+            temp.remove(0);
+        }
     }
 
     public void markConversationRead(Context context, final Conversation conversation){
@@ -249,6 +222,7 @@ public class MainFragment extends Fragment{
             @Override
             public void onComplete(String s) {
                 mainActivity.moveConversationToPrivate(conversation);
+                mainActivity.messageDatabaseHelper.insertConversation(conversation);
             }
 
             @Override

@@ -11,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -28,6 +29,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.stetho.Stetho;
+import com.facebook.stetho.inspector.elements.android.MethodInvoker;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity
     // The list view in the Navigation Drawer
     private ExpandableListView drawerListView;
     // The fragment that holds the messages of the selected user
-    private MainFragment currentFragment;
+    private Fragment currentFragment;
     /* Request for when the search activity is launched by clicking "Search"
        in the navigation drawer */
     private int SEARCH_USER_REQUEST = 1;
@@ -87,11 +90,15 @@ public class MainActivity extends AppCompatActivity
     private TextView toolbarTitle;
     private LinearLayout warningBanner;
 
+    MessageDatabaseHelper messageDatabaseHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initializeVariables();
 
-        if(getToken() == null ||  ! isConnectedToNetwork()){
+        if(getToken() == null ||  (! isConnectedToNetwork() && messageDatabaseHelper.databaseIsEmpty())){
             goToLogin();
             return;
         }
@@ -106,8 +113,6 @@ public class MainActivity extends AppCompatActivity
         }
 
 
-        setContentView(R.layout.activity_main);
-        initializeVariables();
         registerReceiverForScreen();
         setupToolbar();
         initializeDrawer();
@@ -152,6 +157,11 @@ public class MainActivity extends AppCompatActivity
         queuedToastMessage = null;
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
+        messageDatabaseHelper = new MessageDatabaseHelper(this);
+
+        //This is used to view the sql data base by going to chrome://inspect on a browser
+        Stetho.initializeWithDefaults(this);
+
 
         warningBanner = (LinearLayout) findViewById(R.id.warning_banner);
         warningBanner.setOnClickListener(new View.OnClickListener() {
@@ -177,6 +187,8 @@ public class MainActivity extends AppCompatActivity
                 showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
             }
         };
+
+
         connectSocket(ocl);
     }
 
@@ -275,13 +287,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    public void saveBadToken(View v){
-        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString(LoginActivity.TOKEN, "This_is_a_bad_login_token");
-        editor.commit();
-    }
-
     protected void clearToken(){
         SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
@@ -363,7 +368,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         switch (id){
             case R.id.action_pdf_activity:
-                viewPDF();
+                viewPDF(null);
                 break;
         }
 
@@ -426,14 +431,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
-        super.onResume();
-
+        hideMainElements();
         isPaused = false;
 
+        super.onResume();
+
+
         if(isConnectedToNetwork()){
-            hideMainElements();
             hideWarningBanner();
         }else{
+            showMainElements();
             showWarningBanner();
         }
 
@@ -516,6 +523,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 try {
+                    //TODO Use jsonconverter
                     JSONObject jo = new JSONObject(s);
                     JSONArray users = jo.getJSONArray("user_ids");
                     long id = jo.getLong("conv_id");
@@ -526,11 +534,15 @@ public class MainActivity extends AppCompatActivity
                         if(id != loggedInUser.getID())
                             conversation.addUser(userList.get(id));
                     }
-                    conversation.setNumOfUnseen(numOfUnseen);
+                    conversation.setNumOfUnread(numOfUnseen);
                     currentConversations.put(conversation.getID(), conversation);
-                    Log.v("tag2","Size: " + currentConversations.size());
                     Log.v("taggy", "Adding to nav bar");
                     addToNavBar(groupID, conversation);
+
+                    long conversationID = conversation.getID();
+                    List<Long> members = conversation.getUserIDs();
+                    long unseen = conversation.getNumOfUnread();
+                    messageDatabaseHelper.insertConversation(conversationID, members, -1, unseen);
 
                     if(changeFragment){
                         onConversationClick(conversation.viewInNavDrawer, conversation.getID());
@@ -571,7 +583,7 @@ public class MainActivity extends AppCompatActivity
                             finish();
                             return;
                         }
-                        List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
+                        List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
                         // Find the newly detected conversation
                         Conversation newConversation = null;
@@ -640,23 +652,40 @@ public class MainActivity extends AppCompatActivity
      * Change the messages in the fragment to be the messages of selectedUser
      */
     private void changeFragment(){
+
         if(isConnectedToNetwork()){
             hideMainElements();
         }
-        currentFragment = startMainFragment();
-        currentFragment.conversation = selectedConversation;
-        currentFragment.userName = loggedInUser.getName();
-        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
-        fragmentTransaction.commit();
-        currentFragment.loadMessages(this, selectedConversation, userList);
-        toolbarTitle.setText(selectedConversation.getName());
+
+        if(selectedConversation != null){
+            currentFragment = startMainFragment();
+
+            MainFragment mainFragment = (MainFragment) currentFragment;
+
+            mainFragment.conversation = selectedConversation;
+            mainFragment.userName = loggedInUser.getName();
+            android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+            fragmentTransaction.commit();
+            mainFragment.loadMessages(this, selectedConversation, userList);
+            toolbarTitle.setText(selectedConversation.getName());
+            RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+            if(recyclerView != null){
+                recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
+            }
+            updateMostRecentConversation(selectedConversation.getID());
+        }else{
+            Log.v("taggy", "Showing pdf");
+            currentFragment = new PDFFragment();
+            android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+            fragmentTransaction.commit();
+            toolbarTitle.setText("PDF");
+            showMainElements();
+        }
+
 
         closeDrawer();
-        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
-        recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() - 1);
-
-        updateMostRecentConversation(selectedConversation.getID());
         updateFrag();
     }
 
@@ -720,13 +749,19 @@ public class MainActivity extends AppCompatActivity
             finish();
             return;
         }
+
+        assert currentFragment instanceof MainFragment;
+
         currentFragment = startMainFragment();
-        currentFragment.conversation = selectedConversation;
-        currentFragment.userName = loggedInUser.getName();
+
+        MainFragment mainFragment = (MainFragment) currentFragment;
+
+        mainFragment.conversation = selectedConversation;
+        mainFragment.userName = loggedInUser.getName();
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+        fragmentTransaction.replace(R.id.fragment_container, mainFragment);
         fragmentTransaction.commit();
-        currentFragment.loadMessages(this, selectedConversation, userList);
+        mainFragment.loadMessages(this, selectedConversation, userList);
         if(getSupportActionBar() != null){
             toolbarTitle.setText(selectedConversation.getName());
         }
@@ -833,6 +868,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void loadData(){
+        final MainActivity mainActivity = this;
         hideMainElements();
         // Load data from server
         RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
@@ -842,10 +878,8 @@ public class MainActivity extends AppCompatActivity
                     goToLogin();
                     return;
                 }
-                List<User> users = RequestWrapper.GetUserList(s);
-                for(User u: users){
-                    u.setContext(MainActivity.this);
-                }
+                List<User> users = JSONConverter.toUserList(s, mainActivity);
+                messageDatabaseHelper.insertUsers(users);
                 onUsersLoaded(users);
             }
 
@@ -856,6 +890,13 @@ public class MainActivity extends AppCompatActivity
                     showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
                     logout(null);
                     return;
+                }else if(messageDatabaseHelper.getUserListJSON() != null){
+                    List<User> users = messageDatabaseHelper.getUserList();
+                    for(User u: users){
+                        u.setContext(MainActivity.this);
+                    }
+                    onUsersLoaded(users);
+                    return;
                 }
                 logout(null);
             }
@@ -863,7 +904,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateNavDrawer(){
-        Log.v("taggy", "updating nav drawer now");
         RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             public void onComplete(final String s) {
                 runOnUiThread(new Runnable() {
@@ -873,7 +913,7 @@ public class MainActivity extends AppCompatActivity
                             goToLogin();
                             return;
                         }
-                        List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
+                        List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
                         //called update conversation without the context
                         //needs to be connected here now
@@ -883,20 +923,20 @@ public class MainActivity extends AppCompatActivity
 
                         List<Conversation> newConversations = new ArrayList<Conversation>();
                         for( Conversation conversation : conversations){
-                            if(conversation.getNumOfUnseen() > 0){
+                            if(conversation.getNumOfUnread() > 0){
                                 Conversation actualConversation = currentConversations.get(conversation.getID());
                                 if(actualConversation == null){
                                     newConversations.add(conversation);
                                 }else{
-                                    actualConversation.setNumOfUnseen(conversation.getNumOfUnseen());
+                                    actualConversation.setNumOfUnread(conversation.getNumOfUnread());
                                     moveConversationToUnread(actualConversation);
                                 }
                             }
                         }
+                        messageDatabaseHelper.insertConversations(conversations);
                         populateUnread(newConversations);
                         moveAllOnlineConversationsUp();
                         reloadCurrentFragment();
-                        printNavDrawer();
                     }
                 });
 
@@ -932,13 +972,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initializeConversations() {
+        final MainActivity mainActivity = this;
         RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
                     goToLogin();
                     return;
                 }
-                List<Conversation> conversations = RequestWrapper.TranslateConversationMetadata(s, userList);
+                List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
                 //called update conversation without the context
                 //needs to be connected here now
@@ -946,6 +987,7 @@ public class MainActivity extends AppCompatActivity
                     c.setContext(MainActivity.this);
                 }
                 populateConversations(conversations);
+                messageDatabaseHelper.insertConversations(conversations);
 
                 onLoadComplete();
             }
@@ -957,6 +999,11 @@ public class MainActivity extends AppCompatActivity
                     showToast(getString(R.string.cred_expired), Toast.LENGTH_LONG);
                     logout(null);
                     return;
+                }
+                List<Conversation> conversations = messageDatabaseHelper.getConversationsList(mainActivity);
+                if(conversations != null){
+                    populateConversations(conversations);
+                    onLoadComplete();
                 }
             }
         });
@@ -1039,7 +1086,7 @@ public class MainActivity extends AppCompatActivity
         List<Conversation> privateConversations = new ArrayList<Conversation>();
 
         for(Conversation conversation : conversations){
-            if(conversation.getNumOfUnseen() > 0){
+            if(conversation.getNumOfUnread() > 0){
                 unreadConversations.add(conversation);
             }else{
                 privateConversations.add(conversation);
@@ -1122,9 +1169,13 @@ public class MainActivity extends AppCompatActivity
         goToLogin();
     }
 
-    public  void viewPDF(){
-        Intent i = new Intent(this, PDFActivity.class);
-        startActivity(i);
+    public  void viewPDF(View v){
+        //Intent i = new Intent(this, PDFActivity.class);
+        //startActivity(i);
+        //TODO Display PDF in fragment instead of activity
+        selectedConversation.deselect();
+        selectedConversation = null;
+        changeFragment();
     }
 
     public void updateMostRecentConversation(long conversationID){
@@ -1190,7 +1241,7 @@ public class MainActivity extends AppCompatActivity
 
     public void moveConversationToPrivate(final Conversation conversation){
         navDrawerAdapter.moveConversationToPrivate(conversation);
-        conversation.setNumOfUnseen(0);
+        conversation.setNumOfUnread(0);
 
         runOnUiThread(new Runnable() {
             @Override
@@ -1360,13 +1411,20 @@ public class MainActivity extends AppCompatActivity
 
 
     public void pushMessage(final String message){
+        if(! (currentFragment instanceof MainFragment)){
+            Log.v("taggy", "Trying to push message when current fragment is not MainFragment");
+            return;
+        }
+
+        final MainFragment mainFragment = (MainFragment) currentFragment;
+
         if(socket == null || socket.isClosed() || ! socket.isOpen()){
             Log.v("sockett", "Socket is not in working condition while trying to send message. Reconnecting and resending message");
             connectSocket(new RequestWrapper.OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
                     socket.pushMessage(message);
-                    currentFragment.clearMessage();
+                    mainFragment.clearMessage();
                 }
 
                 @Override
@@ -1380,7 +1438,7 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             socket.pushMessage(message);
-            currentFragment.clearMessage();
+            mainFragment.clearMessage();
 
         }
     }
@@ -1462,6 +1520,27 @@ public class MainActivity extends AppCompatActivity
             //forceSocketReconnect();
         }else{
             Log.v("sockett", "activity is paused, not connecting socket");
+        }
+    }
+
+    /**************************************************
+     * Dev functions
+     */
+
+
+    public void saveBadToken(View v){
+        SharedPreferences sp = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString(LoginActivity.TOKEN, "This_is_a_bad_login_token");
+        editor.commit();
+    }
+
+
+    public void logDB(View v){
+        List<Conversation> conversations = messageDatabaseHelper.getConversationsList(this);
+
+        for(Conversation conversation : conversations){
+            Log.v("taggy", conversation.toString());
         }
     }
 }

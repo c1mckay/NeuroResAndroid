@@ -8,13 +8,13 @@ import android.view.View;
  */
 
 abstract class NavDrawerItem {
-    private Long id;
-    private Context c;
+    private long id;
+    private  Context c;
     View viewInNavDrawer;
     boolean isSelected;
 
 
-    NavDrawerItem(Long id, Context c){
+    NavDrawerItem(long id, Context c){
         this.id = id;
         this.c = c;
         isSelected = false;
@@ -24,7 +24,7 @@ abstract class NavDrawerItem {
         this.viewInNavDrawer = v;
     }
 
-    public Long getID() {
+    public long getID() {
         return id;
     }
 
