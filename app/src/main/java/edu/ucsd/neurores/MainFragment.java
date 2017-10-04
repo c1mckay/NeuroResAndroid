@@ -290,6 +290,26 @@ public class MainFragment extends Fragment{
         super.onResume();
     }
 
+    public void wipeConversation(){
+        RequestWrapper.WipeConversation(mainActivity, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+            @Override
+            public void onComplete(String s) {
+                clearMessages();
+                mainActivity.messageDatabaseHelper.removeAllMessagesInConversation(conversation.getID());
+                Log.v("taggy", s);
+            }
+
+            @Override
+            public void onError(int i) {
+
+            }
+        });
+    }
+
+    public void clearMessages(){
+        messageList.clearMessages();
+        displayMessages(false);
+    }
 
     public void errorVisMessage(String s){
         Log.d("visError", s);

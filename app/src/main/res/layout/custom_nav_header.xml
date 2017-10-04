@@ -73,8 +73,8 @@
                 android:textColor="@color/white"
                 android:gravity="right"
                 android:textSize="20sp"
-                android:onClick="saveBadToken"
-                android:text="Bad Token"/>
+                android:onClick="logDB"
+                android:text="Log Messages"/>
 
 
         </LinearLayout>

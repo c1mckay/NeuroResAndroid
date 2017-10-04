@@ -33,6 +33,7 @@ class RequestWrapper {
   private static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
   private static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
   private static final String CREATE_CONVERSATION = "/start_conversation";
+  private static final String WIPE_CONVERSATION = "/wipe_conversation";
   private static final String MARK_SEEN = "/mark_seen";
   private static final String SERVER_CHECK = "/";
 
@@ -78,6 +79,10 @@ class RequestWrapper {
 
   static void  UpdateConversations(Context context, String token, OnHTTPRequestCompleteListener oci){
     new HTTPRequestThread(context, token, POST_REQUEST, oci).execute(CONVERSATIONS_ENDPOINT);
+  }
+
+  static void WipeConversation(Context context, long id, String token, OnHTTPRequestCompleteListener ocl){
+    new HTTPRequestThread(context, token,POST_REQUEST, ocl).setData(Long.toString(id)).execute(WIPE_CONVERSATION);
   }
 
   private static String getFirebaseTokenData(){

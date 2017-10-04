@@ -198,6 +198,11 @@ public class MessageDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void removeAllMessagesInConversation(long conversationID){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(MESSAGE_TABLE, COLUMN_CONVERSATION_ID + "=" + conversationID, null);
+    }
+
     public boolean insertConversation(Conversation conversation){
         return insertConversation(conversation.getID(), conversation.getUserIDs(), -1, conversation.getNumOfUnread());
     }
@@ -378,7 +383,7 @@ public class MessageDatabaseHelper extends SQLiteOpenHelper {
         if(cursor.getCount() == 0){
             cursor.close();
             db.close();
-            return null;
+            return "[]";
         }
         List<Message> list = new ArrayList<Message>();
 

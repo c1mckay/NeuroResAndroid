@@ -32,6 +32,10 @@ public class MessageList {
         backer.remove(position);
     }
 
+    public void clearMessages(){
+        backer.clear();
+    }
+
     public int size(){
         return backer.size();
     }

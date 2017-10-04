@@ -367,8 +367,12 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         switch (id){
-            case R.id.action_pdf_activity:
-                viewPDF(null);
+            case R.id.action_wipe_thread:
+                if(currentFragment instanceof MainFragment){
+                    ((MainFragment)currentFragment).wipeConversation();
+                }else{
+                   Log.v("taggy", "Conversation wipe requested when currentFragment is not MainFragment");
+                }
                 break;
         }
 
@@ -1170,11 +1174,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     public  void viewPDF(View v){
-        //Intent i = new Intent(this, PDFActivity.class);
-        //startActivity(i);
-        //TODO Display PDF in fragment instead of activity
-        selectedConversation.deselect();
-        selectedConversation = null;
+        if(currentFragment instanceof PDFFragment){
+            closeDrawer();
+            return;
+        }
+
+        if(selectedConversation != null){
+            selectedConversation.deselect();
+            selectedConversation = null;
+        }
         changeFragment();
     }
 
@@ -1470,7 +1478,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-
     public void toggleSettings(View view) {
         View dropdown = findViewById(R.id.settings_menu_dropdown);
         if(dropdown.getVisibility() == View.GONE){
@@ -1538,9 +1545,7 @@ public class MainActivity extends AppCompatActivity
 
     public void logDB(View v){
         List<Conversation> conversations = messageDatabaseHelper.getConversationsList(this);
-
-        for(Conversation conversation : conversations){
-            Log.v("taggy", conversation.toString());
-        }
+        String messageJSON = messageDatabaseHelper.getMessagesJSON(selectedConversation.getID());
+        Log.v("taggy", messageJSON + "");
     }
 }
