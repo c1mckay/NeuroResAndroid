@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -15,6 +16,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -369,7 +371,7 @@ public class MainActivity extends AppCompatActivity
         switch (id){
             case R.id.action_wipe_thread:
                 if(currentFragment instanceof MainFragment){
-                    ((MainFragment)currentFragment).wipeConversation();
+                    wipeAlert();
                 }else{
                    Log.v("taggy", "Conversation wipe requested when currentFragment is not MainFragment");
                 }
@@ -512,6 +514,28 @@ public class MainActivity extends AppCompatActivity
         ArrayList<Long> userIDs = new ArrayList<>();
         userIDs.add(user_id);
         createConversation(userIDs,PRIVATE_MENU_GROUP , true, 0);
+    }
+
+    public void wipeAlert(){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Delete messages with " + selectedConversation.getName() + "?");
+
+        alertDialogBuilder
+                .setMessage(R.string.wipe_messages_message)
+                .setCancelable(true)
+                .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog,int id) {
+                        ((MainFragment)currentFragment).wipeConversation();
+                    }
+                })
+                .setNegativeButton("No",new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
 
     private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){
