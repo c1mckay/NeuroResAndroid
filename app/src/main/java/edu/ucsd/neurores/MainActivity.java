@@ -525,7 +525,7 @@ public class MainActivity extends AppCompatActivity
                 .setCancelable(true)
                 .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog,int id) {
-                        ((MainFragment)currentFragment).wipeConversation();
+                        wipeConversation(selectedConversation.getID(), true);
                     }
                 })
                 .setNegativeButton("No",new DialogInterface.OnClickListener() {
@@ -536,6 +536,14 @@ public class MainActivity extends AppCompatActivity
 
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+    }
+
+    public void wipeConversation(long conversationID, boolean alertServer){
+        if(currentFragment instanceof MainFragment && ((MainFragment)currentFragment).conversation.getID() == conversationID){
+            ((MainFragment)currentFragment).wipeConversation(alertServer);
+        }
+
+        messageDatabaseHelper.removeAllMessagesInConversation(conversationID);
     }
 
     private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){

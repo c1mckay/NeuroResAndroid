@@ -373,6 +373,10 @@ public class MessageDatabaseHelper extends SQLiteOpenHelper {
         return conversation;
     }
 
+    public void makeDatabaseMatchMessageList(long conversationID, List<Message> messageList){
+        removeAllMessagesInConversation(conversationID);
+        insertMessages(messageList);
+    }
 
     public String getMessagesJSON(long conversationID){
         SQLiteDatabase db = this.getWritableDatabase();

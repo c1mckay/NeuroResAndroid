@@ -43,6 +43,7 @@ public class JSONConverter {
 
         for(Message message : messages){
             if(message == null){
+                Log.v("taggy", "Null message");
                 continue;
             }
 
@@ -186,29 +187,21 @@ public class JSONConverter {
             return jsonObject;
         }
         public Message deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            SimpleDateFormat formatter = Message.getFormatter();
-
             long user_id;
             long messageID;
             long conversationID;
             String text;
-            Date date;
+            long milliseconds;
 
-            try{
-                JsonObject jsonObject = (JsonObject) json;
-                user_id = jsonObject.get("sender").getAsLong();
-                messageID = jsonObject.get("message_id").getAsLong();
-                conversationID = jsonObject.get("conv_id").getAsLong();
-                text = jsonObject.get("text").getAsString();
-                String dateString = jsonObject.get("date").getAsString();
-                date = formatter.parse(dateString);
-                // TODO Work with timeszones
-                date = new Date(date.getTime() - (1000 * 60 * 60 * 7));
-            }catch(ParseException e){
-                return null;
-            }
-
-            return new Message(messageID, conversationID, user_id, text, date.getTime());
+            JsonObject jsonObject = (JsonObject) json;
+            user_id = jsonObject.get("sender").getAsLong();
+            messageID = jsonObject.get("message_id").getAsLong();
+            conversationID = jsonObject.get("conv_id").getAsLong();
+            text = jsonObject.get("text").getAsString();
+            String dateString = jsonObject.get("date").getAsString();
+            milliseconds = Message.getMillisecondsFromTimeString(dateString);
+            Message message = new Message(messageID, conversationID, user_id, text, milliseconds);
+            return message;
         }
     }
 

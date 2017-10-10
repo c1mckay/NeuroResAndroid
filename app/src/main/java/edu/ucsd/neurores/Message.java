@@ -54,13 +54,8 @@ public class Message {
         this.sender = "unknown";
 
         long time;
-        try{
-            time = getFormatter().parse(timeStringDBFormat).getTime();
-            this.time = time;
-        }catch(ParseException e){
-            Log.v("error", "time could not be converted: " + timeStringDBFormat);
-            this.time = -1;
-        }
+        time = getMillisecondsFromTimeString(timeStringDBFormat);
+        this.time = time;
     }
 
     /*****  Getters and setters for variables *****/
@@ -108,12 +103,13 @@ public class Message {
         String timeString;
         switch(timeLength){
             default:
-                DateFormat df = new SimpleDateFormat(SHORT_DATE_FORMAT, Locale.getDefault());
-                timeString = df.format(new Date(getTime()));
-                // Remove leading 0 from single digit days Ex 09->9
-                if(timeString.charAt(4) == '0'){
-                    timeString = timeString.substring(0,4) + timeString.substring(5);
-                }
+                //DateFormat df = new SimpleDateFormat(SHORT_DATE_FORMAT, Locale.getDefault());
+                //df.setTimeZone(TimeZone.getDefault());
+
+                DateFormat custom = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault());
+                custom.setTimeZone(TimeZone.getDefault());
+
+                timeString = custom.format(new Date(getTime()));
                 break;
         }
         return timeString;
@@ -125,15 +121,31 @@ public class Message {
                 "Time: " + time + "\n";
     }
 
+    public static String getTimeStringFormattedForDB(long time){
+        SimpleDateFormat formatter = getFormatter();
+        return formatter.format(new Date(time));
+    }
+
     public String getTimeStringFormattedForDB(){
         return getFormatter().format(new Date(getTime()));
     }
 
-    public static SimpleDateFormat getFormatter(){
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        formatter.setTimeZone(TimeZone.getDefault());
+    public static SimpleDateFormat getFormatter() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         return formatter;
     }
+
+    public static long getMillisecondsFromTimeString(String timeString){
+        SimpleDateFormat formatter = getFormatter();
+        try{
+            return formatter.parse(timeString).getTime();
+        }catch (ParseException e){
+            Log.v("taggy", "Error gettinh time from timestring: " + timeString + " " + e.getMessage());
+            return 0;
+        }
+    }
+
 
     public void logMessageInfo(){
         Log.v("tag", toString());

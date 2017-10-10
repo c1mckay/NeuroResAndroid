@@ -49,8 +49,9 @@ public class WebSocket extends WebSocketClient {
             if(isUserStatusUpdate(jo)){
                 updateUserStatus(jo);
                 return;
-            }else if(false){
-                // TODO Wipe thread
+            }else if(isWipeUpdate(jo)){
+                long conversationID =  jo.getLong("convID");
+                mainActivity.wipeConversation(conversationID, false);
                 return;
             }else{
 
@@ -63,7 +64,7 @@ public class WebSocket extends WebSocketClient {
                 String messageText = jo.getString("text");
                 int messageID = Integer.parseInt(jo.getString("mID"));
                 long time = System.currentTimeMillis();
-                String timeString = Message.getFormatter().format(new Date(time));
+                String timeString = Message.getTimeStringFormattedForDB(time);
 
                 mainActivity.messageDatabaseHelper.insertMessage(messageID, messageText, conversationID, fromID, timeString);
                 if(userIsNotViewingThisConversation(conversationID)){
@@ -128,6 +129,15 @@ public class WebSocket extends WebSocketClient {
         }
     }
 
+    private boolean isWipeUpdate(JSONObject jo){
+        try{
+            return jo.has("wipeThread") && jo.getBoolean("wipeThread");
+        }catch(JSONException e){
+            Log.v("error", "Error trying to read value of wipeThread in socket message");
+            return false;
+        }
+    }
+
     private boolean userIsNotViewingThisConversation(long conversationID){
         if(! (currentFragment instanceof MainFragment)){
             return true;
@@ -185,6 +195,7 @@ public class WebSocket extends WebSocketClient {
 
         MainFragment mainFragment = (MainFragment) currentFragment;
         JSONObject jo = new JSONObject();
+        Log.v("taggy", System.currentTimeMillis() + "");
         try {
             jo.put("conv_id", mainFragment.conversation.getID());
             jo.put("text", message);

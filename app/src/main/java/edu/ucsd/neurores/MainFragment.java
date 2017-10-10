@@ -153,7 +153,6 @@ public class MainFragment extends Fragment{
      * @param conversation the conversation to query the server for
      */
     public void loadMessages(final Context context, final Conversation conversation, final HashMap<Long, User> users){
-        final MessageDatabaseHelper helper = new MessageDatabaseHelper(context);
         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         formatter.setTimeZone(TimeZone.getDefault());
         //should actually queue the messages at this point
@@ -165,10 +164,11 @@ public class MainFragment extends Fragment{
             @Override
             public void onComplete(String s) {
                 List<Message> messages = JSONConverter.toMessageList(s, users);
-                helper.insertMessages(messages);
                 updateMessageView(context, messages);
                 errorTextView.setVisibility(View.GONE);
                 mainActivity.dismissNotifications(conversation.getID());
+
+                mainActivity.messageDatabaseHelper.makeDatabaseMatchMessageList(conversation.getID(),messages );
             }
 
             @Override
@@ -290,20 +290,23 @@ public class MainFragment extends Fragment{
         super.onResume();
     }
 
-    public void wipeConversation(){
-        RequestWrapper.WipeConversation(mainActivity, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
-            @Override
-            public void onComplete(String s) {
-                clearMessages();
-                mainActivity.messageDatabaseHelper.removeAllMessagesInConversation(conversation.getID());
-                Log.v("taggy", s);
-            }
+    public void wipeConversation(boolean alertServer){
+        if(alertServer){
+            RequestWrapper.WipeConversation(mainActivity, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+                @Override
+                public void onComplete(String s) {
+                    clearMessages();
+                    Log.v("taggy", s);
+                }
 
-            @Override
-            public void onError(int i) {
+                @Override
+                public void onError(int i) {
 
-            }
-        });
+                }
+            });
+        }else{
+         clearMessages();
+        }
     }
 
     public void clearMessages(){
