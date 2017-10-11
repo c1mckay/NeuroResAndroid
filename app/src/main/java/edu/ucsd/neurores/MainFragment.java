@@ -7,9 +7,11 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -144,10 +146,18 @@ public class MainFragment extends Fragment{
         recyclerView.scrollToPosition(messageList.size() - 1);
 
         setupSendMessageButton(v);
+        centerToolbarTitle();
 
         return v;
     }
-    
+
+    private void centerToolbarTitle() {
+        TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.toolbar_title);
+        Toolbar.LayoutParams params =  (Toolbar.LayoutParams)toolbarTitle.getLayoutParams();
+        params.gravity = Gravity.CENTER;
+        toolbarTitle.setLayoutParams(params);
+    }
+
     /**
      * The conversation details to load
      * @param conversation the conversation to query the server for

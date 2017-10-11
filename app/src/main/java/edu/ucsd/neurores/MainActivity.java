@@ -21,9 +21,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         initializeVariables();
 
+
         if(getToken() == null ||  (! isConnectedToNetwork() && messageDatabaseHelper.databaseIsEmpty())){
             goToLogin();
             return;
@@ -149,7 +152,6 @@ public class MainActivity extends AppCompatActivity
             getSupportActionBar().setDisplayShowTitleEnabled(false);
             toolbarTitle = (TextView) toolbar.findViewById(R.id.toolbar_title);
             toolbarTitle.setText(getResources().getString(R.string.welcome));
-
         }
     }
 
@@ -182,6 +184,7 @@ public class MainActivity extends AppCompatActivity
             public void onComplete(String s) {
                 hideMainElements();
                 updateNavDrawer();
+                reloadCurrentFragment();
             }
 
             @Override
@@ -463,8 +466,8 @@ public class MainActivity extends AppCompatActivity
             changeFragment();
             needToChangeFragment = false;
         }else if(currentFragment != null){
-            //reloadCurrentFragment();
             updateNavDrawer();
+            reloadCurrentFragment();
         }
         connectSocket();
 
@@ -544,6 +547,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         messageDatabaseHelper.removeAllMessagesInConversation(conversationID);
+        updateNavDrawer();
     }
 
     private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){
@@ -951,28 +955,32 @@ public class MainActivity extends AppCompatActivity
                         }
                         List<Conversation> conversations = JSONConverter.toConversationList(s, userList);
 
-                        //called update conversation without the context
-                        //needs to be connected here now
-                        for(Conversation c: conversations){
-                            c.setContext(MainActivity.this);
-                        }
-
                         List<Conversation> newConversations = new ArrayList<Conversation>();
                         for( Conversation conversation : conversations){
-                            if(conversation.getNumOfUnread() > 0){
-                                Conversation actualConversation = currentConversations.get(conversation.getID());
-                                if(actualConversation == null){
-                                    newConversations.add(conversation);
+
+                            conversation.setContext(MainActivity.this);
+
+                            Conversation oldConversation = currentConversations.get(conversation.getID());
+                            if(oldConversation == null){
+                                newConversations.add(conversation);
+                            }else{
+                                oldConversation.setNumOfUnread(conversation.getNumOfUnread());
+                                if(oldConversation.hasUnreadMessages()){
+                                    moveConversationToUnread(oldConversation);
                                 }else{
-                                    actualConversation.setNumOfUnread(conversation.getNumOfUnread());
-                                    moveConversationToUnread(actualConversation);
+                                    moveConversationToPrivate(oldConversation);
                                 }
                             }
+
+                        }
+
+                        for(Conversation conversation : currentConversations.values()){
+                            Log.v("taggy", conversation.getName() + ": " + conversation.getNumOfUnread());
                         }
                         messageDatabaseHelper.insertConversations(conversations);
                         populateUnread(newConversations);
                         moveAllOnlineConversationsUp();
-                        reloadCurrentFragment();
+                        //reloadCurrentFragment();
                     }
                 });
 

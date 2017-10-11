@@ -227,6 +227,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
         }else {
             notificationTextView.setVisibility(View.VISIBLE);
             if (conversation.getNumOfUnread() > 9) {
+                Log.v("taggy", conversation.getNumOfUnread() + "");
                 notificationTextView.setText(R.string.max_num_unread_messages);
             } else {
                 notificationTextView.setText(conversation.getNumOfUnread() + "");
