@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -69,5 +70,15 @@ public class NotificationHandler extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify((int)conversationID /* ID of notification */, notificationBuilder.build());
+        wakeScreen();
+    }
+
+    private void wakeScreen() {
+        PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        if(! pm.isScreenOn())
+        {
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE, "Notification");
+            wl.acquire(1000);
+        }
     }
 }
