@@ -109,15 +109,10 @@ public class LoginTask extends AsyncTask<String,Void, String>{
             con.disconnect();
 
             loginSuccessful = true;
-            return getToken(body);
+            return body;
         }catch(Exception e){
-            return "Failed";
+            return e.getMessage() + "";
         }
-    }
-
-    private String getToken(String body) {
-        int index = body.indexOf("</body>");
-        return body.substring(0, index);
     }
 
     public String getBody(HttpsURLConnection con) throws IOException {

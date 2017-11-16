@@ -202,7 +202,7 @@ public class LoginActivity extends AppCompatActivity{
             LoginTask loginTask = new LoginTask(email, password, new RequestWrapper.OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
-                    Log.v("taggy", s);
+                    Log.v("taggy", "Token is: " + s);
                     saveEmail(email);
                     saveToken(s);
                     loginInProgress = false;

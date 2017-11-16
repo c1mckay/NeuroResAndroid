@@ -17,25 +17,27 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocket;
 
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
 class RequestWrapper {
     static final String BASE_URL = "neurores.ucsd.edu";
-    private static final String LOGIN_ENDPOINT = "/login";
-    private static final String GET_USERS_ENDPOINT = "/users_list";
-    private static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
-    private static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
-    private static final String CREATE_CONVERSATION = "/start_conversation";
-    private static final String WIPE_CONVERSATION = "/wipe_conversation";
-    private static final String MARK_SEEN = "/mark_seen";
-    private static final String SERVER_CHECK = "/";
+    private static final String LOGIN_ENDPOINT = "/static/login";
+    private static final String GET_USERS_ENDPOINT = "/static/users_list";
+    private static final String CONVERSATIONS_ENDPOINT = "/static/conversation_data";
+    private static final String CONVERSATION_CONTENT_ENDPOINT = "/static/get_messages";
+    private static final String CREATE_CONVERSATION = "/static/start_conversation";
+    private static final String WIPE_CONVERSATION = "/static/wipe_conversation";
+    private static final String MARK_SEEN = "/static/mark_seen";
+    private static final String SERVER_CHECK = "/static/users_login";
 
     private static final String AUTH_HEADER_KEY = "auth";
     private static final String POST_REQUEST = "POST";
@@ -189,12 +191,40 @@ class RequestWrapper {
         }
 
         private String request(String requestType, String hostName, String endpoint, List<Pair<String, String>> headers, String data, Context context) {
-            String blankLine = "\r\n\r\n";
-
-            NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-            //noinspection deprecation
-            SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
             try {
+
+
+                URL url = new URL("https://" + hostName + endpoint);
+                HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+                con.setRequestMethod(requestType);
+                con.addRequestProperty("auth", token);
+                con.connect();
+
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+                con.disconnect();
+
+                return response.toString();
+
+
+/******** The rest of this was a work around for the SSL cert problem. Remove once it is confirmed that the preceding code works *************/
+
+
+/*
+
+                String blankLine = "\r\n\r\n";
+
+                NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
+                //noinspection deprecation
+                SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
+
                 String request = "";
                 Socket sock = new Socket(hostName, 443);
                 SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock, hostName, 443, false);
@@ -239,7 +269,7 @@ class RequestWrapper {
 
                 resultCode = getResponseCode(response);
 
-                if (resultCode >= 200) {
+                if (resultCode >= 400) {
                     throw new HTTPRequestException();
                 }
 
@@ -260,6 +290,7 @@ class RequestWrapper {
                     throw new UnauthorizedException("Invalid login token");
                 }
                 return response;
+
             } catch (HTTPRequestException e) {
                 if(endpoint.equals(SERVER_CHECK)){
                     return "";
@@ -271,6 +302,7 @@ class RequestWrapper {
                 Log.v("taggy", "Connect exception");
                 setFailure(true);
                 return "Connect exception";
+                */
             } catch (Exception e) {
                 Log.v("taggy", "Fail");
                 Log.v("taggy", e.getMessage());
