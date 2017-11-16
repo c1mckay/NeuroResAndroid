@@ -918,6 +918,8 @@ public class MainActivity extends AppCompatActivity
                     goToLogin();
                     return;
                 }
+                Log.v("taggy", "Token: " + getToken());
+                Log.v("taggy", s);
                 List<User> users = JSONConverter.toUserList(s, mainActivity);
                 messageDatabaseHelper.insertUsers(users);
                 onUsersLoaded(users);
@@ -1564,9 +1566,17 @@ public class MainActivity extends AppCompatActivity
         Log.v("taggy", "!! disconnected socket !!");
         if(! isPaused){
             showWarningBanner();
+            //showDisconnectMessage();
             //forceSocketReconnect();
         }else{
             Log.v("sockett", "activity is paused, not connecting socket");
+        }
+    }
+
+    private void showDisconnectMessage() {
+        if(currentFragment instanceof MainFragment){
+            MainFragment current = (MainFragment) currentFragment;
+            current.addMessage("NeuroRes",getString(R.string.disconnected_message), System.currentTimeMillis(), true);
         }
     }
 

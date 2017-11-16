@@ -9,6 +9,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -198,6 +199,30 @@ public class LoginActivity extends AppCompatActivity{
 
             String loginCredentials = email + ":";
             loginInProgress = true;
+            LoginTask loginTask = new LoginTask(email, password, new RequestWrapper.OnCompleteListener() {
+                @Override
+                public void onComplete(String s) {
+                    Log.v("taggy", s);
+                    saveEmail(email);
+                    saveToken(s);
+                    loginInProgress = false;
+                    Intent startApp = new Intent(LoginActivity.this, MainActivity.class);
+                    LoginActivity.this.startActivity(startApp);
+                    finish();
+                }
+
+                @Override
+                public void onError(String s) {
+                    //TODO set error depending on response code
+                    loginInProgress = false;
+                    mEmailSignInButton.setText(R.string.log_in);
+                    mPasswordView.setError(getString(R.string.error_incorrect_password));
+                    mPasswordView.requestFocus();
+                }
+            });
+
+            loginTask.execute();
+            /*
             RequestWrapper.GetLoginToken(this, loginCredentials, new RequestWrapper.OnHTTPRequestCompleteListener() {
                 @Override
                 public void onComplete(String s) {
@@ -218,6 +243,7 @@ public class LoginActivity extends AppCompatActivity{
                     mPasswordView.requestFocus();
                 }
             });
+            */
         }
     }
 
