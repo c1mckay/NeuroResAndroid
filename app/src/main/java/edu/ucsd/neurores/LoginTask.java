@@ -108,7 +108,8 @@ public class LoginTask extends AsyncTask<String,Void, String>{
             body = getBody(con);
             con.disconnect();
 
-            loginSuccessful = true;
+
+            loginSuccessful = ! body.toLowerCase().equals("unauthorized");
             return body;
         }catch(Exception e){
             return e.getMessage() + "";

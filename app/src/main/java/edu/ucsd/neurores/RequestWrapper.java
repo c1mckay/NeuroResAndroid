@@ -38,7 +38,7 @@ class RequestWrapper {
     private static final String CREATE_CONVERSATION = "/static/start_conversation";
     private static final String WIPE_CONVERSATION = "/static/wipe_conversation";
     private static final String MARK_SEEN = "/static/mark_seen";
-    private static final String SERVER_CHECK = "/static/users_login";
+    private static final String SERVER_CHECK = "/static/privacy.html";
 
     private static final String AUTH_HEADER_KEY = "auth";
     private static final String POST_REQUEST = "POST";
@@ -70,7 +70,13 @@ class RequestWrapper {
     }
 
     static void checkServerIsOnline(Context context, OnHTTPRequestCompleteListener ocl) {
-        new HTTPRequestThread(context, "", GET_REQUEST, ocl).execute(SERVER_CHECK);
+        Log.v("taggy", "In Server Check");
+        HTTPRequestThread thread = new HTTPRequestThread(context, "", GET_REQUEST, ocl);
+        //thread.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        //thread.addHeader("Accept-Language", "en-US,en;q=0.5");
+        //thread.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0");
+        //thread.addHeader("Connection", "close");
+        thread.execute(SERVER_CHECK);
     }
 
     static void UpdateUsers(Context context, String token, OnHTTPRequestCompleteListener oci) {
@@ -139,7 +145,9 @@ class RequestWrapper {
             this.headers = new ArrayList<Pair<String, String>>();
             this.resultCode = -1;
 
-            addAuthHeader();
+            if(! this.token.equals("")){
+                addAuthHeader();
+            }
         }
 
         /**
@@ -192,15 +200,18 @@ class RequestWrapper {
         }
 
         private String request(String requestType, String hostName, String endpoint, List<Pair<String, String>> headers, String data, Context context) {
+            HttpsURLConnection con = null;
+            int responseCode = -1;
             try {
 
-
                 URL url = new URL("https://" + hostName + endpoint);
-                HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+                con = (HttpsURLConnection) url.openConnection();
                 con.setRequestMethod(requestType);
-                con.addRequestProperty("auth", token);
-                con.setDoOutput(true);
+                for(Pair<String, String> pair : headers){
+                    con.addRequestProperty(pair.first, pair.second);
+                }
                 if(data != null) {
+                    con.setDoOutput(true);
                     DataOutputStream wr = new DataOutputStream(con.getOutputStream());
                     wr.write(data.getBytes("UTF-8"));
                     wr.flush();
@@ -208,8 +219,10 @@ class RequestWrapper {
                 }
                 con.connect();
 
+                responseCode = con.getResponseCode();
+                BufferedReader in;
 
-                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String inputLine;
                 StringBuffer response = new StringBuffer();
 
@@ -219,6 +232,7 @@ class RequestWrapper {
                 in.close();
                 con.disconnect();
 
+                Log.v("taggy", "success");
                 return response.toString();
 
 
@@ -313,6 +327,8 @@ class RequestWrapper {
                 */
             } catch (Exception e) {
                 Log.v("taggy", "Fail");
+                Log.v("taggy", responseCode + "");
+                Log.v("taggy", con.getRequestMethod());
                 Log.v("taggy", e.getMessage());
                 e.printStackTrace();
                 setFailure(true);

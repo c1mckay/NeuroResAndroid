@@ -48,7 +48,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 //TODO Handle the errors in HTTP calls
 public class MainActivity extends AppCompatActivity
@@ -1375,6 +1377,7 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             socket = new WebSocket(currentFragment, this);
+            Log.v("sockett", "Socket connected");
             setupSSL(this, socket,ocl);
         }catch (URISyntaxException e){
             Log.v("sockett", "The socket failed to connect: " + e.getMessage());
@@ -1420,10 +1423,16 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void run() {
                 try{
-                    NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-                    org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    Socket sock1 = new Socket(RequestWrapper.BASE_URL, 443);
-                    SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 443, false);
+                    //NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
+                    //org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
+                    //Socket sock1 = new Socket(RequestWrapper.BASE_URL, 3001);
+                    //SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 3001, false);
+                    // TODO Move all socket stuff into WebSocket
+                    // TODO Handle users who are not authorized to log in (handle in LoginTask)
+                    //TODO Change error message with sign in
+                    // TODO Remove all the old cert stuff
+                    SocketFactory socketFactory = SSLSocketFactory.getDefault();
+                    Socket socketSSL = socketFactory.createSocket(RequestWrapper.BASE_URL, 3001);
 
                     sock.setSocket(socketSSL);
                     if(! sock.connectBlocking()){
@@ -1446,6 +1455,7 @@ public class MainActivity extends AppCompatActivity
 
                 }catch (Exception e){
                     Log.v("sockett", "There was a problem setting up ssl websocket");
+                    Log.v("sockett", e.getMessage() + "!!");
                     e.printStackTrace();
                     if(ocl != null){
                         ocl.onError("There was a problem setting up the websocket");

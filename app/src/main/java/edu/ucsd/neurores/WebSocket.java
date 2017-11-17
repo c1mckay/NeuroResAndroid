@@ -20,7 +20,8 @@ public class WebSocket extends WebSocketClient {
     Fragment currentFragment;
     MainActivity mainActivity;
     WebSocket(Fragment currentFragment, MainActivity mainActivity) throws URISyntaxException {
-        super(new URI("wss://neurores.ucsd.edu"));
+        super(new URI("wss://neurores.ucsd.edu:3001"));
+        //connect();
         this.currentFragment = currentFragment;
         this.mainActivity = mainActivity;
     }
