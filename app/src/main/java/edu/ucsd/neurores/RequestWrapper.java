@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ConnectException;
@@ -198,6 +199,13 @@ class RequestWrapper {
                 HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
                 con.setRequestMethod(requestType);
                 con.addRequestProperty("auth", token);
+                con.setDoOutput(true);
+                if(data != null) {
+                    DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+                    wr.write(data.getBytes("UTF-8"));
+                    wr.flush();
+                    wr.close();
+                }
                 con.connect();
 
 
