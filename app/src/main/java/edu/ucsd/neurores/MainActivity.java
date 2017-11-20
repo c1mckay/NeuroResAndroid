@@ -1162,7 +1162,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void hideWarningBanner(){
+    public void hideWarningBanner(){
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1171,7 +1171,7 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private void showWarningBanner(){
+    public void showWarningBanner(){
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1350,59 +1350,24 @@ public class MainActivity extends AppCompatActivity
 
     /***************************************************/
 
-
-
-    /********** Socket Methods **********/
-
     private void connectSocket(){
         connectSocket(null);
     }
 
     private void connectSocket(RequestWrapper.OnCompleteListener ocl){
+        if(socket != null){
+            Log.v("sockett", "Closing socket!");
+            socket.close();
+            socket = null;
+        }
         try{
-            if(socket != null && ! socket.isClosed() && socket.isOpen()){
-                Log.v("sockett", "Socket is still open. Done");
-                hideWarningBanner();
-                if(ocl != null){
-                    ocl.onComplete("Connected");
-                }
-                return;
-            }
-            closeSocket();
-            if(currentFragment == null){
-                Log.v("sockett", "Error: Trying to create a socket with a null fragment");
-                if(ocl != null){
-                    ocl.onError("Error: Trying to create a socket with a null fragment");
-                }
-                return;
-            }
-            socket = new WebSocket(currentFragment, this);
-            Log.v("sockett", "Socket connected");
-            setupSSL(this, socket,ocl);
+            socket = new WebSocket(currentFragment, this, null);
         }catch (URISyntaxException e){
-            Log.v("sockett", "The socket failed to connect: " + e.getMessage());
-            closeSocket();
-            if(ocl != null){
-                ocl.onError("Socket Failed to connect");
-            }
+            Log.v("sockett", "URISyntaxException: " + e.getMessage());
+            socket = null;
         }
     }
 
-    private void forceSocketReconnect(){
-        try{
-            Log.v("sockett", "Forcing reconnect");
-            closeSocket();
-            if(currentFragment == null){
-                Log.v("sockett", "Error: Trying to create a socket with a null fragment");
-                return;
-            }
-            socket = new WebSocket(currentFragment, this);
-            setupSSL(this, socket);
-        }catch (URISyntaxException e){
-            Log.v("sockett", "The socket failed to forcibly connect: " + e.getMessage());
-            closeSocket();
-        }
-    }
 
     private void closeSocket(){
         if(socket != null){
@@ -1413,61 +1378,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void setupSSL(final Context context, final WebSocket sock){
-        setupSSL(context, sock, null);
-    }
-
-    private void setupSSL(final Context context, final WebSocket sock, final RequestWrapper.OnCompleteListener ocl){
-
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    //NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-                    //org.apache.http.conn.ssl.SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-                    //Socket sock1 = new Socket(RequestWrapper.BASE_URL, 3001);
-                    //SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock1, RequestWrapper.BASE_URL, 3001, false);
-                    // TODO Move all socket stuff into WebSocket
-                    // TODO Handle users who are not authorized to log in (handle in LoginTask)
-                    //TODO Change error message with sign in
-                    // TODO Remove all the old cert stuff
-                    SocketFactory socketFactory = SSLSocketFactory.getDefault();
-                    Socket socketSSL = socketFactory.createSocket(RequestWrapper.BASE_URL, 3001);
-
-                    sock.setSocket(socketSSL);
-                    if(! sock.connectBlocking()){
-                        if(! sock.isOpen()){
-                            Log.v("sockett", "Failed to connect socket");
-                            throw new Exception("Error connecting to the web socket");
-                        }else{
-                            hideWarningBanner();
-                            if(ocl != null){
-                                ocl.onComplete("Connected");
-                            }
-                        }
-                    }else{
-                        hideWarningBanner();
-                        Log.v("sockett", "Connected");
-                        if(ocl != null){
-                            ocl.onComplete("Connected");
-                        }
-                    }
-
-                }catch (Exception e){
-                    Log.v("sockett", "There was a problem setting up ssl websocket");
-                    Log.v("sockett", e.getMessage() + "!!");
-                    e.printStackTrace();
-                    if(ocl != null){
-                        ocl.onError("There was a problem setting up the websocket");
-                    }
-                }
-            }
-        };
-
-        Thread thread = new Thread(r);
-        thread.start();
-
-    }
 
 
     public void pushMessage(final String message){

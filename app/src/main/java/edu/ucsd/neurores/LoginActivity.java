@@ -213,37 +213,20 @@ public class LoginActivity extends AppCompatActivity{
 
                 @Override
                 public void onError(String s) {
-                    //TODO set error depending on response code
                     loginInProgress = false;
                     mEmailSignInButton.setText(R.string.log_in);
-                    mPasswordView.setError(getString(R.string.error_incorrect_password));
-                    mPasswordView.requestFocus();
+                    if(s.equals(LoginTask.UNAUTH_USER)){
+                        //mPasswordView.setError();
+                        mEmailView.setError(getString(R.string.error_account_not_authorized));
+                        mEmailView.requestFocus();
+                    }else{
+                        mPasswordView.setError(getString(R.string.error_incorrect_username_or_password));
+                        mPasswordView.requestFocus();
+                    }
                 }
             });
 
             loginTask.execute();
-            /*
-            RequestWrapper.GetLoginToken(this, loginCredentials, new RequestWrapper.OnHTTPRequestCompleteListener() {
-                @Override
-                public void onComplete(String s) {
-                    saveEmail(email);
-                    saveToken(s);
-                    loginInProgress = false;
-                    Intent startApp = new Intent(LoginActivity.this, MainActivity.class);
-                    LoginActivity.this.startActivity(startApp);
-                    finish();
-                }
-
-                @Override
-                public void onError(int i) {
-                    //TODO set error depending on response code
-                    loginInProgress = false;
-                    mEmailSignInButton.setText(R.string.log_in);
-                    mPasswordView.setError(getString(R.string.error_incorrect_password));
-                    mPasswordView.requestFocus();
-                }
-            });
-            */
         }
     }
 

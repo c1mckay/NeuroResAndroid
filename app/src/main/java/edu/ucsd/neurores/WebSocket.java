@@ -1,5 +1,6 @@
 package edu.ucsd.neurores;
 
+import android.app.ActivityManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.widget.Toast;
@@ -10,27 +11,93 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+
 public class WebSocket extends WebSocketClient {
 
     Fragment currentFragment;
     MainActivity mainActivity;
-    WebSocket(Fragment currentFragment, MainActivity mainActivity) throws URISyntaxException {
+
+    WebSocket(Fragment currentFragment, MainActivity mainActivity, RequestWrapper.OnCompleteListener ocl) throws URISyntaxException {
         super(new URI("wss://neurores.ucsd.edu:3001"));
-        //connect();
         this.currentFragment = currentFragment;
         this.mainActivity = mainActivity;
+
+        setupSSLSocket(mainActivity, ocl);
+    }
+
+    private void setupSSLSocket(final MainActivity mainActivity, final RequestWrapper.OnCompleteListener ocl) {
+        Runnable runable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SocketFactory socketFactory = SSLSocketFactory.getDefault();
+                    Socket socketSSL = socketFactory.createSocket(RequestWrapper.BASE_URL, 3001);
+
+                    setSocket(socketSSL);
+
+                    if (!connectBlocking()) {
+                        if (!isOpen()) {
+                            Log.v("sockett", "Failed to connect socket");
+                            throw new SocketException("Error connecting to the web socket");
+                        } else {
+                            mainActivity.hideWarningBanner();
+                            if (ocl != null) {
+                                ocl.onComplete("Connected WEIRD");
+                            }
+                        }
+                    } else {
+                        mainActivity.hideWarningBanner();
+                        Log.v("sockett", "Connected");
+                        if (ocl != null) {
+                            ocl.onComplete("Connected");
+                        }
+                    }
+
+                } catch (SocketException e) {
+                    Log.v("sockett", "Socket Exception");
+                    Log.v("sockett", e.getMessage() + "!!");
+                    e.printStackTrace();
+                    if (ocl != null) {
+                        ocl.onError("There was a problem setting up the websocket");
+                    }
+                } catch (IOException e) {
+                    Log.v("sockett", "There was a problem while setting up the socket");
+                    Log.v("sockett", e.getMessage() + "!!");
+                    e.printStackTrace();
+                    if (ocl != null) {
+                        ocl.onError("There was a problem setting up the websocket");
+                    }
+                } catch (InterruptedException e) {
+                    Log.v("sockett", "There was a problem while connecting the socket");
+                    Log.v("sockett", e.getMessage() + "!!");
+                    e.printStackTrace();
+                    if (ocl != null) {
+                        ocl.onError("There was a problem setting up the websocket");
+                    }
+                }
+            }
+        };
+
+        Thread connectSSLSocketThread = new Thread(runable);
+        connectSSLSocketThread.start();
+
     }
 
 
     public void onOpen(ServerHandshake handshakedata) {
         JSONObject jo = new JSONObject();
         try {
-            if(currentFragment instanceof MainFragment){
+            if (currentFragment instanceof MainFragment) {
                 MainFragment mainFragment = (MainFragment) currentFragment;
                 jo.put("greeting", mainFragment.getToken());
             }
@@ -47,16 +114,16 @@ public class WebSocket extends WebSocketClient {
 
         try {
             jo = new JSONObject(message);
-            if(isUserStatusUpdate(jo)){
+            if (isUserStatusUpdate(jo)) {
                 updateUserStatus(jo);
                 return;
-            }else if(isWipeUpdate(jo)){
-                long conversationID =  jo.getLong("convID");
+            } else if (isWipeUpdate(jo)) {
+                long conversationID = jo.getLong("convID");
                 mainActivity.wipeConversation(conversationID, false);
                 return;
-            }else{
+            } else {
 
-                if(! mainActivity.screenIsOn){
+                if (!mainActivity.screenIsOn) {
                     mainActivity.queueToast("New Message");
                 }
 
@@ -68,22 +135,22 @@ public class WebSocket extends WebSocketClient {
                 String timeString = Message.getTimeStringFormattedForDB(time);
 
                 mainActivity.messageDatabaseHelper.insertMessage(messageID, messageText, conversationID, fromID, timeString);
-                if(userIsNotViewingThisConversation(conversationID)){
+                if (userIsNotViewingThisConversation(conversationID)) {
                     //long conversationID = jo.getLong("conv_id");
-                    HashMap<Long,Conversation> currentConversations = mainActivity.currentConversations;
+                    HashMap<Long, Conversation> currentConversations = mainActivity.currentConversations;
                     boolean conversationExists = currentConversations.containsKey(conversationID);
 
-                    if(conversationExists){
+                    if (conversationExists) {
                         moveConversationToUnread(currentConversations.get(conversationID));
-                    }else{
+                    } else {
                         createConversation(conversationID);
                     }
 
                     notifyUserOfNewMessage(fromID);
-                }else{
+                } else {
                     MainFragment mainFragment = (MainFragment) currentFragment;
                     String from = mainFragment.conversation.getUser(fromID);
-                    if(from == null)
+                    if (from == null)
                         from = "";//this should just a message I sent, an echo.
                     boolean isAtBottom = mainFragment.isAtBottom();
                     displayMessage(from, messageText, time, isAtBottom, fromID);
@@ -96,60 +163,60 @@ public class WebSocket extends WebSocketClient {
         }
     }
 
-    private void displayMessage(String from, String message, long time, boolean isAtBottom, long userID){
-        if(! (currentFragment instanceof MainFragment)){
+    private void displayMessage(String from, String message, long time, boolean isAtBottom, long userID) {
+        if (!(currentFragment instanceof MainFragment)) {
             Log.v("taggy", "Trying to display message while current fragment is not a MainFragment");
             return;
         }
 
         MainFragment mainFragment = (MainFragment) currentFragment;
-        if(isAtBottom){
-            if(mainFragment.isLoading()){
-                mainFragment.addTempMessage(from,message,time);
-            }else{
-                mainFragment.addMessage(from,message,time, true);
+        if (isAtBottom) {
+            if (mainFragment.isLoading()) {
+                mainFragment.addTempMessage(from, message, time);
+            } else {
+                mainFragment.addMessage(from, message, time, true);
             }
-        }else{
-            if(mainFragment.isLoading()){
-                mainFragment.addTempMessage(from,message,time);
-            }else{
-                mainFragment.addMessage(from,message,time, false);
+        } else {
+            if (mainFragment.isLoading()) {
+                mainFragment.addTempMessage(from, message, time);
+            } else {
+                mainFragment.addMessage(from, message, time, false);
             }
-            if(userID != mainActivity.loggedInUser.getID()){
+            if (userID != mainActivity.loggedInUser.getID()) {
                 notifyUserOfNewMessage(userID);
             }
         }
     }
 
-    private boolean isUserStatusUpdate(JSONObject jo){
-        try{
+    private boolean isUserStatusUpdate(JSONObject jo) {
+        try {
             return jo.has("userStatusUpdate") && jo.getBoolean("userStatusUpdate");
-        }catch(JSONException e){
+        } catch (JSONException e) {
             Log.v("sockett", "Failed reading json in isUserStatusUpdate()");
             return false;
         }
     }
 
-    private boolean isWipeUpdate(JSONObject jo){
-        try{
+    private boolean isWipeUpdate(JSONObject jo) {
+        try {
             return jo.has("wipeThread") && jo.getBoolean("wipeThread");
-        }catch(JSONException e){
+        } catch (JSONException e) {
             Log.v("error", "Error trying to read value of wipeThread in socket message");
             return false;
         }
     }
 
-    private boolean userIsNotViewingThisConversation(long conversationID){
-        if(! (currentFragment instanceof MainFragment)){
+    private boolean userIsNotViewingThisConversation(long conversationID) {
+        if (!(currentFragment instanceof MainFragment)) {
             return true;
-        }else{
+        } else {
             MainFragment mainFragment = (MainFragment) currentFragment;
             return mainFragment.conversation == null || mainFragment.conversation.getID() != conversationID;
         }
     }
 
     private void markAsSeen(long conversationID) {
-        if(! (currentFragment instanceof MainFragment)){
+        if (!(currentFragment instanceof MainFragment)) {
             Log.v("taggy", "Trying to mark message as seen while current fragment is not a MainFragment");
             return;
         }
@@ -170,7 +237,7 @@ public class WebSocket extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         Log.v("sockett", "onClose()");
         mainActivity.onSocketDisconnected();
-        if(currentFragment instanceof MainFragment){
+        if (currentFragment instanceof MainFragment) {
             MainFragment mainFragment = (MainFragment) currentFragment;
             mainFragment.errorVisMessage(reason);
         }
@@ -179,17 +246,16 @@ public class WebSocket extends WebSocketClient {
     public void onError(Exception ex) {
         Log.v("sockett", ex.getMessage());
 
-        if(currentFragment != null && currentFragment instanceof MainFragment){
+        if (currentFragment != null && currentFragment instanceof MainFragment) {
             MainFragment mainFragment = (MainFragment) currentFragment;
             mainFragment.errorVisMessage(ex.getLocalizedMessage());
         }
 
 
-
     }
 
-    public void pushMessage(String message){
-        if(! (currentFragment instanceof MainFragment)){
+    public void pushMessage(String message) {
+        if (!(currentFragment instanceof MainFragment)) {
             Log.v("taggy", "Trying to send message while current fragment is not a MainFragment");
             return;
         }
@@ -206,51 +272,51 @@ public class WebSocket extends WebSocketClient {
         send(jo.toString());
     }
 
-    public void updateUserStatus(JSONObject jo){
-        if(jo.has("activeUsers")){
-            try{
+    public void updateUserStatus(JSONObject jo) {
+        if (jo.has("activeUsers")) {
+            try {
                 JSONArray onlineUsers = jo.getJSONArray("activeUsers");
                 setOnlineStatusOfUsers(onlineUsers);
-            }catch(JSONException e){
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        if(jo.has("onlineUser")){
-            try{
+        if (jo.has("onlineUser")) {
+            try {
                 long userID = jo.getLong("onlineUser");
                 mainActivity.updateUserOnline(userID, true);
-            }catch(JSONException e){
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        if(jo.has("offlineUser")){
-            try{
+        if (jo.has("offlineUser")) {
+            try {
                 long userID = jo.getLong("offlineUser");
                 mainActivity.updateUserOnline(userID, false);
-            }catch(JSONException e){
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void setOnlineStatusOfUsers(JSONArray onlineUsers){
-        try{
-            for(User user : mainActivity.userList.values()){
+    private void setOnlineStatusOfUsers(JSONArray onlineUsers) {
+        try {
+            for (User user : mainActivity.userList.values()) {
                 boolean isOnline = false;
-                for( int i = 0; i < onlineUsers.length(); i++){
-                    if((long)user.getID() == (long)onlineUsers.getLong(i)){
+                for (int i = 0; i < onlineUsers.length(); i++) {
+                    if ((long) user.getID() == (long) onlineUsers.getLong(i)) {
                         isOnline = true;
                     }
                 }
                 mainActivity.updateUserOnline(user.getID(), isOnline);
             }
-        }catch(JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
 
     }
 
-    private void moveConversationToUnread(final Conversation conversation){
+    private void moveConversationToUnread(final Conversation conversation) {
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -260,20 +326,20 @@ public class WebSocket extends WebSocketClient {
         });
     }
 
-    private void createConversation(final long conversationID){
-                Log.v("taggy", "New Conversation detected!");
-                mainActivity.onNewConversationDetected(conversationID);
+    private void createConversation(final long conversationID) {
+        Log.v("taggy", "New Conversation detected!");
+        mainActivity.onNewConversationDetected(conversationID);
     }
 
-    private void notifyUserOfNewMessage(final long userID){
+    private void notifyUserOfNewMessage(final long userID) {
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(mainActivity.userList.containsKey(userID)){
+                if (mainActivity.userList.containsKey(userID)) {
                     User u = mainActivity.userList.get(userID);
                     Toast.makeText(mainActivity, "New message from " + u.getName(),
                             Toast.LENGTH_SHORT).show();
-                }else{
+                } else {
                     Toast.makeText(mainActivity, "New message received",
                             Toast.LENGTH_SHORT).show();
                 }
@@ -281,7 +347,7 @@ public class WebSocket extends WebSocketClient {
         });
     }
 
-    public void updateFrag(Fragment fragment){
+    public void updateFrag(Fragment fragment) {
         currentFragment = fragment;
     }
 }

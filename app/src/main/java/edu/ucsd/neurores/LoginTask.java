@@ -26,6 +26,7 @@ import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
 
 public class LoginTask extends AsyncTask<String,Void, String>{
+    public static String UNAUTH_USER = "Unauthorized User";
     String username, password;
     RequestWrapper.OnCompleteListener ocl;
     boolean loginSuccessful;
@@ -108,11 +109,14 @@ public class LoginTask extends AsyncTask<String,Void, String>{
             body = getBody(con);
             con.disconnect();
 
-
-            loginSuccessful = ! body.toLowerCase().equals("unauthorized");
+            loginSuccessful = true;
             return body;
         }catch(Exception e){
-            return e.getMessage() + "";
+            if(e.getMessage().equals(UNAUTH_USER)){
+                return UNAUTH_USER;
+            }else{
+                return e.getMessage() + "";
+            }
         }
     }
 
@@ -247,7 +251,7 @@ public class LoginTask extends AsyncTask<String,Void, String>{
         setCookies(con, cookies);
 
         if (con.getResponseCode() != expResCode) {
-            throw new Exception("Expected " + expResCode + " from " + con.getURL().toString() + ". Received " + con.getResponseCode());
+            throw new Exception(UNAUTH_USER);
         }
 
         combineCookies(getCookies(con), cookies);

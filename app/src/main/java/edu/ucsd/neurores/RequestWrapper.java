@@ -44,11 +44,6 @@ class RequestWrapper {
     private static final String POST_REQUEST = "POST";
     private static final String GET_REQUEST = "GET";
 
-    static final String ERROR_UNAUTHORIZED = "unauthorized";
-    static final String ERROR_BAD_REQUEST = "bad request";
-    static final String ERROR_INTERNAL_SERVER = "internal server error";
-
-
     static void GetLoginToken(Context context, String loginCredentials, final OnHTTPRequestCompleteListener ocl) {
         String firebaseTokenData = getFirebaseTokenData();
 
@@ -70,12 +65,7 @@ class RequestWrapper {
     }
 
     static void checkServerIsOnline(Context context, OnHTTPRequestCompleteListener ocl) {
-        Log.v("taggy", "In Server Check");
-        HTTPRequestThread thread = new HTTPRequestThread(context, "", GET_REQUEST, ocl);
-        //thread.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        //thread.addHeader("Accept-Language", "en-US,en;q=0.5");
-        //thread.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0");
-        //thread.addHeader("Connection", "close");
+        HTTPRequestThread thread = new HTTPRequestThread(context, null, GET_REQUEST, ocl);
         thread.execute(SERVER_CHECK);
     }
 
@@ -145,7 +135,7 @@ class RequestWrapper {
             this.headers = new ArrayList<Pair<String, String>>();
             this.resultCode = -1;
 
-            if(! this.token.equals("")){
+            if(token != null){
                 addAuthHeader();
             }
         }
@@ -201,7 +191,6 @@ class RequestWrapper {
 
         private String request(String requestType, String hostName, String endpoint, List<Pair<String, String>> headers, String data, Context context) {
             HttpsURLConnection con = null;
-            int responseCode = -1;
             try {
 
                 URL url = new URL("https://" + hostName + endpoint);
@@ -219,7 +208,6 @@ class RequestWrapper {
                 }
                 con.connect();
 
-                responseCode = con.getResponseCode();
                 BufferedReader in;
 
                 in = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -232,103 +220,11 @@ class RequestWrapper {
                 in.close();
                 con.disconnect();
 
-                Log.v("taggy", "success");
                 return response.toString();
 
 
-/******** The rest of this was a work around for the SSL cert problem. Remove once it is confirmed that the preceding code works *************/
-
-
-/*
-
-                String blankLine = "\r\n\r\n";
-
-                NeuroSSLSocketFactory neuroSSLSocketFactory = new NeuroSSLSocketFactory(context);
-                //noinspection deprecation
-                SSLSocketFactory sslSocketFactory = neuroSSLSocketFactory.createAdditionalCertsSSLSocketFactory();
-
-                String request = "";
-                Socket sock = new Socket(hostName, 443);
-                SSLSocket socketSSL = (SSLSocket) sslSocketFactory.createSocket(sock, hostName, 443, false);
-                PrintWriter pw = new PrintWriter(socketSSL.getOutputStream());
-                BufferedReader br = new BufferedReader(new InputStreamReader(socketSSL.getInputStream(), "UTF-8"));
-
-                request += requestType + " " + endpoint + " HTTP/1.1\r\n";
-                pw.print(requestType + " " + endpoint + " HTTP/1.1\r\n");
-                request += "Host: " + hostName + "\r\n";
-                request += "Connection: close\r\n";
-                pw.print("Host: " + hostName + "\r\n");
-                pw.print("Connection: close\r\n");
-                for (Pair<String, String> p : headers) {
-                    pw.print(p.first + ": " + p.second + "\r\n");
-                    request += (p.first + ": " + p.second + "\r\n");
-                }
-
-                if (requestType.toUpperCase().equals(POST_REQUEST)) {
-                    pw.print("Content-Type: application/json\r\n");
-                    request += "Content-Type: application/json\r\n";
-                    if (data != null) {
-                        pw.print("Content-Length: " + data.length() + "\r\n");
-                        request += "Content-Length: " + data.length() + "\r\n";
-
-                        pw.print("\r\n" + data);
-                        request += "\r\n" + data;
-                    }
-                }
-                pw.write("\r\n");
-                request += "\r\n";
-                pw.flush();
-
-                Log.v("requestr", request);
-
-                int nextChar;
-                String response = "";
-                while ((nextChar = br.read()) != -1) {
-                    response += (char) nextChar;
-                }
-
-                Log.v("requestr", response + "\n");
-
-                resultCode = getResponseCode(response);
-
-                if (resultCode >= 400) {
-                    throw new HTTPRequestException();
-                }
-
-                if (response.contains("Content-Length: ")) {
-                    int index = response.indexOf("Content-Length: ") + "Content-Length: ".length();
-                    response = response.substring(index);
-                    if (!response.contains("\r\n")) {
-                        throw new Exception("Malformed response");
-                    }
-                    index = response.indexOf("\r\n");
-                    int contentLength = Integer.parseInt(response.substring(0, index));
-                    response = response.substring(index + "\r\n".length() + 2);
-                    response = response.substring(0, contentLength);
-                } else {
-                    response = response.substring(response.indexOf(blankLine) + blankLine.length());
-                }
-                if (response.toLowerCase().equals("invalid token")) {
-                    throw new UnauthorizedException("Invalid login token");
-                }
-                return response;
-
-            } catch (HTTPRequestException e) {
-                if(endpoint.equals(SERVER_CHECK)){
-                    return "";
-                }
-                Log.v("taggy", "HttpRequestException");
-                setFailure(true);
-                return getErrorString(resultCode);
-            } catch (ConnectException e) {
-                Log.v("taggy", "Connect exception");
-                setFailure(true);
-                return "Connect exception";
-                */
             } catch (Exception e) {
                 Log.v("taggy", "Fail");
-                Log.v("taggy", responseCode + "");
-                Log.v("taggy", con.getRequestMethod());
                 Log.v("taggy", e.getMessage());
                 e.printStackTrace();
                 setFailure(true);
@@ -336,46 +232,6 @@ class RequestWrapper {
             }
         }
 
-        private int getResponseCode(String response) {
-            int index = response.indexOf(" ");
-            if (index == -1) {
-                return 0;
-            }
-            response = response.substring(index + 1);
-
-            index = response.indexOf(" ");
-            if (index == -1) {
-                return 0;
-            }
-            response = response.substring(0, index);
-
-            try {
-                return Integer.parseInt(response);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-
-        private String getErrorString(int responseCode) {
-            String error = "";
-
-            switch (responseCode) {
-                case 400:
-                    error = ERROR_BAD_REQUEST;
-                    break;
-                case 401:
-                    error = ERROR_UNAUTHORIZED;
-                    break;
-                case 500: {
-                    error = ERROR_INTERNAL_SERVER;
-                    break;
-                }
-                default:
-                    error = "Unknown error: " + responseCode;
-            }
-
-            return error;
-        }
     }
 
 }
