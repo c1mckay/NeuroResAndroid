@@ -24,19 +24,30 @@ import javax.net.ssl.SSLSocketFactory;
 
 public class WebSocket extends WebSocketClient {
 
+    public static final String WEBSOCKET_URI_STRING = "wss://neurores.ucsd.edu:3001";
+
     Fragment currentFragment;
     MainActivity mainActivity;
 
-    WebSocket(Fragment currentFragment, MainActivity mainActivity, RequestWrapper.OnCompleteListener ocl) throws URISyntaxException {
-        super(new URI("wss://neurores.ucsd.edu:3001"));
+
+    WebSocket(Fragment currentFragment, MainActivity mainActivity, RequestWrapper.OnCompleteListener ocl) {
+        super(getWebsocketURI());
         this.currentFragment = currentFragment;
         this.mainActivity = mainActivity;
 
         setupSSLSocket(mainActivity, ocl);
     }
 
+    private static URI getWebsocketURI(){
+        try{
+            return new URI(WEBSOCKET_URI_STRING);
+        }catch (URISyntaxException e){
+            throw new RuntimeException("URISyntaxException: " + WEBSOCKET_URI_STRING);
+        }
+    }
+
     private void setupSSLSocket(final MainActivity mainActivity, final RequestWrapper.OnCompleteListener ocl) {
-        Runnable runable = new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -88,7 +99,7 @@ public class WebSocket extends WebSocketClient {
             }
         };
 
-        Thread connectSSLSocketThread = new Thread(runable);
+        Thread connectSSLSocketThread = new Thread(runnable);
         connectSSLSocketThread.start();
 
     }

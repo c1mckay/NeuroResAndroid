@@ -31,7 +31,8 @@ import javax.net.ssl.SSLSocket;
 @SuppressWarnings("Convert2Diamond")
 class RequestWrapper {
     static final String BASE_URL = "neurores.ucsd.edu";
-    private static final String LOGIN_ENDPOINT = "/static/login";
+    private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/static/android_token";
+
     private static final String GET_USERS_ENDPOINT = "/static/users_list";
     private static final String CONVERSATIONS_ENDPOINT = "/static/conversation_data";
     private static final String CONVERSATION_CONTENT_ENDPOINT = "/static/get_messages";
@@ -44,12 +45,15 @@ class RequestWrapper {
     private static final String POST_REQUEST = "POST";
     private static final String GET_REQUEST = "GET";
 
-    static void GetLoginToken(Context context, String loginCredentials, final OnHTTPRequestCompleteListener ocl) {
-        String firebaseTokenData = getFirebaseTokenData();
+    static void login(String username, String password,RequestWrapper.OnCompleteListener ocl){
+        LoginTask loginTask = new LoginTask(username, password, ocl);
+        loginTask.execute();
+    }
 
-        HTTPRequestThread requestThread = new HTTPRequestThread(context, loginCredentials, POST_REQUEST, ocl);
-        requestThread.setData(firebaseTokenData);
-        requestThread.execute(LOGIN_ENDPOINT);
+    static void registerFirebaseToken(Context context, String token, final OnHTTPRequestCompleteListener ocl){
+        HTTPRequestThread httpRequestThread = new HTTPRequestThread(context, token, POST_REQUEST, ocl);
+        httpRequestThread.setData(getFirebaseTokenData());
+        httpRequestThread.execute(REGISTER_ANDROID_TOKEN_ENDPOINT);
     }
 
     static void GetConversationData(Context context, long id, String token, OnHTTPRequestCompleteListener ocl) {
@@ -155,6 +159,10 @@ class RequestWrapper {
         }
 
         protected void onPostExecute(String result) {
+            if(ocl == null){
+                return;
+            }
+
             if (requestFailed) {
                 ocl.onError(resultCode);
             } else {

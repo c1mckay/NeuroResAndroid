@@ -197,15 +197,17 @@ public class LoginActivity extends AppCompatActivity{
             focusView.requestFocus();
         } else {
 
-            String loginCredentials = email + ":";
             loginInProgress = true;
-            LoginTask loginTask = new LoginTask(email, password, new RequestWrapper.OnCompleteListener() {
+            RequestWrapper.login(email, password, new RequestWrapper.OnCompleteListener() {
                 @Override
-                public void onComplete(String s) {
-                    Log.v("taggy", "Token is: " + s);
+                public void onComplete(String sessionToken) {
+                    Log.v("taggy", "Token is: " + sessionToken);
                     saveEmail(email);
-                    saveToken(s);
+                    saveToken(sessionToken);
                     loginInProgress = false;
+
+                    RequestWrapper.registerFirebaseToken(getApplicationContext(), sessionToken, null);
+
                     Intent startApp = new Intent(LoginActivity.this, MainActivity.class);
                     LoginActivity.this.startActivity(startApp);
                     finish();
@@ -216,7 +218,6 @@ public class LoginActivity extends AppCompatActivity{
                     loginInProgress = false;
                     mEmailSignInButton.setText(R.string.log_in);
                     if(s.equals(LoginTask.UNAUTH_USER)){
-                        //mPasswordView.setError();
                         mEmailView.setError(getString(R.string.error_account_not_authorized));
                         mEmailView.requestFocus();
                     }else{
@@ -226,7 +227,6 @@ public class LoginActivity extends AppCompatActivity{
                 }
             });
 
-            loginTask.execute();
         }
     }
 

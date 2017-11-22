@@ -26,10 +26,10 @@ import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
 
 public class LoginTask extends AsyncTask<String,Void, String>{
-    public static String UNAUTH_USER = "Unauthorized User";
-    String username, password;
-    RequestWrapper.OnCompleteListener ocl;
-    boolean loginSuccessful;
+    static String UNAUTH_USER = "Unauthorized User";
+    private String username, password;
+    private RequestWrapper.OnCompleteListener ocl;
+    private boolean loginSuccessful;
 
     LoginTask(String username, String password,RequestWrapper.OnCompleteListener ocl){
         this.username = username;

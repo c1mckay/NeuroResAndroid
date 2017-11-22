@@ -21,11 +21,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
@@ -34,23 +32,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
-import com.facebook.stetho.inspector.elements.android.MethodInvoker;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.Socket;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 
 //TODO Handle the errors in HTTP calls
 public class MainActivity extends AppCompatActivity
@@ -88,7 +80,7 @@ public class MainActivity extends AppCompatActivity
     public User loggedInUser;
     Toast mostRecentToast;
 
-    private WebSocket socket;
+    private WebSocket webSocket;
     private BroadcastReceiver screenStateReceiver;
     boolean isPaused;
     boolean screenIsOn;
@@ -176,12 +168,11 @@ public class MainActivity extends AppCompatActivity
                 onBannerClicked();
             }
         });
-
-        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     private void onBannerClicked() {
-        RequestWrapper.OnCompleteListener ocl = new RequestWrapper.OnCompleteListener() {
+
+        connectWebSocket(new RequestWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 hideMainElements();
@@ -192,11 +183,9 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onError(String s) {
                 showToast(getResources().getString(R.string.no_connection), Toast.LENGTH_LONG);
+                closeWebSocket();
             }
-        };
-
-
-        connectSocket(ocl);
+        });
     }
 
     private void logFireBaseToken() {
@@ -204,7 +193,7 @@ public class MainActivity extends AppCompatActivity
             Log.d("token", FirebaseInstanceId.getInstance().getToken());
     }
 
-        private void registerReceiverForScreen() {
+    private void registerReceiverForScreen() {
        screenStateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -229,14 +218,14 @@ public class MainActivity extends AppCompatActivity
         Log.v("sockett","Screen On");
         screenIsOn = true;
         if(! isPaused){
-            connectSocket();
+            connectWebSocket();
             reloadCurrentFragment();
             showQueuedToast();
         }
     }
 
     private void onScreenTurnedOff(){
-        Log.v("socket","Screen Off");
+        Log.v("webSocket","Screen Off");
         screenIsOn = false;
     }
 
@@ -270,14 +259,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         isPaused = true;
-        closeSocket();
+        closeWebSocket();
         //hideMainElements();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
-        closeSocket();
+        closeWebSocket();
         unregisterReceiverForScreen();
         super.onDestroy();
     }
@@ -285,7 +274,7 @@ public class MainActivity extends AppCompatActivity
     public void setupFragmentAndSocket(){
         invalidateNavigationDrawer();
         setInitialFragment();
-        connectSocket();
+        connectWebSocket();
     }
 
     protected String getToken(){
@@ -471,7 +460,7 @@ public class MainActivity extends AppCompatActivity
             updateNavDrawer();
             reloadCurrentFragment();
         }
-        connectSocket();
+        connectWebSocket();
 
         hideSoftKeyboard();
     }
@@ -755,8 +744,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateFrag(){
-        if(socket != null){
-            socket.updateFrag(currentFragment);
+        if(webSocket != null){
+            webSocket.updateFrag(currentFragment);
         }
     }
 
@@ -1211,7 +1200,7 @@ public class MainActivity extends AppCompatActivity
         editor.putString(LoginActivity.TOKEN, null);
         //editor.putString(LoginActivity.NAME , null);
         editor.putLong(PREV_CONVERSATION_ID , -1);
-        closeSocket();
+        closeWebSocket();
         editor.commit();
 
         goToLogin();
@@ -1350,35 +1339,32 @@ public class MainActivity extends AppCompatActivity
 
     /***************************************************/
 
-    private void connectSocket(){
-        connectSocket(null);
+    private void connectWebSocket(RequestWrapper.OnCompleteListener ocl){
+        webSocket = new WebSocket(currentFragment, this, ocl);
     }
 
-    private void connectSocket(RequestWrapper.OnCompleteListener ocl){
-        if(socket != null){
-            Log.v("sockett", "Closing socket!");
-            socket.close();
-            socket = null;
-        }
-        try{
-            socket = new WebSocket(currentFragment, this, null);
-        }catch (URISyntaxException e){
-            Log.v("sockett", "URISyntaxException: " + e.getMessage());
-            socket = null;
-        }
+    private void connectWebSocket(){
+        webSocket = new WebSocket(currentFragment, this, new RequestWrapper.OnCompleteListener() {
+            @Override
+            public void onComplete(String s) {
+                hideWarningBanner();
+            }
+
+            @Override
+            public void onError(String s) {
+                showWarningBanner();
+                closeWebSocket();
+            }
+        });
     }
 
-
-    private void closeSocket(){
-        if(socket != null){
-            Log.v("sockett", "Closing socket!");
-            socket.close();
-            socket = null;
+    private void closeWebSocket(){
+        if(webSocket != null){
+            Log.v("sockett", "Closing webSocket!");
+            webSocket.close();
+            webSocket = null;
         }
     }
-
-
-
 
     public void pushMessage(final String message){
         if(! (currentFragment instanceof MainFragment)){
@@ -1388,12 +1374,12 @@ public class MainActivity extends AppCompatActivity
 
         final MainFragment mainFragment = (MainFragment) currentFragment;
 
-        if(socket == null || socket.isClosed() || ! socket.isOpen()){
+        if(webSocket == null || webSocket.isClosed() || ! webSocket.isOpen()){
             Log.v("sockett", "Socket is not in working condition while trying to send message. Reconnecting and resending message");
-            connectSocket(new RequestWrapper.OnCompleteListener() {
+            connectWebSocket(new RequestWrapper.OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
-                    socket.pushMessage(message);
+                    webSocket.pushMessage(message);
                     mainFragment.clearMessage();
                 }
 
@@ -1407,7 +1393,7 @@ public class MainActivity extends AppCompatActivity
                 Log.v("sockett", "currentfragment is null when trying to send message");
                 return;
             }
-            socket.pushMessage(message);
+            webSocket.pushMessage(message);
             mainFragment.clearMessage();
 
         }
@@ -1416,7 +1402,7 @@ public class MainActivity extends AppCompatActivity
     /***************************************************/
 
     private void goToLogin(){
-        closeSocket();
+        closeWebSocket();
         Intent i = new Intent(this, LoginActivity.class);
         startActivity(i);
         finish();
@@ -1483,13 +1469,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onSocketDisconnected(){
-        Log.v("taggy", "!! disconnected socket !!");
+        Log.v("taggy", "!! disconnected webSocket !!");
         if(! isPaused){
             showWarningBanner();
             //showDisconnectMessage();
             //forceSocketReconnect();
         }else{
-            Log.v("sockett", "activity is paused, not connecting socket");
+            Log.v("sockett", "activity is paused, not connecting webSocket");
         }
     }
 
