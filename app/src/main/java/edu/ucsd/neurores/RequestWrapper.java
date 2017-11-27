@@ -204,9 +204,13 @@ class RequestWrapper {
                 URL url = new URL("https://" + hostName + endpoint);
                 con = (HttpsURLConnection) url.openConnection();
                 con.setRequestMethod(requestType);
+                con.setConnectTimeout(1500);
+                con.setReadTimeout(1500);
+
                 for(Pair<String, String> pair : headers){
                     con.addRequestProperty(pair.first, pair.second);
                 }
+
                 if(data != null) {
                     con.setDoOutput(true);
                     DataOutputStream wr = new DataOutputStream(con.getOutputStream());
@@ -227,6 +231,10 @@ class RequestWrapper {
                 }
                 in.close();
                 con.disconnect();
+
+                Log.v("requestt", con.getRequestMethod() + ": https://" + hostName + endpoint);
+                Log.v("requestt", "Server returned status code: " + con.getResponseCode());
+                Log.v("requestt", "Server returned body: " + response.toString());
 
                 return response.toString();
 
