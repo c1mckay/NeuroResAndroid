@@ -96,22 +96,16 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         initializeVariables();
 
-
         if(getToken() == null ||  (! isConnectedToNetwork() && messageDatabaseHelper.databaseIsEmpty())){
             goToLogin();
             return;
         }
 
         setUp();
+        logFireBaseToken();
     }
 
     private void setUp(){
-        if(getIntent().hasExtra(CONVERSATION_ID)){
-            setPreviousConversationID(getIntent().getLongExtra(CONVERSATION_ID, -1));
-            Log.v("taggy", "previous set");
-        }
-
-
         registerReceiverForScreen();
         setupToolbar();
         initializeDrawer();
@@ -804,6 +798,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     private long getConversationIDForInitialLoad(){
+        if(getIntent().hasExtra(CONVERSATION_ID)){
+            long lastConversationID = getIntent().getLongExtra(CONVERSATION_ID, -1);
+            setPreviousConversationID(lastConversationID);
+            Log.v("taggy", "previous set to: " + lastConversationID);
+        }
+
+        if(hasPreviousConversation()){
+            return getPreviousConversationID();
+        }else if( hasOngoingConversations()){
+            return getFirstConversationID();
+        }else{
+            return -1;
+        }
+
+        /*
         if(hasOngoingConversations() && ! hasPreviousConversation()){
             Log.v("taggy", "Has ongoing");
             return getFirstConversationID();
@@ -811,6 +820,7 @@ public class MainActivity extends AppCompatActivity
             Log.v("taggy", "Got previous");
             return getPreviousConversationID();
         }
+        */
 
 
     }
@@ -1340,10 +1350,12 @@ public class MainActivity extends AppCompatActivity
     /***************************************************/
 
     private void connectWebSocket(RequestWrapper.OnCompleteListener ocl){
+        closeWebSocket();
         webSocket = new WebSocket(currentFragment, this, ocl);
     }
 
     private void connectWebSocket(){
+        closeWebSocket();
         webSocket = new WebSocket(currentFragment, this, new RequestWrapper.OnCompleteListener() {
             @Override
             public void onComplete(String s) {

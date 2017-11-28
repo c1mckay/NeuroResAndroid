@@ -87,17 +87,7 @@ class RequestWrapper {
     }
 
     private static String getFirebaseTokenData() {
-        String firebaseTokenData = null;
-        if (FirebaseInstanceId.getInstance().getToken() != null) {
-            try {
-                JSONObject firebaseToken = new JSONObject();
-                firebaseToken.put("android_token", FirebaseInstanceId.getInstance().getToken());
-                firebaseTokenData = firebaseToken.toString();
-            } catch (JSONException e) {
-                firebaseTokenData = null;
-            }
-        }
-        return firebaseTokenData;
+        return FirebaseInstanceId.getInstance().getToken();
     }
 
     interface OnCompleteListener {

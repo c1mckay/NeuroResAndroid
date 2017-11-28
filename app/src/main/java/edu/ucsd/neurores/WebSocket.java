@@ -267,20 +267,21 @@ public class WebSocket extends WebSocketClient {
 
     public void pushMessage(String message) {
         if (!(currentFragment instanceof MainFragment)) {
-            Log.v("taggy", "Trying to send message while current fragment is not a MainFragment");
+            Log.v("sockett", "Trying to send message while current fragment is not a MainFragment");
             return;
         }
 
         MainFragment mainFragment = (MainFragment) currentFragment;
         JSONObject jo = new JSONObject();
-        Log.v("taggy", System.currentTimeMillis() + "");
         try {
             jo.put("conv_id", mainFragment.conversation.getID());
             jo.put("text", message);
+            Log.v("sockett", message);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         send(jo.toString());
+        Log.v("sockett", "Message sent");
     }
 
     public void updateUserStatus(JSONObject jo) {
