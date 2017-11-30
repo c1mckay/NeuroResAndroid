@@ -4,38 +4,86 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import edu.ucsd.neurores.R;
 import edu.ucsd.neurores.network.RequestWrapper;
 
 public class WebViewLoginActivity extends AppCompatActivity {
-    WebView webView;
     String loginURL = "https://neurores.ucsd.edu/token/tokenGenerator.php";
     String tokenURL = "https://neurores.ucsd.edu/key/";
+    String unauthorizedURL = "https://neurores.ucsd.edu/token/unathorized";
+
+    WebView webView;
+    LinearLayout unauthorizedErrorLinearLayout;
+    Button tryAgainButton;
+    TextView waitTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setupActionBar();
         setContentView(R.layout.activity_web_view_login);
 
-        setupWebView();
+        setupView();
+
         webView.loadUrl(loginURL);
     }
 
-    private void setupWebView() {
+    private void setupView() {
         webView = (WebView) findViewById(R.id.login_webview);
+        unauthorizedErrorLinearLayout = (LinearLayout) findViewById(R.id.unauthorized_error_linear_layout);
+        tryAgainButton = (Button) findViewById(R.id.try_again_button);
+        waitTextView = (TextView) findViewById(R.id.wait_message_text_view);
 
+        tryAgainButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hide(unauthorizedErrorLinearLayout);
+                show(waitTextView);
+
+                clearAllWebViewData();
+                webView.loadUrl(loginURL);
+            }
+        });
+
+        setupWebView();
+    }
+
+    private void setupActionBar() {
+        ActionBar actionbar = getSupportActionBar();
+        if(actionbar != null){
+            actionbar.setDisplayHomeAsUpEnabled(true);
+            actionbar.setTitle(getString(R.string.action_sign_in_short));
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        onBackPressed();
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setupWebView() {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageFinished(WebView view, String url){
-                hideWaitMessage();
+                hide(waitTextView);
+                show(webView);
                 if(url.startsWith(tokenURL)){
                     String token = extractToken(url);
                     saveTokenToPreferences(token);
@@ -43,15 +91,26 @@ public class WebViewLoginActivity extends AppCompatActivity {
 
                     startMainActivity();
                     finish();
+                }else if(url.startsWith(unauthorizedURL)){
+                    notifyUserUnauthorized();
                 }
 
             }
         });
 
         webView.getSettings().setJavaScriptEnabled(true);
+        clearAllWebViewData();
+    }
+
+    private void clearAllWebViewData(){
         webView.clearCache(true);
         webView.clearHistory();
         clearCookies(this);
+    }
+
+    private void notifyUserUnauthorized() {
+        show(unauthorizedErrorLinearLayout);
+        hide(webView);
     }
 
     private String extractToken(String url){
@@ -70,9 +129,12 @@ public class WebViewLoginActivity extends AppCompatActivity {
         WebViewLoginActivity.this.startActivity(startApp);
     }
 
-    private void hideWaitMessage(){
-        findViewById(R.id.wait_message_text_view).setVisibility(View.GONE);
-        webView.setVisibility(View.VISIBLE);
+    private void hide(View v){
+        v.setVisibility(View.GONE);
+    }
+
+    private void show(View v){
+        v.setVisibility(View.VISIBLE);
     }
 
     @SuppressWarnings("deprecation")

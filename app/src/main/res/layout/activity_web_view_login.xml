@@ -24,6 +24,29 @@
         android:textSize="20sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Please wait ..."/>
+        android:text="@string/please_wait"/>
+
+    <LinearLayout
+        android:id="@+id/unauthorized_error_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/error_account_not_authorized"/>
+
+        <Button
+            android:id="@+id/try_again_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="@string/try_again"/>
+
+    </LinearLayout>
 
 </LinearLayout>

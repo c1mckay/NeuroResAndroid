@@ -53,6 +53,8 @@
     <string name="delete_all_messages">Delete All Messages</string>
     <string name="disconnected_message">You are not connected to NeuroRes and therefore unable to send messages.</string>
     <string name="log_in_button_text">Log In with AD</string>
+    <string name="please_wait">Please wait ...</string>
+    <string name="try_again">Try Again</string>
 
 
 </resources>
