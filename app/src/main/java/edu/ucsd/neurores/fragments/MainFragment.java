@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -27,6 +27,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 
+import edu.ucsd.neurores.abstraction.Conversation;
+import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
+import edu.ucsd.neurores.helper.JSONConverter;
+import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.abstraction.Message;
+import edu.ucsd.neurores.abstraction.MessageList;
+import edu.ucsd.neurores.R;
+import edu.ucsd.neurores.network.RequestWrapper;
+import edu.ucsd.neurores.abstraction.User;
+import edu.ucsd.neurores.network.WebSocket;
+import edu.ucsd.neurores.adapters.MessageAdapter;
+import edu.ucsd.neurores.data.MessageDatabaseHelper;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -43,7 +56,7 @@ public class MainFragment extends Fragment{
     public Conversation conversation;
 
     //Username of the owner of these messages
-    String userName = null;
+    public String userName = null;
     // Used to temporarily store a message when the view has not yet been made
     //private String message = null;
     public SimpleDateFormat formatter;
@@ -170,7 +183,7 @@ public class MainFragment extends Fragment{
             Log.v("taggy", "Conversation is null");
             return;
         }
-        RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.GetConversationData(context, conversation.getID(), getToken(), new HTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 List<Message> messages = JSONConverter.toMessageList(s, users);
@@ -178,7 +191,7 @@ public class MainFragment extends Fragment{
                 errorTextView.setVisibility(View.GONE);
                 mainActivity.dismissNotifications(conversation.getID());
 
-                mainActivity.messageDatabaseHelper.makeDatabaseMatchMessageList(conversation.getID(),messages );
+                mainActivity.getMessageDatabaseHelper().makeDatabaseMatchMessageList(conversation.getID(),messages );
             }
 
             @Override
@@ -228,11 +241,11 @@ public class MainFragment extends Fragment{
     }
 
     public void markConversationRead(Context context, final Conversation conversation){
-        RequestWrapper.markConversationSeen(context, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.markConversationSeen(context, conversation.getID(), getToken(), new HTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 mainActivity.moveConversationToPrivate(conversation);
-                mainActivity.messageDatabaseHelper.insertConversation(conversation);
+                mainActivity.getMessageDatabaseHelper().insertConversation(conversation);
             }
 
             @Override
@@ -242,7 +255,7 @@ public class MainFragment extends Fragment{
         });
     }
 
-    String getToken(){
+    public String getToken(){
         return getArguments().getString("token", null);
     }
 
@@ -302,7 +315,7 @@ public class MainFragment extends Fragment{
 
     public void wipeConversation(boolean alertServer){
         if(alertServer){
-            RequestWrapper.WipeConversation(mainActivity, conversation.getID(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+            RequestWrapper.WipeConversation(mainActivity, conversation.getID(), getToken(), new HTTPRequestCompleteListener() {
                 @Override
                 public void onComplete(String s) {
                     clearMessages();

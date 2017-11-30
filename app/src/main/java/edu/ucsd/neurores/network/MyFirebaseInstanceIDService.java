@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.network;
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;

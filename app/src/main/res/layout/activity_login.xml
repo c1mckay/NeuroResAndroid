@@ -1,132 +1,72 @@
-<ScrollView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:weightSum="2"
+    tools:context="edu.ucsd.neurores.activites.LoginActivity">
 
-    <LinearLayout
+
+    <TextView
+        android:id="@+id/loginUcsdTv"
         android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        tools:context="edu.ucsd.neurores.LoginActivity">
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textColor="#000000"
+        android:textSize="22sp"
+        android:layout_weight="0"
+        android:text="UC San Diego"/>
 
-
-        <TextView
-            android:id="@+id/loginUcsdTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAlignment="center"
-            android:textColor="#000000"
-            android:textSize="22sp"
-            android:text="UC San Diego"/>
-
-        <TextView
-            android:id="@+id/departmentTV"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#000000"
-            android:textSize="20sp"
-            android:gravity="center"
-            android:text="Department of Neuroscience"
-            android:lines="2"/>
-
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:adjustViewBounds="true"
-            android:layout_height="150sp"
-            android:src="@drawable/logo"/>
-
-
-        <android.support.design.widget.TextInputLayout
-            android:layout_width="match_parent"
-            android:id="@+id/email_layout"
-            android:layout_height="wrap_content"
-            android:imeOptions="actionNext"
-            >
-
-            <EditText
-                android:id="@+id/email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="username"
-                android:gravity="center_horizontal"
-                android:ellipsize="start"
-                android:inputType="textEmailAddress"
-                android:maxLines="1"
-                android:singleLine="true" />
-
-        </android.support.design.widget.TextInputLayout>
-
-
-
-        <android.support.design.widget.TextInputLayout
-            android:layout_width="match_parent"
-            android:id="@+id/password_layout"
-            android:layout_height="wrap_content">
-
-            <EditText
-                android:id="@+id/password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="password"
-                android:imeActionId="@+id/login"
-                android:gravity="center_horizontal"
-                android:ellipsize="start"
-                android:textAlignment="center"
-                android:imeActionLabel="@string/action_sign_in_short"
-                android:imeOptions="actionUnspecified"
-                android:inputType="textPassword"
-                android:maxLines="1"/>
-
-        </android.support.design.widget.TextInputLayout>
-
-
-
-        <TextView
-            android:id="@+id/loginErrorTV"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAlignment="center"
-            android:textColor="#FF0000"
-            android:visibility="invisible"
-            android:text="Incorrect password"/>
-
-
-
-        <Button
-            android:id="@+id/email_sign_in_button"
-            style="?android:textAppearanceSmall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Log In"
-            android:paddingTop="25dp"
-            android:paddingBottom="25dp"
-            android:textSize="20dp"
-            android:textColor="@color/white"
-            android:background="@color/colorPrimary"
-            android:textStyle="bold" />
-
-        <!--
-        <TextView
-            android:text="@string/hippa_statement"
-            android:textSize="25sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-            -->
+    <TextView
+        android:id="@+id/departmentTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:layout_weight="0"
+        android:text="Department of Neuroscience"
+        android:lines="2"/>
 
 
 
 
-    </LinearLayout>
+    <ImageView
+        android:layout_width="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_height="300sp"
+        android:layout_weight="0"
+        android:src="@drawable/logo"/>
+
+    <View
+        android:layout_width="0px"
+        android:layout_height="0px"
+        android:layout_weight="1"
+        />
+
+    <Button
+        android:id="@+id/email_sign_in_button"
+        style="?android:textAppearanceSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/log_in_button_text"
+        android:paddingTop="25dp"
+        android:paddingBottom="25dp"
+        android:textSize="20dp"
+        android:textColor="@color/white"
+        android:background="@color/colorPrimary"
+        android:textAlignment="center"
+        android:layout_weight="0"
+        android:textStyle="bold" />
 
 
-</ScrollView>
+</LinearLayout>
 
 
 

@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.abstraction;
 
 /**
  * Created by tbpetersen on 2/14/2017.

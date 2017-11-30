@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.abstraction;
 
 import android.content.Context;
 import android.util.Log;
@@ -6,20 +6,22 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsd.neurores.activites.MainActivity;
+
 /**
  * Created by tbpetersen on 3/23/2017.
  */
 
-public class Conversation extends NavDrawerItem{
+public class Conversation extends NavDrawerItem {
     private List<User> users;
     private long numOfUnread;
 
-    Conversation(long id, Context c){
+    public Conversation(long id, Context c){
         super(id, c);
         users = new ArrayList<User>();
     }
 
-    void addUser(User user) {
+    public void addUser(User user) {
         users.add(user);
     }
 
@@ -104,4 +106,5 @@ public class Conversation extends NavDrawerItem{
     public int getNumberOfUsers(){
         return users.size();
     }
+
 }

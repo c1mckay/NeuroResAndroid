@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -32,6 +32,8 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
+
+import edu.ucsd.neurores.R;
 
 
 /**

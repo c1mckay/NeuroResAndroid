@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.network;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -7,30 +7,23 @@ import android.util.Pair;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ConnectException;
-import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocket;
+
+import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
 
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
-class RequestWrapper {
-    static final String BASE_URL = "neurores.ucsd.edu";
+public class RequestWrapper {
+    public static final String BASE_URL = "neurores.ucsd.edu";
     private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/static/android_token";
 
     private static final String GET_USERS_ENDPOINT = "/static/users_list";
@@ -45,48 +38,50 @@ class RequestWrapper {
     private static final String POST_REQUEST = "POST";
     private static final String GET_REQUEST = "GET";
 
-    static void login(String username, String password,RequestWrapper.OnCompleteListener ocl){
+    /*
+    public static void login(String username, String password,RequestWrapper.OnCompleteListener ocl){
         LoginTask loginTask = new LoginTask(username, password, ocl);
         loginTask.execute();
     }
+    */
 
-    static void registerFirebaseToken(Context context, String token, final OnHTTPRequestCompleteListener ocl){
+    public static void registerFirebaseToken(Context context, String token, HTTPRequestCompleteListener ocl){
         HTTPRequestThread httpRequestThread = new HTTPRequestThread(context, token, POST_REQUEST, ocl);
         httpRequestThread.setData(getFirebaseTokenData());
         httpRequestThread.execute(REGISTER_ANDROID_TOKEN_ENDPOINT);
     }
 
-    static void GetConversationData(Context context, long id, String token, OnHTTPRequestCompleteListener ocl) {
+    public static void GetConversationData(Context context, long id, String token, HTTPRequestCompleteListener ocl) {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
     }
 
-    static void CreateConversation(Context context, List<Long> users, String token, OnHTTPRequestCompleteListener ocl) {
+    public static void CreateConversation(Context context, List<Long> users, String token, HTTPRequestCompleteListener ocl) {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(new JSONArray(users).toString()).execute(CREATE_CONVERSATION);
     }
 
-    static void markConversationSeen(Context context, long id, String token, OnHTTPRequestCompleteListener ocl) {
+    public static void markConversationSeen(Context context, long id, String token, HTTPRequestCompleteListener ocl) {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(MARK_SEEN);
     }
 
-    static void checkServerIsOnline(Context context, OnHTTPRequestCompleteListener ocl) {
+    public static void checkServerIsOnline(Context context, HTTPRequestCompleteListener ocl) {
         HTTPRequestThread thread = new HTTPRequestThread(context, null, GET_REQUEST, ocl);
         thread.execute(SERVER_CHECK);
     }
 
-    static void UpdateUsers(Context context, String token, OnHTTPRequestCompleteListener oci) {
+    public static void UpdateUsers(Context context, String token, HTTPRequestCompleteListener oci) {
         HTTPRequestThread httpRequestThread = new HTTPRequestThread(context, token, POST_REQUEST, oci);
         httpRequestThread.execute(GET_USERS_ENDPOINT);
     }
 
-    static void UpdateConversations(Context context, String token, OnHTTPRequestCompleteListener oci) {
+    public static void UpdateConversations(Context context, String token, HTTPRequestCompleteListener oci) {
         new HTTPRequestThread(context, token, POST_REQUEST, oci).execute(CONVERSATIONS_ENDPOINT);
     }
 
-    static void WipeConversation(Context context, long id, String token, OnHTTPRequestCompleteListener ocl) {
+    public static void WipeConversation(Context context, long id, String token, HTTPRequestCompleteListener ocl) {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(WIPE_CONVERSATION);
     }
 
-    private static String getFirebaseTokenData() {
+    public static String getFirebaseTokenData() {
         return FirebaseInstanceId.getInstance().getToken();
     }
 
@@ -94,12 +89,6 @@ class RequestWrapper {
         void onComplete(String s);
 
         void onError(String s);
-    }
-
-    interface OnHTTPRequestCompleteListener {
-        void onComplete(String s);
-
-        void onError(int i);
     }
 
     /*************************************************************************************************
@@ -113,14 +102,14 @@ class RequestWrapper {
         private String token;
         private String requestType;
         private String endpoint;
-        private OnHTTPRequestCompleteListener ocl;
+        private HTTPRequestCompleteListener ocl;
         private Context context;
         private boolean requestFailed;
         private int resultCode;
         private List<Pair<String, String>> headers;
 
 
-        HTTPRequestThread(Context context, String token, String requestType, OnHTTPRequestCompleteListener ocl) {
+        HTTPRequestThread(Context context, String token, String requestType, HTTPRequestCompleteListener ocl) {
             this.ocl = ocl;
             this.token = token;
             this.context = context;

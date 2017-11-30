@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.activites;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -19,6 +19,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+
+import edu.ucsd.neurores.R;
+import edu.ucsd.neurores.abstraction.User;
+import edu.ucsd.neurores.adapters.ContactSearchAdapter;
+import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
+import edu.ucsd.neurores.network.RequestWrapper;
 
 /**
  * Overview of this activity: This activity is started by the main activity when the search icon is
@@ -55,7 +61,7 @@ public class SearchActivity extends AppCompatActivity {
         // Token for calls to server
         final String token = getIntent().getStringExtra("token");
         // Get all the users. Update the arrayList "users". Set up the search adapter
-        RequestWrapper.UpdateUsers(getApplicationContext(), token, new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.UpdateUsers(getApplicationContext(), token, new HTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 try {
@@ -93,7 +99,7 @@ public class SearchActivity extends AppCompatActivity {
                             if(user != null){
                                 ArrayList<Long> usersInConv = new ArrayList<Long>();
                                 usersInConv.add(user.getID());
-                                RequestWrapper.CreateConversation(getApplicationContext(), usersInConv, token, new RequestWrapper.OnHTTPRequestCompleteListener() {
+                                RequestWrapper.CreateConversation(getApplicationContext(), usersInConv, token, new HTTPRequestCompleteListener() {
                                     @Override
                                     public void onComplete(String s) {
                                         try{

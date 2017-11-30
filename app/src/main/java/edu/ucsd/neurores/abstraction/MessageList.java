@@ -1,6 +1,8 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.abstraction;
 
 import java.util.ArrayList;
+
+import edu.ucsd.neurores.abstraction.Message;
 
 public class MessageList {
 

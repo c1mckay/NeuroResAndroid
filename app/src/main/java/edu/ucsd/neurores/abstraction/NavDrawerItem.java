@@ -1,20 +1,22 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.abstraction;
 
 import android.content.Context;
 import android.view.View;
+
+import edu.ucsd.neurores.R;
 
 /**
  * Created by tbpetersen on 3/14/2017.
  */
 
-abstract class NavDrawerItem {
+public abstract class NavDrawerItem {
     private long id;
     private  Context c;
     View viewInNavDrawer;
     boolean isSelected;
 
 
-    NavDrawerItem(long id, Context c){
+    public NavDrawerItem(long id, Context c){
         this.id = id;
         this.c = c;
         isSelected = false;
@@ -28,13 +30,13 @@ abstract class NavDrawerItem {
         return id;
     }
 
-    void select(){
+    public void select(){
         if(viewInNavDrawer != null){
             viewInNavDrawer.setBackgroundColor(c.getResources().getColor(R.color.selected));
         }
     }
 
-    void deselect(){
+    public void deselect(){
         if(viewInNavDrawer != null){
             viewInNavDrawer.setBackgroundColor(c.getResources().getColor(R.color.colorPrimary));
         }
@@ -42,6 +44,14 @@ abstract class NavDrawerItem {
 
     public void setContext(Context context) {
         this.c = context;
+    }
+
+    public View getViewInNavDrawer(){
+        return viewInNavDrawer;
+    }
+
+    public void setViewInNavDrawer(View v){
+        viewInNavDrawer = v;
     }
 
 }

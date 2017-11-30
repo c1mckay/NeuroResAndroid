@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.activites;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -38,11 +38,25 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
+
+import edu.ucsd.neurores.abstraction.Conversation;
+import edu.ucsd.neurores.abstraction.Group;
+import edu.ucsd.neurores.adapters.NavDrawerAdapter;
+import edu.ucsd.neurores.abstraction.NavDrawerItem;
+import edu.ucsd.neurores.fragments.PDFFragment;
+import edu.ucsd.neurores.R;
+import edu.ucsd.neurores.abstraction.User;
+import edu.ucsd.neurores.network.WebSocket;
+import edu.ucsd.neurores.data.MessageDatabaseHelper;
+import edu.ucsd.neurores.fragments.MainFragment;
+import edu.ucsd.neurores.helper.JSONConverter;
+import edu.ucsd.neurores.helper.OnCompleteListener;
+import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
+import edu.ucsd.neurores.network.RequestWrapper;
 
 //TODO Handle the errors in HTTP calls
 public class MainActivity extends AppCompatActivity
@@ -166,7 +180,7 @@ public class MainActivity extends AppCompatActivity
 
     private void onBannerClicked() {
 
-        connectWebSocket(new RequestWrapper.OnCompleteListener() {
+        connectWebSocket(new OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 hideMainElements();
@@ -245,7 +259,7 @@ public class MainActivity extends AppCompatActivity
         return activeNetwork != null && activeNetwork.isConnected();
     }
 
-    public void checkServerIsOnline(RequestWrapper.OnHTTPRequestCompleteListener onCompleteListener){
+    public void checkServerIsOnline(HTTPRequestCompleteListener onCompleteListener){
         final Context context = this;
         RequestWrapper.checkServerIsOnline(this,  onCompleteListener);
     }
@@ -440,7 +454,7 @@ public class MainActivity extends AppCompatActivity
 
         // Check if the main fragment needs to be changed
         if(needToChangeFragment){
-            if(selectedConversation.viewInNavDrawer == null) {
+            if(selectedConversation.getViewInNavDrawer() == null) {
                 // Add a view to the navigation bar for the new user
                 addToNavBar(PRIVATE_MENU_GROUP, selectedConversation);
             }else{
@@ -457,6 +471,10 @@ public class MainActivity extends AppCompatActivity
         connectWebSocket();
 
         hideSoftKeyboard();
+    }
+
+    public MessageDatabaseHelper getMessageDatabaseHelper(){
+        return messageDatabaseHelper;
     }
 
     /**
@@ -495,7 +513,7 @@ public class MainActivity extends AppCompatActivity
     private void onUserClick(long user_id){
         for(Conversation conversation: currentConversations.values()){
             if(conversation.getNumberOfUsers() == 1 && conversation.getUserAtIndex(0).getID() == user_id){
-                onConversationClick(conversation.viewInNavDrawer, conversation.getID());
+                onConversationClick(conversation.getViewInNavDrawer(), conversation.getID());
                 return;
             }
         }
@@ -536,7 +554,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createConversation(List<Long> userIDs, final int groupID, final boolean changeFragment, final int numOfUnseen){
-        RequestWrapper.CreateConversation(this, userIDs, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.CreateConversation(this, userIDs, getToken(), new HTTPRequestCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
@@ -570,7 +588,7 @@ public class MainActivity extends AppCompatActivity
                     messageDatabaseHelper.insertConversation(conversationID, members, -1, unseen);
 
                     if(changeFragment){
-                        onConversationClick(conversation.viewInNavDrawer, conversation.getID());
+                        onConversationClick(conversation.getViewInNavDrawer(), conversation.getID());
                     }
                     Log.v("taggy", "done creating");
 
@@ -598,7 +616,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                RequestWrapper.UpdateConversations(getApplication(), getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+                RequestWrapper.UpdateConversations(getApplication(), getToken(), new HTTPRequestCompleteListener() {
                     @Override
                     public void onComplete(String s) {
                         if(s == null){
@@ -655,7 +673,7 @@ public class MainActivity extends AppCompatActivity
             }
             // Select clicked on user
             selectedConversation = currentConversations.get(conversation_id);;
-            selectedConversation.viewInNavDrawer = v;
+            selectedConversation.setViewInNavDrawer(v);
             selectedConversation.select();
         }
         // Reset the input fields and hide it
@@ -912,7 +930,7 @@ public class MainActivity extends AppCompatActivity
         final MainActivity mainActivity = this;
         hideMainElements();
         // Load data from server
-        RequestWrapper.UpdateUsers(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.UpdateUsers(this, getToken(), new HTTPRequestCompleteListener() {
 
             public void onComplete(String s) {
                 if(s == null){
@@ -947,7 +965,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateNavDrawer(){
-        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.UpdateConversations(this, getToken(), new HTTPRequestCompleteListener() {
             public void onComplete(final String s) {
                 runOnUiThread(new Runnable() {
                     @Override
@@ -1020,7 +1038,7 @@ public class MainActivity extends AppCompatActivity
 
     private void initializeConversations() {
         final MainActivity mainActivity = this;
-        RequestWrapper.UpdateConversations(this, getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.UpdateConversations(this, getToken(), new HTTPRequestCompleteListener() {
             public void onComplete(String s) {
                 if(s == null){
                     goToLogin();
@@ -1065,8 +1083,8 @@ public class MainActivity extends AppCompatActivity
         TreeSet<String> departments = new TreeSet<String>();
         for(User u : users){
             // Do not include the dev department
-            if(!u.userType.equals("dev")){
-                departments.add(u.userType);
+            if(!u.getUserType().equals("dev")){
+                departments.add(u.getUserType());
             }
         }
 
@@ -1081,7 +1099,7 @@ public class MainActivity extends AppCompatActivity
 
         for(User u : users){
             if(u != loggedInUser){
-                addUserToDepartment(u.userType, u);
+                addUserToDepartment(u.getUserType(), u);
             }
         }
 
@@ -1320,6 +1338,10 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public boolean screenIsOn(){
+        return screenIsOn;
+    }
+
     public void queueToast(String s){
         queuedToastMessage = s;
     }
@@ -1349,14 +1371,14 @@ public class MainActivity extends AppCompatActivity
 
     /***************************************************/
 
-    private void connectWebSocket(RequestWrapper.OnCompleteListener ocl){
+    private void connectWebSocket(OnCompleteListener ocl){
         closeWebSocket();
         webSocket = new WebSocket(currentFragment, this, ocl);
     }
 
     private void connectWebSocket(){
         closeWebSocket();
-        webSocket = new WebSocket(currentFragment, this, new RequestWrapper.OnCompleteListener() {
+        webSocket = new WebSocket(currentFragment, this, new OnCompleteListener() {
             @Override
             public void onComplete(String s) {
                 hideWarningBanner();
@@ -1388,7 +1410,7 @@ public class MainActivity extends AppCompatActivity
 
         if(webSocket == null || webSocket.isClosed() || ! webSocket.isOpen()){
             Log.v("sockett", "Socket is not in working condition while trying to send message. Reconnecting and resending message");
-            connectWebSocket(new RequestWrapper.OnCompleteListener() {
+            connectWebSocket(new OnCompleteListener() {
                 @Override
                 public void onComplete(String s) {
                     webSocket.pushMessage(message);

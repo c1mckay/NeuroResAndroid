@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.adapters;
 
 import android.content.Context;
 import android.graphics.Paint;
@@ -15,6 +15,14 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsd.neurores.abstraction.Conversation;
+import edu.ucsd.neurores.abstraction.Group;
+import edu.ucsd.neurores.abstraction.NavDrawerInnerGroup;
+import edu.ucsd.neurores.abstraction.NavDrawerItem;
+import edu.ucsd.neurores.R;
+import edu.ucsd.neurores.abstraction.User;
+import edu.ucsd.neurores.activites.MainActivity;
+
 /**
  * Created by tbpetersen on 2/23/2017.
  */
@@ -29,7 +37,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
 
     private MainActivity activity;
 
-    NavDrawerAdapter(MainActivity activity){
+    public NavDrawerAdapter(MainActivity activity){
 
         this.activity = activity;
 
@@ -133,7 +141,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                 }
 
                 Conversation conversation = (Conversation) getChild(groupPosition,childPosition);
-                conversation.viewInNavDrawer = child;
+                conversation.setViewInNavDrawer(child);
 
                 setConversationNameAndTag(child, conversation, R.id.CONVERSATION);
 
@@ -200,7 +208,7 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
                         }
                     });
 
-                    u.viewInNavDrawer = userView;
+                    u.setViewInNavDrawer(userView);
                 }
 
                 child.setTag(R.id.STAFFGROUP, childPosition);

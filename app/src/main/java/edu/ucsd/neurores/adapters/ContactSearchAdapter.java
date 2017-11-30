@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.adapters;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;

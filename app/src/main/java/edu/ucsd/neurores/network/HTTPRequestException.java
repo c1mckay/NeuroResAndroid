@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.network;
 
 /**
  * Created by tbpetersen on 9/8/2017.

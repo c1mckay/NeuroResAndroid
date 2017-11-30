@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.abstraction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ public class Group <T>{
     private int id;
     private boolean isExpanded;
 
-    Group(int id){
+    public Group(int id){
         this.id = id;
         group = new ArrayList<T>();
         isExpanded = true;

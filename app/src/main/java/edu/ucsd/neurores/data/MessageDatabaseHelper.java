@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.data;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,8 +8,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+
+import edu.ucsd.neurores.abstraction.Conversation;
+import edu.ucsd.neurores.helper.JSONConverter;
+import edu.ucsd.neurores.abstraction.Message;
+import edu.ucsd.neurores.abstraction.User;
 
 /**
  * Created by tbpetersen on 9/11/2017.
@@ -167,7 +171,7 @@ public class MessageDatabaseHelper extends SQLiteOpenHelper {
 
     public void insertUsers(List<User> userList){
         for(User user : userList){
-            insertUser(user.getID(), user.getName(), user.userType, false);
+            insertUser(user.getID(), user.getName(), user.getUserType(), false);
         }
     }
 

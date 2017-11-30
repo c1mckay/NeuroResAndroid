@@ -1,6 +1,5 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.network;
 
-import android.app.ActivityManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.widget.Toast;
@@ -16,11 +15,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
 import java.util.HashMap;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+
+import edu.ucsd.neurores.abstraction.Conversation;
+import edu.ucsd.neurores.abstraction.Message;
+import edu.ucsd.neurores.abstraction.User;
+import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.fragments.MainFragment;
+import edu.ucsd.neurores.helper.OnCompleteListener;
 
 public class WebSocket extends WebSocketClient {
 
@@ -30,7 +35,7 @@ public class WebSocket extends WebSocketClient {
     MainActivity mainActivity;
 
 
-    WebSocket(Fragment currentFragment, MainActivity mainActivity, RequestWrapper.OnCompleteListener ocl) {
+    public WebSocket(Fragment currentFragment, MainActivity mainActivity, OnCompleteListener ocl) {
         super(getWebsocketURI());
         this.currentFragment = currentFragment;
         this.mainActivity = mainActivity;
@@ -46,7 +51,7 @@ public class WebSocket extends WebSocketClient {
         }
     }
 
-    private void setupSSLSocket(final MainActivity mainActivity, final RequestWrapper.OnCompleteListener ocl) {
+    private void setupSSLSocket(final MainActivity mainActivity, final OnCompleteListener ocl) {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -134,7 +139,7 @@ public class WebSocket extends WebSocketClient {
                 return;
             } else {
 
-                if (!mainActivity.screenIsOn) {
+                if (!mainActivity.screenIsOn()) {
                     mainActivity.queueToast("New Message");
                 }
 
@@ -145,7 +150,7 @@ public class WebSocket extends WebSocketClient {
                 long time = System.currentTimeMillis();
                 String timeString = Message.getTimeStringFormattedForDB(time);
 
-                mainActivity.messageDatabaseHelper.insertMessage(messageID, messageText, conversationID, fromID, timeString);
+                mainActivity.getMessageDatabaseHelper().insertMessage(messageID, messageText, conversationID, fromID, timeString);
                 if (userIsNotViewingThisConversation(conversationID)) {
                     //long conversationID = jo.getLong("conv_id");
                     HashMap<Long, Conversation> currentConversations = mainActivity.currentConversations;
@@ -232,7 +237,7 @@ public class WebSocket extends WebSocketClient {
             return;
         }
         MainFragment mainFragment = (MainFragment) currentFragment;
-        RequestWrapper.markConversationSeen(mainActivity, conversationID, mainFragment.getToken(), new RequestWrapper.OnHTTPRequestCompleteListener() {
+        RequestWrapper.markConversationSeen(mainActivity, conversationID, mainFragment.getToken(), new HTTPRequestCompleteListener() {
             @Override
             public void onComplete(String s) {
                 // TODO Check response for success

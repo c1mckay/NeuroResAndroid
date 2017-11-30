@@ -1,6 +1,5 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.network;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -15,6 +14,9 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
+
+import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.R;
 
 public class NotificationHandler extends FirebaseMessagingService {
 

@@ -1,9 +1,8 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.adapters;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -17,6 +16,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+
+import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.abstraction.Message;
+import edu.ucsd.neurores.abstraction.MessageList;
+import edu.ucsd.neurores.R;
 
 
 /**

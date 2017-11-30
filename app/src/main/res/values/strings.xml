@@ -52,6 +52,7 @@
     <string name="wipe_messages_message">Delete all messages in this conversation?\n\n This cannot be undone</string>
     <string name="delete_all_messages">Delete All Messages</string>
     <string name="disconnected_message">You are not connected to NeuroRes and therefore unable to send messages.</string>
+    <string name="log_in_button_text">Log In with AD</string>
 
 
 </resources>

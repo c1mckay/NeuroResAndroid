@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.abstraction;
 
 import android.content.Context;
 
@@ -15,7 +15,7 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
     private String name;
     private boolean isExpanded;
 
-    NavDrawerInnerGroup(Context context, String name){
+    public NavDrawerInnerGroup(Context context, String name){
         super(0, context);
         this.name = name;
         this.context = context;
@@ -23,7 +23,7 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
         children = new ArrayList<>();
     }
 
-    void addChild(User newChild){
+    public void addChild(User newChild){
         children.add(newChild);
     }
 
@@ -35,7 +35,7 @@ public class NavDrawerInnerGroup extends NavDrawerItem {
         return children.size();
     }
 
-    List<User> getChildren(){
+    public List<User> getChildren(){
         return children;
     }
 

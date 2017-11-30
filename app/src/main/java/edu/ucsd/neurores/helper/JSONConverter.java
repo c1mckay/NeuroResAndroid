@@ -1,4 +1,4 @@
-package edu.ucsd.neurores;
+package edu.ucsd.neurores.helper;
 
 import android.content.Context;
 import android.util.Log;
@@ -19,13 +19,15 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
+import edu.ucsd.neurores.abstraction.Conversation;
+import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.abstraction.Message;
+import edu.ucsd.neurores.abstraction.User;
 
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
 
@@ -110,7 +112,7 @@ public class JSONConverter {
     }
 
 
-    static List<Conversation> toConversationList(String jsonString, HashMap<Long,User> userList){
+    public static List<Conversation> toConversationList(String jsonString, HashMap<Long,User> userList){
         List<Conversation> conversationList = new ArrayList<Conversation>();
 
         try{
@@ -212,7 +214,7 @@ public class JSONConverter {
             String superUser = null;
             jsonObject.addProperty("email", src.getName());
             jsonObject.addProperty("user_id", src.getID());
-            jsonObject.addProperty("user_type", src.userType);
+            jsonObject.addProperty("user_type", src.getUserType());
             jsonObject.addProperty("super_user", superUser);
             jsonObject.addProperty("isOnline", false);
             return jsonObject;
