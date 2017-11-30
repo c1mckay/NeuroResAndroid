@@ -1,4 +1,4 @@
-package edu.ucsd.neurores.activites;
+package edu.ucsd.neurores.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +7,7 @@ import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -18,6 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import edu.ucsd.neurores.R;
+import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
 import edu.ucsd.neurores.network.RequestWrapper;
 
 public class WebViewLoginActivity extends AppCompatActivity {
@@ -89,7 +91,20 @@ public class WebViewLoginActivity extends AppCompatActivity {
                     saveTokenToPreferences(token);
                     RequestWrapper.registerFirebaseToken(getApplicationContext(), token, null);
 
-                    startMainActivity();
+                    RequestWrapper.getUsername(WebViewLoginActivity.this, token, new HTTPRequestCompleteListener() {
+                        @Override
+                        public void onComplete(String s) {
+                            // Response has quotes. This substring removes them
+                            saveUsernameToPreferences(s.substring(1, s.length() -1));
+                            startMainActivity();
+                        }
+
+                        @Override
+                        public void onError(int i) {
+                            Log.v("taggy","Error: " + i);
+                            // TODO handle error
+                        }
+                    });
                     finish();
                 }else if(url.startsWith(unauthorizedURL)){
                     notifyUserUnauthorized();
@@ -121,6 +136,13 @@ public class WebViewLoginActivity extends AppCompatActivity {
         SharedPreferences sp = WebViewLoginActivity.this.getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
         editor.putString(LoginActivity.TOKEN, loginToken);
+        editor.commit();
+    }
+
+    private void saveUsernameToPreferences(String username){
+        SharedPreferences sp = WebViewLoginActivity.this.getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString(LoginActivity.NAME, username);
         editor.commit();
     }
 

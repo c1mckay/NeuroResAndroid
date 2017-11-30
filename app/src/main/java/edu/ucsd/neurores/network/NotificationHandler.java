@@ -15,7 +15,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 import edu.ucsd.neurores.R;
 
 public class NotificationHandler extends FirebaseMessagingService {

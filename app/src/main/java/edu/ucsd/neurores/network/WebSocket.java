@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSocketFactory;
 import edu.ucsd.neurores.abstraction.Conversation;
 import edu.ucsd.neurores.abstraction.Message;
 import edu.ucsd.neurores.abstraction.User;
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 import edu.ucsd.neurores.fragments.MainFragment;
 import edu.ucsd.neurores.helper.OnCompleteListener;
 

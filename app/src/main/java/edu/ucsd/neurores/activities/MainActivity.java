@@ -1,4 +1,4 @@
-package edu.ucsd.neurores.activites;
+package edu.ucsd.neurores.activities;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -59,6 +59,7 @@ import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
 import edu.ucsd.neurores.network.RequestWrapper;
 
 //TODO Handle the errors in HTTP calls
+//TODO Handle case where token is set in prefs but username is not (otherwise there are null ptrs)
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, DrawerLayout.DrawerListener, ExpandableListView.OnGroupClickListener, ExpandableListView.OnChildClickListener {
 

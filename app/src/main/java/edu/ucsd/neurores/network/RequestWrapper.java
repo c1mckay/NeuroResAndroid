@@ -18,8 +18,6 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
-
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {
@@ -27,23 +25,17 @@ public class RequestWrapper {
     private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/static/android_token";
 
     private static final String GET_USERS_ENDPOINT = "/static/users_list";
+    private static final String GET_USERNAME_ENDPOINT = "/static/get_user_name";
     private static final String CONVERSATIONS_ENDPOINT = "/static/conversation_data";
     private static final String CONVERSATION_CONTENT_ENDPOINT = "/static/get_messages";
     private static final String CREATE_CONVERSATION = "/static/start_conversation";
     private static final String WIPE_CONVERSATION = "/static/wipe_conversation";
-    private static final String MARK_SEEN = "/static/mark_seen";
-    private static final String SERVER_CHECK = "/static/privacy.html";
+    private static final String MARK_SEEN_ENDPOINT = "/static/mark_seen";
+    private static final String SERVER_CHECK_ENDPOINT = "/static/privacy.html";
 
     private static final String AUTH_HEADER_KEY = "auth";
     private static final String POST_REQUEST = "POST";
     private static final String GET_REQUEST = "GET";
-
-    /*
-    public static void login(String username, String password,RequestWrapper.OnCompleteListener ocl){
-        LoginTask loginTask = new LoginTask(username, password, ocl);
-        loginTask.execute();
-    }
-    */
 
     public static void registerFirebaseToken(Context context, String token, HTTPRequestCompleteListener ocl){
         HTTPRequestThread httpRequestThread = new HTTPRequestThread(context, token, POST_REQUEST, ocl);
@@ -60,12 +52,16 @@ public class RequestWrapper {
     }
 
     public static void markConversationSeen(Context context, long id, String token, HTTPRequestCompleteListener ocl) {
-        new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(MARK_SEEN);
+        new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(MARK_SEEN_ENDPOINT);
     }
 
     public static void checkServerIsOnline(Context context, HTTPRequestCompleteListener ocl) {
         HTTPRequestThread thread = new HTTPRequestThread(context, null, GET_REQUEST, ocl);
-        thread.execute(SERVER_CHECK);
+        thread.execute(SERVER_CHECK_ENDPOINT);
+    }
+
+    public static void getUsername(Context context, String token, HTTPRequestCompleteListener ocl) {
+        new HTTPRequestThread(context, token, POST_REQUEST, ocl).execute(GET_USERNAME_ENDPOINT);
     }
 
     public static void UpdateUsers(Context context, String token, HTTPRequestCompleteListener oci) {

@@ -6,7 +6,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 
 /**
  * Created by tbpetersen on 3/23/2017.

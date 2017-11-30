@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 import edu.ucsd.neurores.abstraction.Message;
 import edu.ucsd.neurores.abstraction.MessageList;
 import edu.ucsd.neurores.R;

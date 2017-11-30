@@ -30,7 +30,7 @@ import java.util.TimeZone;
 import edu.ucsd.neurores.abstraction.Conversation;
 import edu.ucsd.neurores.network.HTTPRequestCompleteListener;
 import edu.ucsd.neurores.helper.JSONConverter;
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 import edu.ucsd.neurores.abstraction.Message;
 import edu.ucsd.neurores.abstraction.MessageList;
 import edu.ucsd.neurores.R;

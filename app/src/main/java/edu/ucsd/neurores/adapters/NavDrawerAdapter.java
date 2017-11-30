@@ -21,7 +21,7 @@ import edu.ucsd.neurores.abstraction.NavDrawerInnerGroup;
 import edu.ucsd.neurores.abstraction.NavDrawerItem;
 import edu.ucsd.neurores.R;
 import edu.ucsd.neurores.abstraction.User;
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 
 /**
  * Created by tbpetersen on 2/23/2017.

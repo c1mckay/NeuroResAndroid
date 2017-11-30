@@ -1,4 +1,4 @@
-package edu.ucsd.neurores.activites;
+package edu.ucsd.neurores.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

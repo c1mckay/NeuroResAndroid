@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.ucsd.neurores.abstraction.Conversation;
-import edu.ucsd.neurores.activites.MainActivity;
+import edu.ucsd.neurores.activities.MainActivity;
 import edu.ucsd.neurores.abstraction.Message;
 import edu.ucsd.neurores.abstraction.User;
 
