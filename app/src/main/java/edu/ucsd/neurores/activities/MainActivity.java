@@ -286,7 +286,7 @@ public class MainActivity extends AppCompatActivity
         connectWebSocket();
     }
 
-    protected String getToken(){
+    public String getToken(){
         SharedPreferences sPref = getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         return sPref.getString(LoginActivity.TOKEN, null);
     }
@@ -327,11 +327,18 @@ public class MainActivity extends AppCompatActivity
 
     private MainFragment startMainFragment(){
         MainFragment mFrag = new MainFragment();
-        //mFrag.setupSocket(this);
         Bundle i = new Bundle();
         i.putString("token", getToken());
         mFrag.setArguments(i);
         return mFrag;
+    }
+
+    private PDFFragment startPDFFragment(){
+        PDFFragment pdfFrag = new PDFFragment();
+        Bundle i = new Bundle();
+        i.putString("token", getToken());
+        pdfFrag.setArguments(i);
+        return pdfFrag;
     }
 
     public void setKeyboardPushing(){
@@ -440,6 +447,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
+        Log.v("taggy", "On resume called");
         hideMainElements();
         isPaused = false;
 
@@ -720,7 +728,7 @@ public class MainActivity extends AppCompatActivity
             updateMostRecentConversation(selectedConversation.getID());
         }else{
             Log.v("taggy", "Showing pdf");
-            currentFragment = new PDFFragment();
+            currentFragment = startPDFFragment();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
             fragmentTransaction.commit();
@@ -996,13 +1004,9 @@ public class MainActivity extends AppCompatActivity
 
                         }
 
-                        for(Conversation conversation : currentConversations.values()){
-                            Log.v("taggy", conversation.getName() + ": " + conversation.getNumOfUnread());
-                        }
                         messageDatabaseHelper.insertConversations(conversations);
                         populateUnread(newConversations);
                         moveAllOnlineConversationsUp();
-                        //reloadCurrentFragment();
                     }
                 });
 
@@ -1383,6 +1387,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onComplete(String s) {
                 hideWarningBanner();
+                Log.v("taggy", "Websocket is open: " + webSocket.isOpen());
             }
 
             @Override

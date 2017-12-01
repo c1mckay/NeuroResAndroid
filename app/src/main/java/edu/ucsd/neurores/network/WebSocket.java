@@ -73,7 +73,7 @@ public class WebSocket extends WebSocketClient {
                         }
                     } else {
                         mainActivity.hideWarningBanner();
-                        Log.v("sockett", "Connected");
+                        Log.v("sockett", "Connected to websocket");
                         if (ocl != null) {
                             ocl.onComplete("Connected");
                         }
@@ -113,15 +113,13 @@ public class WebSocket extends WebSocketClient {
     public void onOpen(ServerHandshake handshakedata) {
         JSONObject jo = new JSONObject();
         try {
-            if (currentFragment instanceof MainFragment) {
-                MainFragment mainFragment = (MainFragment) currentFragment;
-                jo.put("greeting", mainFragment.getToken());
-            }
+                jo.put("greeting", mainActivity.getToken());
             //TODO Check if socket connection is actually accepted (is not accepted when token is bad)
         } catch (JSONException e) {
             e.printStackTrace();
         }
         send(jo.toString());
+        Log.v("taggy", "Message on socket sent: " + jo.toString());
     }
 
     public void onMessage(String message) {
