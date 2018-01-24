@@ -718,7 +718,7 @@ public class MainActivity extends AppCompatActivity
             mainFragment.userName = loggedInUser.getName();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
-            fragmentTransaction.commit();
+            fragmentTransaction.commitAllowingStateLoss();
             mainFragment.loadMessages(this, selectedConversation, userList);
             toolbarTitle.setText(selectedConversation.getName());
             RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
@@ -731,7 +731,7 @@ public class MainActivity extends AppCompatActivity
             currentFragment = startPDFFragment();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
-            fragmentTransaction.commit();
+            fragmentTransaction.commitAllowingStateLoss();
             toolbarTitle.setText("PDF");
             showMainElements();
         }
@@ -779,7 +779,7 @@ public class MainActivity extends AppCompatActivity
             currentFragment = loadOnboardingFragment();
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
-            fragmentTransaction.commit();
+            fragmentTransaction.commitAllowingStateLoss();
             return;
         }
 
@@ -812,7 +812,7 @@ public class MainActivity extends AppCompatActivity
         mainFragment.userName = loggedInUser.getName();
         android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, mainFragment);
-        fragmentTransaction.commit();
+        fragmentTransaction.commitAllowingStateLoss();
         mainFragment.loadMessages(this, selectedConversation, userList);
         if(getSupportActionBar() != null){
             toolbarTitle.setText(selectedConversation.getName());
@@ -1387,7 +1387,11 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onComplete(String s) {
                 hideWarningBanner();
-                Log.v("taggy", "Websocket is open: " + webSocket.isOpen());
+                if(webSocket != null){
+                    Log.v("taggy", "Websocket is open: " + webSocket.isOpen());
+                }else{
+                    onError("Socket is null on onComplete of connectWebSocket");
+                }
             }
 
             @Override

@@ -168,7 +168,7 @@ public class WebSocket extends WebSocketClient {
                         from = "";//this should just a message I sent, an echo.
                     boolean isAtBottom = mainFragment.isAtBottom();
                     displayMessage(from, messageText, time, isAtBottom, fromID);
-                    markAsSeen(mainFragment.conversation.getID());
+                    markAsSeen(mainFragment.conversation.getID(), messageID);
                 }
             }
 
@@ -229,11 +229,27 @@ public class WebSocket extends WebSocketClient {
         }
     }
 
-    private void markAsSeen(long conversationID) {
+    private void markAsSeen(long conversationID, int messageID) {
         if (!(currentFragment instanceof MainFragment)) {
             Log.v("taggy", "Trying to mark message as seen while current fragment is not a MainFragment");
             return;
         }
+
+        respondViaSocket(messageID);
+        respondViaHTTPRequest(conversationID);
+    }
+
+    private void respondViaSocket(long messageID) {
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("mPong", messageID);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        send(jo.toString());
+    }
+
+    private void respondViaHTTPRequest(long conversationID) {
         MainFragment mainFragment = (MainFragment) currentFragment;
         RequestWrapper.markConversationSeen(mainActivity, conversationID, mainFragment.getToken(), new HTTPRequestCompleteListener() {
             @Override
