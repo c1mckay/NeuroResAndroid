@@ -22,16 +22,16 @@ import javax.net.ssl.HttpsURLConnection;
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {
     public static final String BASE_URL = "neurores.ucsd.edu";
-    private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/static/android_token";
+    private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/android_token";
 
-    private static final String GET_USERS_ENDPOINT = "/static/users_list";
-    private static final String GET_USERNAME_ENDPOINT = "/static/get_user_name";
-    private static final String CONVERSATIONS_ENDPOINT = "/static/conversation_data";
-    private static final String CONVERSATION_CONTENT_ENDPOINT = "/static/get_messages";
-    private static final String CREATE_CONVERSATION = "/static/start_conversation";
-    private static final String WIPE_CONVERSATION = "/static/wipe_conversation";
-    private static final String MARK_SEEN_ENDPOINT = "/static/mark_seen";
-    private static final String SERVER_CHECK_ENDPOINT = "/static/privacy.html";
+    private static final String GET_USERS_ENDPOINT = "/users_list";
+    private static final String GET_USERNAME_ENDPOINT = "/get_user_name";
+    private static final String CONVERSATIONS_ENDPOINT = "/conversation_data";
+    private static final String CONVERSATION_CONTENT_ENDPOINT = "/get_messages";
+    private static final String CREATE_CONVERSATION = "/start_conversation";
+    private static final String WIPE_CONVERSATION = "/wipe_conversation";
+    private static final String MARK_SEEN_ENDPOINT = "/mark_seen";
+    private static final String SERVER_CHECK_ENDPOINT = "/privacy.html";
 
     private static final String AUTH_HEADER_KEY = "auth";
     private static final String POST_REQUEST = "POST";
