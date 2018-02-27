@@ -22,7 +22,7 @@ import javax.net.ssl.HttpsURLConnection;
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {
     public static final String BASE_URL = "neurores.ucsd.edu";
-    private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/android_token";
+    private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/firebase_notif";
 
     private static final String GET_USERS_ENDPOINT = "/users_list";
     private static final String GET_USERNAME_ENDPOINT = "/get_user_name";
