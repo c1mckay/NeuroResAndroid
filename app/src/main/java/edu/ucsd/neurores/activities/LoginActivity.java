@@ -66,6 +66,7 @@ public class LoginActivity extends AppCompatActivity{
     private void loginWithWebView() {
         Intent startLogin = new Intent( LoginActivity.this, WebViewLoginActivity.class);
         LoginActivity.this.startActivity(startLogin);
+        finish();
     }
 
     private void showNoInternetConnectionToast() {

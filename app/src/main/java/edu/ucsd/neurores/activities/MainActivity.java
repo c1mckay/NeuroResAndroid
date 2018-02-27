@@ -91,6 +91,8 @@ public class MainActivity extends AppCompatActivity
     public HashMap<Long,Conversation> currentConversations;
     /* The currently selected user */
     public Conversation selectedConversation;
+    private Conversation previousConversation;
+
 
     public User loggedInUser;
     Toast mostRecentToast;
@@ -165,6 +167,7 @@ public class MainActivity extends AppCompatActivity
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
         messageDatabaseHelper = new MessageDatabaseHelper(this);
+        previousConversation = null;
 
         //This is used to view the sql data base by going to chrome://inspect on a browser
         Stetho.initializeWithDefaults(this);
@@ -326,6 +329,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private MainFragment startMainFragment(){
+        previousConversation = null;
+
         MainFragment mFrag = new MainFragment();
         Bundle i = new Bundle();
         i.putString("token", getToken());
@@ -361,7 +366,9 @@ public class MainActivity extends AppCompatActivity
         // Close the drawer if its open
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        } else if(previousConversation != null){
+            onConversationClick(previousConversation.getViewInNavDrawer(), previousConversation.getID());
+        }else{
             super.onBackPressed();
         }
     }
@@ -683,6 +690,7 @@ public class MainActivity extends AppCompatActivity
             // Select clicked on user
             selectedConversation = currentConversations.get(conversation_id);;
             selectedConversation.setViewInNavDrawer(v);
+            Log.v("taggy", "Selecting the new conversation " + selectedConversation.toString());
             selectedConversation.select();
         }
         // Reset the input fields and hide it
@@ -1246,6 +1254,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         if(selectedConversation != null){
+            previousConversation = selectedConversation;
             selectedConversation.deselect();
             selectedConversation = null;
         }
@@ -1544,8 +1553,6 @@ public class MainActivity extends AppCompatActivity
 
 
     public void logDB(View v){
-        List<Conversation> conversations = messageDatabaseHelper.getConversationsList(this);
-        String messageJSON = messageDatabaseHelper.getMessagesJSON(selectedConversation.getID());
-        Log.v("taggy", messageJSON + "");
+        Log.v("taggy", selectedConversation.toString() );
     }
 }
