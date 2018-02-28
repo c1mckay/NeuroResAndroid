@@ -55,6 +55,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
+            <!--
             <TextView
                 android:layout_marginRight="20sp"
                 android:layout_width="wrap_content"
@@ -65,7 +66,6 @@
                 android:onClick="logout"
                 android:text="@string/logout"/>
 
-
             <TextView
                 android:layout_marginRight="20sp"
                 android:layout_width="wrap_content"
@@ -75,6 +75,7 @@
                 android:textSize="20sp"
                 android:onClick="logDB"
                 android:text="Log Messages"/>
+            -->
 
 
         </LinearLayout>

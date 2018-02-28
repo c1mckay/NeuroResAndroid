@@ -161,6 +161,7 @@ public class WebSocket extends WebSocketClient {
                     }
 
                     notifyUserOfNewMessage(fromID);
+                    respondViaSocket(messageID);
                 } else {
                     MainFragment mainFragment = (MainFragment) currentFragment;
                     String from = mainFragment.conversation.getUser(fromID);

@@ -387,10 +387,10 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         switch (id){
             case R.id.action_wipe_thread:
-                if(currentFragment instanceof MainFragment){
+                if(currentFragment instanceof MainFragment && selectedConversation != null){
                     wipeAlert();
                 }else{
-                   Log.v("taggy", "Conversation wipe requested when currentFragment is not MainFragment");
+                   Log.v("taggy", "Conversation wipe requested when currentFragment is not MainFragment or selected conversation is null");
                 }
                 break;
         }
@@ -682,6 +682,8 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+
+
         if(currentConversations.containsKey(conversation_id)){ //a conversation was clicked, and we're about to load it
             //Deselect previous
             if(selectedConversation != null){
@@ -697,6 +699,7 @@ public class MainActivity extends AppCompatActivity
         hideSoftKeyboard();
 
         changeFragment();
+
     }
 
     /**

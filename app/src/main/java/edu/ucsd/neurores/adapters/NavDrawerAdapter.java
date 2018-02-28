@@ -266,6 +266,11 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
     }
 
     public void addConversation(int groupID, Conversation c){
+        if(c.isInvalid()){
+            Log.v("taggy", "Invalid conversation: " + c.getName());
+            return;
+        }
+
         Group<NavDrawerItem> group = getGroupByID(groupID);
         group.addItem(c);
 
@@ -317,6 +322,11 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
     }
 
     public void moveConversationToPrivate(Conversation conversation){
+        if(conversation.isInvalid()){
+            return;
+        }
+
+
         Group<NavDrawerItem> unreadGroup = getGroupByID(UNREAD_GROUP);
         Group<NavDrawerItem> privateGroup = getGroupByID(PRIVATE_GROUP);
 
@@ -345,6 +355,12 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
     }
 
     public void moveConversationToUnread(Conversation conversation){
+        if(conversation.isInvalid()){
+            return;
+        }
+
+
+
         Group<NavDrawerItem> unreadGroup = getGroupByID(UNREAD_GROUP);
         Group<NavDrawerItem> privateGroup = getGroupByID(PRIVATE_GROUP);
 

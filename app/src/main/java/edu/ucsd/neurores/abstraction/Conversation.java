@@ -25,9 +25,13 @@ public class Conversation extends NavDrawerItem {
         users.add(user);
     }
 
+    public boolean isInvalid() {
+        return users == null || users.size() == 0;
+    }
+
     public String getName() {
         if(users == null || users.size() == 0){
-            return "Bugged out conversation";
+            return "User no longer exists";
         }
 
         if(users.size() == 1){
