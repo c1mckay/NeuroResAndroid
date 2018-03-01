@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="edu.ucsd.neurores">
+    package="edu.sdsc.neurores">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -15,19 +15,19 @@
         android:theme="@style/AppTheme">
 
         <!-- android:theme="@style/ThemeOverlay.AppCompat.Dark" -->
-        <service android:name=".network.NotificationHandler">
+        <service android:name="edu.sdsc.neurores.network.NotificationHandler">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".network.MyFirebaseInstanceIDService">
+        <service android:name="edu.sdsc.neurores.network.MyFirebaseInstanceIDService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
 
         <activity
-            android:name=".activities.MainActivity"
+            android:name="edu.sdsc.neurores.activities.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"
@@ -38,15 +38,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.LoginActivity"
+            android:name="edu.sdsc.neurores.activities.LoginActivity"
             android:label="@string/title_activity_login"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
-            android:name=".activities.SearchActivity"
+            android:name="edu.sdsc.neurores.activities.SearchActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible" />
-        <activity android:name=".activities.WebViewLoginActivity">
+        <activity android:name="edu.sdsc.neurores.activities.WebViewLoginActivity">
 
         </activity>
     </application>
