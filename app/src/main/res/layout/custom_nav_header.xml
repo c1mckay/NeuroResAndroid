@@ -56,6 +56,7 @@
             android:orientation="horizontal">
 
             <!--
+
             <TextView
                 android:layout_marginRight="20sp"
                 android:layout_width="wrap_content"
@@ -73,10 +74,9 @@
                 android:textColor="@color/white"
                 android:gravity="right"
                 android:textSize="20sp"
-                android:onClick="logDB"
-                android:text="Log Messages"/>
-            -->
-
+                android:onClick="saveBadToken"
+                android:text="Save bad login"/>
+       -->
 
         </LinearLayout>
 

@@ -11,6 +11,7 @@ import org.json.JSONArray;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class RequestWrapper {
     }
 
     public static void GetConversationData(Context context, long id, String token, HTTPRequestCompleteListener ocl) {
+        Log.v("token", "Sending a request with token: " + token );
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(CONVERSATION_CONTENT_ENDPOINT);
     }
 
@@ -219,6 +221,11 @@ public class RequestWrapper {
                 Log.v("taggy", e.getMessage());
                 e.printStackTrace();
                 setFailure(true);
+                try{
+                    resultCode = con.getResponseCode();
+                }catch(IOException ioException){
+
+                }
                 return null;
             }
         }
