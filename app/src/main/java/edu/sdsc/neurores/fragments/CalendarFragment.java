@@ -1,28 +1,21 @@
 package edu.sdsc.neurores.fragments;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import com.github.barteksc.pdfviewer.PDFView;
-
 import java.util.Calendar;
-
-import devs.mulham.horizontalcalendar.HorizontalCalendar;
-import devs.mulham.horizontalcalendar.HorizontalCalendarView;
-import devs.mulham.horizontalcalendar.utils.HorizontalCalendarListener;
 import edu.sdsc.neurores.R;
-import edu.sdsc.neurores.helper.OnSwipeTouchListener;
+import edu.sdsc.neurores.calendar.CalendarController;
 
 /**
  * Created by tbpetersen on 4/13/2018.
@@ -30,6 +23,8 @@ import edu.sdsc.neurores.helper.OnSwipeTouchListener;
 
 
 public class CalendarFragment extends Fragment {
+    ViewPager viewPager;
+    CalendarController calendarController;
 
     public CalendarFragment() {
         // required empty constructor
@@ -40,75 +35,30 @@ public class CalendarFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.fragment_calendar, container, false);
+        View v = inflater.inflate(R.layout.calendar_root, container, false);
 
+        Calendar start = Calendar.getInstance();
+        Calendar end = Calendar.getInstance();
+        end.add(Calendar.YEAR, 2);
 
-        /* starts before 1 month from now */
-        Calendar startDate = Calendar.getInstance();
-        startDate.add(Calendar.MONTH, -100);
+        calendarController = new CalendarController(v.getContext(), start, end);
 
-        /* ends after 1 month from now */
-        Calendar endDate = Calendar.getInstance();
-        endDate.add(Calendar.MONTH, 100);
+        viewPager = (ViewPager) v.findViewById(R.id.calendar);
+        viewPager.setAdapter(calendarController.getPagerAdapter());
+        viewPager.addOnPageChangeListener(calendarController.getOnPageChangeListener());
 
-        final HorizontalCalendar horizontalCalendar = new HorizontalCalendar.Builder(v, R.id.calendar_view)
-                .range(startDate,endDate)
-                .datesNumberOnScreen(7)
-                .build();
-
-        horizontalCalendar.setCalendarListener(new HorizontalCalendarListener() {
-
-            @Override
-            public void onCalendarScroll(HorizontalCalendarView calendarView, int dx, int dy) {
-
-            }
-
-            @Override
-            public void onDateSelected(Calendar date, int position) {
-
-            }
-        });
-
-        Log.v("taggy", horizontalCalendar.positionOfDate(Calendar.getInstance()) + "");
-        View calView = v.findViewById(R.id.calendar_view);
-
-
-        calView.setOnTouchListener(new OnSwipeTouchListener(getContext()) {
-            @Override
-            public void onSwipeRight() {
-                Log.v("taggy", "Right");
-                horizontalCalendar.centerCalendarToPosition(horizontalCalendar.getSelectedDatePosition() - 7);
-            }
-
-            @Override
-            public void onSwipeLeft() {
-                Log.v("taggy", "Left");
-                horizontalCalendar.centerCalendarToPosition(horizontalCalendar.getSelectedDatePosition() + 7);
-
-            }
-
-            @Override
-            public void onSwipeTop() {
-                Log.v("taggy", "Top");
-
-            }
-
-            @Override
-            public void onSwipeBottom() {
-                Log.v("taggy", "Bot");
-
-            }
-        });
-
-
-        setHasOptionsMenu(true);
         alignLeftToolbarTitle();
         return v;
     }
 
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        calendarController.getOnPageChangeListener().onPageSelected(0);
+    }
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
+        Log.v("taggy", "here it is");
         MenuItem item = menu.findItem(R.id.action_wipe_thread);
         item.setEnabled(false);
         item.setVisible(false);
