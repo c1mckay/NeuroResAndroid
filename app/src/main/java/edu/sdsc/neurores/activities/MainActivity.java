@@ -47,6 +47,7 @@ import edu.sdsc.neurores.abstraction.Conversation;
 import edu.sdsc.neurores.abstraction.Group;
 import edu.sdsc.neurores.adapters.NavDrawerAdapter;
 import edu.sdsc.neurores.abstraction.NavDrawerItem;
+import edu.sdsc.neurores.fragments.CalendarFragment;
 import edu.sdsc.neurores.fragments.PDFFragment;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.abstraction.User;
@@ -69,6 +70,9 @@ public class MainActivity extends AppCompatActivity
 
     public static final String PREV_CONVERSATION_ID = "previousConversationID";
     public static final String CONVERSATION_ID = "conversationID";
+
+    private static final int TYPE_PDF = 0;
+    private static final int TYPE_CAL = 1;
 
 
     Toolbar toolbar = null;
@@ -101,6 +105,7 @@ public class MainActivity extends AppCompatActivity
     private BroadcastReceiver screenStateReceiver;
     boolean isPaused;
     boolean screenIsOn;
+    int nonMessageType;
     String queuedToastMessage;
     private TextView toolbarTitle;
     private LinearLayout warningBanner;
@@ -344,6 +349,14 @@ public class MainActivity extends AppCompatActivity
         i.putString("token", getToken());
         pdfFrag.setArguments(i);
         return pdfFrag;
+    }
+
+    private CalendarFragment startCalendarFragment(){
+        CalendarFragment calendarFragment = new CalendarFragment();
+        Bundle i = new Bundle();
+        i.putString("token", getToken());
+        calendarFragment.setArguments(i);
+        return calendarFragment;
     }
 
     public void setKeyboardPushing(){
@@ -738,12 +751,18 @@ public class MainActivity extends AppCompatActivity
             }
             updateMostRecentConversation(selectedConversation.getID());
         }else{
-            Log.v("taggy", "Showing pdf");
-            currentFragment = startPDFFragment();
+            if(nonMessageType == TYPE_PDF){
+                Log.v("taggy", "Showing pdf");
+                currentFragment = startPDFFragment();
+                toolbarTitle.setText("PDF");
+            }else{
+                Log.v("taggy", "Showing cal");
+                currentFragment = startCalendarFragment();
+                toolbarTitle.setText("Calendar");
+            }
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
             fragmentTransaction.commitAllowingStateLoss();
-            toolbarTitle.setText("PDF");
             showMainElements();
         }
 
@@ -1261,6 +1280,22 @@ public class MainActivity extends AppCompatActivity
             selectedConversation.deselect();
             selectedConversation = null;
         }
+        nonMessageType = TYPE_PDF;
+        changeFragment();
+    }
+
+    public  void viewCalendar(View v){
+        if(currentFragment instanceof CalendarFragment){
+            closeDrawer();
+            return;
+        }
+
+        if(selectedConversation != null){
+            previousConversation = selectedConversation;
+            selectedConversation.deselect();
+            selectedConversation = null;
+        }
+        nonMessageType = TYPE_CAL;
         changeFragment();
     }
 

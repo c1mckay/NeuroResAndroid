@@ -176,7 +176,7 @@ public class MessageDatabaseHelper extends SQLiteOpenHelper {
     }
 
 
-    public boolean insertMessage(long messageID, String text, long convID, long senderID, String date){
+        public boolean insertMessage(long messageID, String text, long convID, long senderID, String date){
         if(alreadyInDatabase(MESSAGE_TABLE, COLUMN_MESSAGE_ID, messageID)){
             return true;
         }
