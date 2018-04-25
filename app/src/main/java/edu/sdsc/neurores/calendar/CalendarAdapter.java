@@ -5,6 +5,7 @@ import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -27,13 +28,15 @@ public class CalendarAdapter extends PagerAdapter {
     private Context context;
     private Calendar start, end;
     private View.OnClickListener onClickListener;
+    private AdapterView.OnItemClickListener onItemClickListener;
 
-    CalendarAdapter(Context context, Calendar start, Calendar end, View.OnClickListener onItemClickListener){
+    CalendarAdapter(Context context, Calendar start, Calendar end, View.OnClickListener onClickListener, AdapterView.OnItemClickListener onItemClickListener){
         this.context = context;
         this.start = start;
         this.end = end;
 
-        this.onClickListener = onItemClickListener;
+        this.onClickListener = onClickListener;
+        this.onItemClickListener = onItemClickListener;
     }
 
     @Override
@@ -97,6 +100,7 @@ public class CalendarAdapter extends PagerAdapter {
         ListView eventListView = (ListView) root.findViewById(R.id.event_list_view);
         BaseAdapter eventAdapter = new EventAdapter(context, getEvents(calendar));
         eventListView.setAdapter(eventAdapter);
+        eventListView.setOnItemClickListener(onItemClickListener);
 
         root.setOnClickListener(onClickListener);
 

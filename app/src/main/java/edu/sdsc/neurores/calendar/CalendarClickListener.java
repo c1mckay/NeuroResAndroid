@@ -19,6 +19,7 @@ public class CalendarClickListener implements ListView.OnItemClickListener, View
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+        /*
         View root = view.getRootView();
         ViewGroup weekGroup = (ViewGroup)root.findViewById(R.id.week_holder);
 
@@ -47,6 +48,8 @@ public class CalendarClickListener implements ListView.OnItemClickListener, View
         desc.setText(event.getDescription());
 
         Log.v("taggy", event.getTitle());
+        */
+        onClick((View)view.getParent().getParent().getParent());
     }
 
     @Override

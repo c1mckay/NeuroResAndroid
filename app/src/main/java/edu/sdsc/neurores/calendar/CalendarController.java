@@ -16,7 +16,8 @@ public class CalendarController {
     private Context context;
     private Calendar start, end;
     private CalendarAdapter pagerAdapter;
-    private View.OnClickListener onItemClickListener;
+    private View.OnClickListener onClickListener;
+    private AdapterView.OnItemClickListener onItemClickListener;
     private ViewPager.OnPageChangeListener onPageChangeListener;
 
     public CalendarController(Context context, Calendar start, Calendar end){
@@ -37,8 +38,10 @@ public class CalendarController {
         this.start = start;
         this.end = end;
 
-        onItemClickListener = new CalendarClickListener();
-        pagerAdapter = new CalendarAdapter(context, start,end, onItemClickListener);
+        CalendarClickListener calendarClickListener = new CalendarClickListener();
+        this.onClickListener = calendarClickListener;
+        this.onItemClickListener = calendarClickListener;
+        pagerAdapter = new CalendarAdapter(context, start,end, onClickListener, onItemClickListener);
         onPageChangeListener = new CalendarPageChangeListener(context, start, end);
     }
 
@@ -61,7 +64,11 @@ public class CalendarController {
         return pagerAdapter;
     }
 
-    public View.OnClickListener onItemClickListener(){
+    public View.OnClickListener getOnClickListener(){
+        return onClickListener;
+    }
+
+    public AdapterView.OnItemClickListener getOnItemClickListener(){
         return onItemClickListener;
     }
 
