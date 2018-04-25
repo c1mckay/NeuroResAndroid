@@ -2,6 +2,7 @@ package edu.sdsc.neurores.calendar;
 
 import android.content.Context;
 import android.support.v4.view.PagerAdapter;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,8 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.facebook.stetho.common.ArrayListAccumulator;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -29,6 +32,8 @@ public class CalendarAdapter extends PagerAdapter {
     private Calendar start, end;
     private View.OnClickListener onClickListener;
     private AdapterView.OnItemClickListener onItemClickListener;
+    List<Calendar> daysOfWeek;
+    List<List<Event>> eventsList;
 
     CalendarAdapter(Context context, Calendar start, Calendar end, View.OnClickListener onClickListener, AdapterView.OnItemClickListener onItemClickListener){
         this.context = context;
@@ -37,6 +42,8 @@ public class CalendarAdapter extends PagerAdapter {
 
         this.onClickListener = onClickListener;
         this.onItemClickListener = onItemClickListener;
+        daysOfWeek = new ArrayList<>();
+        eventsList = new ArrayList<>();
     }
 
     @Override
@@ -48,6 +55,7 @@ public class CalendarAdapter extends PagerAdapter {
     public Object instantiateItem(ViewGroup container, int position) {
         Calendar current = getWeek(position);
 
+        //TODO Replace with recycler view
         LinearLayout weekHolder = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.calendar_week, container, false);
 
         for(int i = 0; i < 7; i++){
@@ -83,7 +91,7 @@ public class CalendarAdapter extends PagerAdapter {
     }
 
     private void addDayView(Calendar calendar, ViewGroup parent){
-
+        daysOfWeek.add(calendar);
         String dayOfWeek = intDayToString(calendar.get(Calendar.DAY_OF_WEEK));
         String dayOfMonth = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
 
@@ -116,6 +124,11 @@ public class CalendarAdapter extends PagerAdapter {
         }
 
 
+        eventsList.add(events);
         return events;
+    }
+
+    public List<Event> getEventsForDay(int dayPosition){
+        return eventsList.get(dayPosition);
     }
 }

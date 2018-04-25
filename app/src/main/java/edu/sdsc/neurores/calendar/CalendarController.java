@@ -42,6 +42,7 @@ public class CalendarController {
         this.onClickListener = calendarClickListener;
         this.onItemClickListener = calendarClickListener;
         pagerAdapter = new CalendarAdapter(context, start,end, onClickListener, onItemClickListener);
+        calendarClickListener.setCalendarAdapter(pagerAdapter);
         onPageChangeListener = new CalendarPageChangeListener(context, start, end);
     }
 

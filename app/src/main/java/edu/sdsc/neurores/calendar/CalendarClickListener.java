@@ -6,8 +6,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.Calendar;
+import java.util.List;
 
 import edu.sdsc.neurores.R;
 
@@ -16,7 +20,12 @@ import edu.sdsc.neurores.R;
  */
 
 public class CalendarClickListener implements ListView.OnItemClickListener, View.OnClickListener {
+    CalendarAdapter calendarAdapter;
 
+
+    public void setCalendarAdapter(CalendarAdapter calendarAdapter){
+        this.calendarAdapter = calendarAdapter;
+    }
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
         /*
@@ -56,5 +65,16 @@ public class CalendarClickListener implements ListView.OnItemClickListener, View
     public void onClick(View view) {
         //TODO Set up recycler view for days of week and set up recycler view for event details
         Log.v("taggy", "Click");
+
+        LinearLayout weekHolder = (LinearLayout) view.getParent();
+
+        for(int i = 0; i < weekHolder.getChildCount(); i++){
+            if(view.equals(weekHolder.getChildAt(i))){
+                List<Event> events = calendarAdapter.getEventsForDay(i);
+                for(Event event : events){
+                    Log.v("taggy", event.getTitle());
+                }
+            }
+        }
     }
 }
