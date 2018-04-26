@@ -36,4 +36,9 @@ public class CalendarBackedEventCalendar implements EventCalendar {
     public int getNumWeeksInCalendar() {
         return (int) ((end.getTimeInMillis() - start.getTimeInMillis()) / (1000 * 60 * 60 * 24 * 7));
     }
+
+    @Override
+    public long getStartTimeMillis() {
+        return start.getTimeInMillis();
+    }
 }

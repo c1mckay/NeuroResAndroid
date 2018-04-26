@@ -9,6 +9,8 @@ import java.text.DateFormatSymbols;
 import java.util.Calendar;
 
 import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
+import edu.sdsc.neurores.calendar.abstraction.Week;
 
 /**
  * Created by trevor on 4/21/18.
@@ -16,12 +18,11 @@ import edu.sdsc.neurores.R;
 
 public class CalendarPageChangeListener implements ViewPager.OnPageChangeListener {
     Context context;
-    Calendar start, end;
+    EventCalendar eventCalendar;
 
-    CalendarPageChangeListener(Context context, Calendar start, Calendar end){
+    CalendarPageChangeListener(Context context, EventCalendar eventCalendar){
         this.context = context;
-        this.start = start;
-        this.end = end;
+        this.eventCalendar = eventCalendar;
     }
 
 
@@ -32,13 +33,15 @@ public class CalendarPageChangeListener implements ViewPager.OnPageChangeListene
 
     @Override
     public void onPageSelected(int position) {
+        Week selectedWeek = eventCalendar.getWeek(position);
+
         Calendar calendar = getWeek(position);
         calendar.add(Calendar.DAY_OF_MONTH, 6);
-        String month = intMonthToString(calendar.get(Calendar.MONTH));
-        String year = String.valueOf(calendar.get(Calendar.YEAR));
+        //String month = intMonthToString(calendar.get(Calendar.MONTH));
+        //String year = String.valueOf(calendar.get(Calendar.YEAR));
 
         TextView textView = (TextView)((Activity)context).findViewById(R.id.calendar_title);
-        textView.setText(month + " " + year);
+        textView.setText(selectedWeek.getMonthName() + " " + selectedWeek.getYear());
     }
 
     @Override
@@ -48,11 +51,8 @@ public class CalendarPageChangeListener implements ViewPager.OnPageChangeListene
 
     private Calendar getWeek(int position){
         Calendar current = Calendar.getInstance();
-        current.setTimeInMillis((long)((1000L * 60L * 60L * 24L * 7L) * position) + start.getTimeInMillis());
+        current.setTimeInMillis((long)((1000L * 60L * 60L * 24L * 7L) * position) + eventCalendar.getStartTimeMillis());
         return current;
     }
 
-    private String intMonthToString(int month){
-        return new DateFormatSymbols().getMonths()[month-1];
-    }
 }

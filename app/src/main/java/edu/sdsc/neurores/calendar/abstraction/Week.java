@@ -6,4 +6,6 @@ package edu.sdsc.neurores.calendar.abstraction;
 
 public interface Week {
     public Day getDay(int position);
+    public String getMonthName();
+    public int getYear();
 }

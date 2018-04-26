@@ -3,10 +3,16 @@ package edu.sdsc.neurores.calendar;
 import android.content.Context;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 
 import java.util.Calendar;
+
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
+import edu.sdsc.neurores.calendar.abstraction.Day;
+import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
+import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 
 /**
  * Created by trevor on 4/21/18.
@@ -20,7 +26,7 @@ public class CalendarController {
     private AdapterView.OnItemClickListener onItemClickListener;
     private ViewPager.OnPageChangeListener onPageChangeListener;
 
-    public CalendarController(Context context, Calendar start, Calendar end){
+    public CalendarController(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
         start = (Calendar) start.clone();
         end = (Calendar) end.clone();
 
@@ -38,12 +44,14 @@ public class CalendarController {
         this.start = start;
         this.end = end;
 
+        EventCalendar eventCalendar = new CalendarBackedEventCalendar(start,end);
+
         CalendarClickListener calendarClickListener = new CalendarClickListener();
         this.onClickListener = calendarClickListener;
         this.onItemClickListener = calendarClickListener;
-        pagerAdapter = new CalendarAdapter(context, start,end, onClickListener, onItemClickListener);
+        pagerAdapter = new CalendarAdapter(context, start,end, dayClickListener);
         calendarClickListener.setCalendarAdapter(pagerAdapter);
-        onPageChangeListener = new CalendarPageChangeListener(context, start, end);
+        onPageChangeListener = new CalendarPageChangeListener(context, eventCalendar);
     }
 
     public int getWeekPosition(Calendar calendar){

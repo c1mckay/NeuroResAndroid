@@ -1,4 +1,4 @@
-package edu.sdsc.neurores.calendar;
+package edu.sdsc.neurores.calendar.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;

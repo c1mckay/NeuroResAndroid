@@ -12,10 +12,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.TextView;
 import java.util.Calendar;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.calendar.CalendarController;
+import edu.sdsc.neurores.calendar.DayClickListener;
+import edu.sdsc.neurores.calendar.abstraction.Day;
+import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
 
 /**
  * Created by tbpetersen on 4/13/2018.
@@ -25,6 +29,7 @@ import edu.sdsc.neurores.calendar.CalendarController;
 public class CalendarFragment extends Fragment {
     ViewPager viewPager;
     CalendarController calendarController;
+    DayClickListener dayClickListener;
 
     public CalendarFragment() {
         // required empty constructor
@@ -35,13 +40,22 @@ public class CalendarFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.calendar_root, container, false);
+        final View v = inflater.inflate(R.layout.calendar_root, container, false);
+        final ListView detailedEventListView = (ListView) v.findViewById(R.id.detailed_event_list_view);
 
         Calendar start = Calendar.getInstance();
         Calendar end = Calendar.getInstance();
         end.add(Calendar.YEAR, 2);
 
-        calendarController = new CalendarController(v.getContext(), start, end);
+        DayClickListener dayClickListener = new DayClickListener() {
+            @Override
+            public void onDayClicked(Day day) {
+                // TODO populate based on events
+                detailedEventListView.setAdapter(new DetailedEventAdapter(v.getContext(),day.getEvents()));
+            }
+        };
+
+        calendarController = new CalendarController(v.getContext(), start, end, dayClickListener);
 
         viewPager = (ViewPager) v.findViewById(R.id.calendar);
         viewPager.setAdapter(calendarController.getPagerAdapter());

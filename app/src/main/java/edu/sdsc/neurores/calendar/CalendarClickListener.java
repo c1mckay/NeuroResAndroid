@@ -9,6 +9,7 @@ import android.widget.ListView;
 import java.util.List;
 
 import edu.sdsc.neurores.calendar.abstraction.Event;
+import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 
 /**
  * Created by trevor on 4/21/18.
@@ -60,16 +61,16 @@ public class CalendarClickListener implements ListView.OnItemClickListener, View
     public void onClick(View view) {
         //TODO Set up recycler view for days of week and set up recycler view for event details
         Log.v("taggy", "Click");
-
-        LinearLayout weekHolder = (LinearLayout) view.getParent();
-
-        for(int i = 0; i < weekHolder.getChildCount(); i++){
-            if(view.equals(weekHolder.getChildAt(i))){
-                List<Event> events = calendarAdapter.getEventsForDay(i);
-                for(Event event : events){
-                    Log.v("taggy", event.getTitle());
-                }
-            }
-        }
+//
+//        LinearLayout weekHolder = (LinearLayout) view.getParent();
+//
+//        for(int i = 0; i < weekHolder.getChildCount(); i++){
+//            if(view.equals(weekHolder.getChildAt(i))){
+//                List<Event> events = calendarAdapter.getEventsForDay(i);
+//                for(Event event : events){
+//                    Log.v("taggy", event.getTitle());
+//                }
+//            }
+//        }
     }
 }
