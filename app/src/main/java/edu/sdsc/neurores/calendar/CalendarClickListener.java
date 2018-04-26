@@ -1,19 +1,14 @@
 package edu.sdsc.neurores.calendar;
 
-import android.support.v4.view.PagerAdapter;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import java.util.Calendar;
 import java.util.List;
 
-import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 
 /**
  * Created by trevor on 4/21/18.

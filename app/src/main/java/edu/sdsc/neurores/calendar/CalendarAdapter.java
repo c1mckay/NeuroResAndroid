@@ -2,7 +2,6 @@ package edu.sdsc.neurores.calendar;
 
 import android.content.Context;
 import android.support.v4.view.PagerAdapter;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,14 +11,16 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.facebook.stetho.common.ArrayListAccumulator;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
 import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
+import edu.sdsc.neurores.calendar.abstraction.Event;
+import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
+import edu.sdsc.neurores.calendar.abstraction.Week;
 
 
 /**
@@ -29,7 +30,7 @@ import edu.sdsc.neurores.R;
 public class CalendarAdapter extends PagerAdapter {
     private static final String[] days = new String[]{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     private Context context;
-    private Calendar start, end;
+    private EventCalendar eventCalendar;
     private View.OnClickListener onClickListener;
     private AdapterView.OnItemClickListener onItemClickListener;
     List<Calendar> daysOfWeek;
@@ -37,8 +38,7 @@ public class CalendarAdapter extends PagerAdapter {
 
     CalendarAdapter(Context context, Calendar start, Calendar end, View.OnClickListener onClickListener, AdapterView.OnItemClickListener onItemClickListener){
         this.context = context;
-        this.start = start;
-        this.end = end;
+        eventCalendar = new CalendarBackedEventCalendar(start,end);
 
         this.onClickListener = onClickListener;
         this.onItemClickListener = onItemClickListener;
@@ -48,14 +48,14 @@ public class CalendarAdapter extends PagerAdapter {
 
     @Override
     public int getCount() {
-        return (int) ((end.getTimeInMillis() - start.getTimeInMillis()) / (1000 * 60 * 60 * 24 * 7));
+        return eventCalendar.getNumWeeksInCalendar();
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-        Calendar current = getWeek(position);
+        Week current = getWeek(position);
 
-        //TODO Replace with recycler view
+        //TODO Replace with recycler view and replace logic
         LinearLayout weekHolder = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.calendar_week, container, false);
 
         for(int i = 0; i < 7; i++){
@@ -80,10 +80,8 @@ public class CalendarAdapter extends PagerAdapter {
         return view == (View) object;
     }
 
-    protected Calendar getWeek(int position){
-        Calendar current = Calendar.getInstance();
-        current.setTimeInMillis((long)((1000L * 60L * 60L * 24L * 7L) * position) + start.getTimeInMillis());
-        return current;
+    protected Week getWeek(int position){
+        return eventCalendar.getWeek(position);
     }
 
     private String intDayToString(int day){

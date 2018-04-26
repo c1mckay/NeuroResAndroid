@@ -4,13 +4,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import java.util.List;
 
 import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 
 /**
  * Created by trevor on 4/21/18.
