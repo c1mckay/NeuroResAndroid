@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Random;
 
 import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.calendar.DayClickHandler;
 import edu.sdsc.neurores.calendar.DayClickListener;
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Event;
@@ -35,19 +37,15 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
     private static final String[] days = new String[]{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     private Context context;
     private EventCalendar eventCalendar;
-    private DayClickListener dayClickListener;
+    private DayClickHandler dayClickHandler;
     private RecyclerView weekHolder;
-    private List<Calendar> daysOfWeek;
-    private List<List<Event>> eventsList;
     private Day selectedDay;
 
-    public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
+    public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickHandler dayClickHandler){
         this.context = context;
         eventCalendar = new CalendarBackedEventCalendar(start,end);
-
-        this.dayClickListener =dayClickListener;
-        daysOfWeek = new ArrayList<>();
-        eventsList = new ArrayList<>();
+        this.dayClickHandler = dayClickHandler;
+        selectedDay = new CalendarBackedDay(Calendar.getInstance());
     }
 
     @Override
@@ -59,15 +57,12 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
     public Object instantiateItem(ViewGroup container, int position) {
         Week current = getWeek(position);
         weekHolder = (RecyclerView) LayoutInflater.from(context).inflate(R.layout.calendar_week, container, false);
-        WeekAdapter weekAdapter = new WeekAdapter(context, current,selectedDay);
-        weekAdapter.addDayClickListener(dayClickListener);
-        weekAdapter.addDayClickListener(this);
+        WeekAdapter weekAdapter = new WeekAdapter(context, current,selectedDay, dayClickHandler);
+        dayClickHandler.registerDayClickListener(this);
         weekHolder.setAdapter(weekAdapter);
         container.addView(weekHolder);
         return weekHolder;
     }
-
-
 
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
@@ -79,7 +74,7 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
         return view == (View) object;
     }
 
-    protected Week getWeek(int position){
+    public Week getWeek(int position){
         return eventCalendar.getWeek(position);
     }
 

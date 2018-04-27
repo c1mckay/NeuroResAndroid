@@ -22,9 +22,11 @@ import java.util.Calendar;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.calendar.CalendarController;
 import edu.sdsc.neurores.calendar.DayClickListener;
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedWeek;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Week;
+import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
 
 /**
@@ -36,6 +38,7 @@ public class CalendarFragment extends Fragment {
     ViewPager viewPager;
     CalendarController calendarController;
     Week selectedWeek;
+    Day selectedDay;
 
     public CalendarFragment() {
         // required empty constructor
@@ -50,14 +53,19 @@ public class CalendarFragment extends Fragment {
         final ListView detailedEventListView = (ListView) v.findViewById(R.id.detailed_event_list_view);
 
         Calendar start = Calendar.getInstance();
-        start.add(Calendar.YEAR, -2);
+        start.add(Calendar.YEAR, -5);
         Calendar end = Calendar.getInstance();
-        end.add(Calendar.YEAR, 2);
+        end.add(Calendar.YEAR, 5);
 
         DayClickListener dayClickListener = new DayClickListener() {
             @Override
             public void onDayClicked(Day day) {
-                detailedEventListView.setAdapter(new DetailedEventAdapter(v.getContext(),day.getEvents()));
+                Log.v("calendar", "loading event data");
+                Log.v("calendar", "events: " + day.getEvents().size());
+                if(selectedDay == null || !selectedDay.equals(day)){
+                    detailedEventListView.setAdapter(new DetailedEventAdapter(v.getContext(),day.getEvents()));
+                    selectedDay = day;
+                }
             }
         };
 

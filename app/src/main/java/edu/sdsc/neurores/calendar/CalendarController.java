@@ -26,7 +26,8 @@ public class CalendarController {
     private View.OnClickListener onClickListener;
     private AdapterView.OnItemClickListener onItemClickListener;
     private ViewPager.OnPageChangeListener onPageChangeListener;
-    EventCalendar eventCalendar;
+    private EventCalendar eventCalendar;
+    private DayClickHandler dayClickHandler;
 
     public CalendarController(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
         start = (Calendar) start.clone();
@@ -47,11 +48,13 @@ public class CalendarController {
         this.end = end;
 
         eventCalendar = new CalendarBackedEventCalendar(start,end);
+        dayClickHandler = new DayClickHandler();
+        dayClickHandler.registerDayClickListener(dayClickListener);
 
         CalendarClickListener calendarClickListener = new CalendarClickListener();
         this.onClickListener = calendarClickListener;
         this.onItemClickListener = calendarClickListener;
-        pagerAdapter = new CalendarAdapter(context, start,end, dayClickListener);
+        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler);
         calendarClickListener.setCalendarAdapter(pagerAdapter);
         onPageChangeListener = new CalendarPageChangeListener(context, eventCalendar);
     }
@@ -60,7 +63,7 @@ public class CalendarController {
         return eventCalendar.getWeekPosition(week);
     }
 
-    public PagerAdapter getPagerAdapter(){
+    public CalendarAdapter getPagerAdapter(){
         return pagerAdapter;
     }
 

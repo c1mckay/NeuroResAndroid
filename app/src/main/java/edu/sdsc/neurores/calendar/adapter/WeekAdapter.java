@@ -16,6 +16,7 @@ import java.util.List;
 
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.adapters.MessageAdapter;
+import edu.sdsc.neurores.calendar.DayClickHandler;
 import edu.sdsc.neurores.calendar.DayClickListener;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Week;
@@ -29,19 +30,16 @@ import edu.sdsc.neurores.calendar.abstraction.Week;
 public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
     private Context context;
     private Week week;
-    private List<DayClickListener> dayClickListeners;
     private Day selectedDay;
+    private DayClickHandler dayClickHandler;
 
-    WeekAdapter(Context context, Week week, Day selectedDay){
+    WeekAdapter(Context context, Week week, Day selectedDay, DayClickHandler dayClickHandler){
         this.context = context;
         this.week = week;
-        this.dayClickListeners = new ArrayList<>();
         this.selectedDay = selectedDay;
+        this.dayClickHandler = dayClickHandler;
     }
 
-    public void addDayClickListener(DayClickListener dayClickListener){
-        dayClickListeners.add(dayClickListener);
-    }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView dayInMonthTextView, dayOfWeekTextView;
@@ -96,18 +94,12 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
         holder.setClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                notifyDaySelected(day);
+                dayClickHandler.notifyListenersOfDayClicked(day);
             }
         });
 
         if(selectedDay != null && selectedDay.equals(day)){
-            notifyDaySelected(day);
-        }
-    }
-
-    private void notifyDaySelected(Day day) {
-        for(DayClickListener dayClickListener : dayClickListeners){
-            dayClickListener.onDayClicked(day);
+            dayClickHandler.notifyListenersOfDayClicked(day);
         }
     }
 

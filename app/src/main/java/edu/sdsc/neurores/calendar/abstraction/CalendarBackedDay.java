@@ -18,7 +18,7 @@ public class CalendarBackedDay extends Day {
     private List<Event> events;
     View view;
 
-    CalendarBackedDay(Calendar calendar){
+    public CalendarBackedDay(Calendar calendar){
         this.calendar = calendar;
         events = new ArrayList<>();
         view = null;
