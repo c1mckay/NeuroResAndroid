@@ -65,18 +65,6 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
         weekHolder.setAdapter(weekAdapter);
         container.addView(weekHolder);
         return weekHolder;
-
-        //TODO Replace with recycler view and replace logic
-//        LinearLayout weekHolder = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.calendar_week, container, false);
-//
-//        for(int i = 0; i < 7; i++){
-//            Calendar c = (Calendar) current.clone();
-//            c.add(Calendar.DAY_OF_MONTH,1 * i);
-//            addDayView(c, weekHolder);
-//        }
-//
-//        container.addView(weekHolder);
-//        return weekHolder;
     }
 
 
@@ -95,54 +83,12 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
         return eventCalendar.getWeek(position);
     }
 
-    private String intDayToString(int day){
-        return days[day - 1].substring(0,3);
-    }
-
-    private void addDayView(Calendar calendar, ViewGroup parent){
-        daysOfWeek.add(calendar);
-        String dayOfWeek = intDayToString(calendar.get(Calendar.DAY_OF_WEEK));
-        String dayOfMonth = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
-
-        LayoutInflater layoutInflater = LayoutInflater.from(context);
-        View root = layoutInflater.inflate(R.layout.calendar_day, parent, false);
-
-        TextView dayOfWeekTextView = (TextView) root.findViewById(R.id.day_of_week_text_view);
-        TextView dayOfMonthTextView = (TextView) root.findViewById(R.id.day_of_month_text_view);
-
-        dayOfWeekTextView.setText(dayOfWeek);
-        dayOfMonthTextView.setText(dayOfMonth);
-
-
-        ListView eventListView = (ListView) root.findViewById(R.id.event_list_view);
-        BaseAdapter eventAdapter = new EventAdapter(context, getEvents(calendar));
-        eventListView.setAdapter(eventAdapter);
-        //eventListView.setOnItemClickListener(onItemClickListener);
-
-        //root.setOnClickListener(onClickListener);
-
-        parent.addView(root);
-    }
-
-    private List<Event> getEvents(Calendar calendar) {
-        List<Event> events = new ArrayList<>();
-
-        Random random = new Random();
-        for(int i = 0; i < random.nextInt(5); i++){
-            events.add(new Event("Meeting", "11a-12p", "Room Num", "This is an important meeting"));
-        }
-
-
-        eventsList.add(events);
-        return events;
-    }
-
-    public List<Event> getEventsForDay(int dayPosition){
-        return eventsList.get(dayPosition);
-    }
-
     @Override
     public void onDayClicked(Day day) {
+        if(selectedDay != null){
+            selectedDay.deselect();
+        }
+        day.select();
         selectedDay = day;
     }
 }

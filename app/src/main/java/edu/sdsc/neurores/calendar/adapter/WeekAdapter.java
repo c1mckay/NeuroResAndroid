@@ -96,14 +96,18 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
         holder.setClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                for(DayClickListener dayClickListener : dayClickListeners){
-                    dayClickListener.onDayClicked(day);
-                }
+                notifyDaySelected(day);
             }
         });
 
         if(selectedDay != null && selectedDay.equals(day)){
-            day.select();
+            notifyDaySelected(day);
+        }
+    }
+
+    private void notifyDaySelected(Day day) {
+        for(DayClickListener dayClickListener : dayClickListeners){
+            dayClickListener.onDayClicked(day);
         }
     }
 

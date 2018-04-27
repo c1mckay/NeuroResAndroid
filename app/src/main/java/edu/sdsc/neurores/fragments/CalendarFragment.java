@@ -35,8 +35,6 @@ import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
 public class CalendarFragment extends Fragment {
     ViewPager viewPager;
     CalendarController calendarController;
-    DayClickListener dayClickListener;
-    Day selectedDay;
     Week selectedWeek;
 
     public CalendarFragment() {
@@ -59,11 +57,6 @@ public class CalendarFragment extends Fragment {
         DayClickListener dayClickListener = new DayClickListener() {
             @Override
             public void onDayClicked(Day day) {
-                if(selectedDay != null){
-                    selectedDay.deselect();
-                }
-                day.select();
-                selectedDay = day;
                 detailedEventListView.setAdapter(new DetailedEventAdapter(v.getContext(),day.getEvents()));
             }
         };
