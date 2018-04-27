@@ -51,6 +51,7 @@ public class CalendarFragment extends Fragment {
         // Inflate the layout for this fragment
         final View v = inflater.inflate(R.layout.calendar_root, container, false);
         final ListView detailedEventListView = (ListView) v.findViewById(R.id.detailed_event_list_view);
+        setHasOptionsMenu(true);
 
         Calendar start = Calendar.getInstance();
         start.add(Calendar.YEAR, -5);
@@ -60,8 +61,6 @@ public class CalendarFragment extends Fragment {
         DayClickListener dayClickListener = new DayClickListener() {
             @Override
             public void onDayClicked(Day day) {
-                Log.v("calendar", "loading event data");
-                Log.v("calendar", "events: " + day.getEvents().size());
                 if(selectedDay == null || !selectedDay.equals(day)){
                     detailedEventListView.setAdapter(new DetailedEventAdapter(v.getContext(),day.getEvents()));
                     selectedDay = day;
@@ -132,12 +131,10 @@ public class CalendarFragment extends Fragment {
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        Log.v("taggy", "here it is");
         MenuItem item = menu.findItem(R.id.action_wipe_thread);
         item.setEnabled(false);
         item.setVisible(false);
     }
-
 
     private void alignLeftToolbarTitle() {
         TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.toolbar_title);

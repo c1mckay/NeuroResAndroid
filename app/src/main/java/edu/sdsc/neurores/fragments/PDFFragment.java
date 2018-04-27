@@ -3,6 +3,7 @@ package edu.sdsc.neurores.fragments;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -46,6 +47,7 @@ public class PDFFragment extends Fragment{
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
+        Log.v("taggy","hiding trash");
         MenuItem item = menu.findItem(R.id.action_wipe_thread);
         item.setEnabled(false);
         item.setVisible(false);

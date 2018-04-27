@@ -359,10 +359,6 @@ public class MainActivity extends AppCompatActivity
         return calendarFragment;
     }
 
-    public void setKeyboardPushing(){
-
-    }
-
     private MainFragment loadOnboardingFragment(){
         MainFragment mFrag = new MainFragment();
         Bundle i = new Bundle();
@@ -760,6 +756,7 @@ public class MainActivity extends AppCompatActivity
                 currentFragment = startCalendarFragment();
                 toolbarTitle.setText("Calendar");
             }
+
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.fragment_container, currentFragment);
             fragmentTransaction.commitAllowingStateLoss();
