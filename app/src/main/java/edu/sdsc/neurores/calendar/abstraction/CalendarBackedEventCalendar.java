@@ -1,5 +1,7 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
+import android.util.Log;
+
 import java.util.Calendar;
 
 /**
@@ -34,11 +36,35 @@ public class CalendarBackedEventCalendar implements EventCalendar {
 
     @Override
     public int getNumWeeksInCalendar() {
-        return (int) ((end.getTimeInMillis() - start.getTimeInMillis()) / (1000 * 60 * 60 * 24 * 7));
+        return (int) ((end.getTimeInMillis() - start.getTimeInMillis()) / (1000L * 60L * 60L * 24L * 7L));
     }
 
     @Override
     public long getStartTimeMillis() {
         return start.getTimeInMillis();
+    }
+
+    @Override
+    public int getWeekPosition(Week week) {
+        Calendar compareCal = Calendar.getInstance();
+        compareCal.setTimeInMillis(week.getStartOfWeek());
+        Log.v("calendar", "Looking for " + compareCal.get(Calendar.WEEK_OF_YEAR) + " " + compareCal.get(Calendar.YEAR));
+
+
+        for(int i = 0; i < getNumWeeksInCalendar(); i++){
+            Week currentWeek = getWeek(i);
+            Calendar currentCalendar = Calendar.getInstance();
+            currentCalendar.setTimeInMillis(currentWeek.getStartOfWeek());
+
+            boolean sameYear = compareCal.get(Calendar.YEAR) == currentCalendar.get(Calendar.YEAR);
+            boolean sameWeek = compareCal.get(Calendar.WEEK_OF_YEAR) == currentCalendar.get(Calendar.WEEK_OF_YEAR);
+
+            if(sameYear && sameWeek){
+                Log.v("calendar","Found " + compareCal.get(Calendar.WEEK_OF_YEAR) +
+                        " " + compareCal.get(Calendar.YEAR));
+                return i;
+            }
+        }
+        return -1;
     }
 }

@@ -12,6 +12,7 @@ import java.util.Calendar;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
+import edu.sdsc.neurores.calendar.abstraction.Week;
 import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 
 /**
@@ -25,6 +26,7 @@ public class CalendarController {
     private View.OnClickListener onClickListener;
     private AdapterView.OnItemClickListener onItemClickListener;
     private ViewPager.OnPageChangeListener onPageChangeListener;
+    EventCalendar eventCalendar;
 
     public CalendarController(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
         start = (Calendar) start.clone();
@@ -44,7 +46,7 @@ public class CalendarController {
         this.start = start;
         this.end = end;
 
-        EventCalendar eventCalendar = new CalendarBackedEventCalendar(start,end);
+        eventCalendar = new CalendarBackedEventCalendar(start,end);
 
         CalendarClickListener calendarClickListener = new CalendarClickListener();
         this.onClickListener = calendarClickListener;
@@ -54,19 +56,8 @@ public class CalendarController {
         onPageChangeListener = new CalendarPageChangeListener(context, eventCalendar);
     }
 
-    public int getWeekPosition(Calendar calendar){
-        calendar = (Calendar) start.clone();
-
-        calendar.set(Calendar.DAY_OF_WEEK, 0);
-
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.clear(Calendar.MINUTE);
-        calendar.clear(Calendar.SECOND);
-        calendar.clear(Calendar.MILLISECOND);
-
-        calendar.set(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek());
-
-        return 0;
+    public int getPositionOfWeek(Week week){
+        return eventCalendar.getWeekPosition(week);
     }
 
     public PagerAdapter getPagerAdapter(){
@@ -83,5 +74,9 @@ public class CalendarController {
 
     public ViewPager.OnPageChangeListener getOnPageChangeListener(){
         return onPageChangeListener;
+    }
+
+    public Week getWeekAtPosition(int position){
+        return eventCalendar.getWeek(position);
     }
 }

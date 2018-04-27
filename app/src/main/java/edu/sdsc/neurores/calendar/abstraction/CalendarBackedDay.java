@@ -1,9 +1,13 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
+import android.view.View;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
+
+import edu.sdsc.neurores.R;
 
 /**
  * Created by trevor on 4/25/18.
@@ -12,10 +16,12 @@ import java.util.Random;
 public class CalendarBackedDay implements Day {
     private Calendar calendar;
     private List<Event> events;
+    View view;
 
     CalendarBackedDay(Calendar calendar){
         this.calendar = calendar;
         events = new ArrayList<>();
+        view = null;
 
         Random random = new Random();
         for(int i = 0; i < random.nextInt(5); i++){
@@ -42,5 +48,26 @@ public class CalendarBackedDay implements Day {
     @Override
     public int getDayInMonth() {
         return calendar.get(Calendar.DAY_OF_MONTH);
+    }
+
+    @Override
+    public void deselect() {
+        if(view != null){
+            View backgroundHolder = view.findViewById(R.id.day_background_holder);
+            backgroundHolder.setBackgroundDrawable(view.getContext().getResources().getDrawable(R.drawable.calendar_day_unselected));
+        }
+    }
+
+    @Override
+    public void select() {
+        if(view != null){
+            View backgroundHolder = view.findViewById(R.id.day_background_holder);
+            backgroundHolder.setBackgroundDrawable(view.getContext().getResources().getDrawable(R.drawable.calendar_day_selected));
+        }
+    }
+
+    @Override
+    public void setView(View view) {
+        this.view = view;
     }
 }

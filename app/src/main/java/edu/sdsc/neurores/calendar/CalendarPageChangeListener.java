@@ -35,8 +35,8 @@ public class CalendarPageChangeListener implements ViewPager.OnPageChangeListene
     public void onPageSelected(int position) {
         Week selectedWeek = eventCalendar.getWeek(position);
 
-        Calendar calendar = getWeek(position);
-        calendar.add(Calendar.DAY_OF_MONTH, 6);
+        //Calendar calendar = getWeek(position);
+        //calendar.add(Calendar.DAY_OF_MONTH, 6);
         //String month = intMonthToString(calendar.get(Calendar.MONTH));
         //String year = String.valueOf(calendar.get(Calendar.YEAR));
 

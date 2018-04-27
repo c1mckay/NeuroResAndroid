@@ -37,8 +37,10 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView dayInMonthTextView, dayOfWeekTextView;
         ListView eventListView;
+        View root;
         MyViewHolder(View itemView) {
             super(itemView);
+            root = itemView;
             dayInMonthTextView = (TextView) itemView.findViewById(R.id.day_of_month_text_view);
             dayOfWeekTextView = (TextView) itemView.findViewById(R.id.day_of_week_text_view);
             eventListView = (ListView) itemView.findViewById(R.id.event_list_view);
@@ -46,6 +48,10 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
 
         public void setClickListener(View.OnClickListener onClickListener){
             itemView.setOnClickListener(onClickListener);
+        }
+
+        public View getRoot(){
+            return itemView;
         }
     }
 
@@ -62,6 +68,7 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
         final Day day = week.getDay(position);
+        day.setView(holder.getRoot());
 
         holder.dayOfWeekTextView.setText(day.getDayOfWeek());
         holder.dayInMonthTextView.setText(String.valueOf(day.getDayInMonth()));

@@ -1,5 +1,7 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
+import android.view.View;
+
 import java.util.List;
 
 /**
@@ -13,4 +15,7 @@ public interface Day {
     void addEvent(Event event);
     String getDayOfWeek();
     int getDayInMonth();
+    void deselect();
+    void select();
+    void setView(View view);
 }
