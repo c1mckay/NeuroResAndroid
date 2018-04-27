@@ -11,6 +11,9 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.adapters.MessageAdapter;
 import edu.sdsc.neurores.calendar.DayClickListener;
@@ -26,12 +29,18 @@ import edu.sdsc.neurores.calendar.abstraction.Week;
 public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
     private Context context;
     private Week week;
-    private DayClickListener dayClickListener;
+    private List<DayClickListener> dayClickListeners;
+    private Day selectedDay;
 
-    WeekAdapter(Context context, Week week, DayClickListener dayClickListener){
+    WeekAdapter(Context context, Week week, Day selectedDay){
         this.context = context;
         this.week = week;
-        this.dayClickListener = dayClickListener;
+        this.dayClickListeners = new ArrayList<>();
+        this.selectedDay = selectedDay;
+    }
+
+    public void addDayClickListener(DayClickListener dayClickListener){
+        dayClickListeners.add(dayClickListener);
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
@@ -87,9 +96,15 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
         holder.setClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dayClickListener.onDayClicked(day);
+                for(DayClickListener dayClickListener : dayClickListeners){
+                    dayClickListener.onDayClicked(day);
+                }
             }
         });
+
+        if(selectedDay != null && selectedDay.equals(day)){
+            day.select();
+        }
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.util.Random;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.calendar.DayClickListener;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
+import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Event;
 import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Week;
@@ -30,14 +31,15 @@ import edu.sdsc.neurores.calendar.abstraction.Week;
  * Created by trevor on 4/21/18.
  */
 
-public class CalendarAdapter extends PagerAdapter {
+public class CalendarAdapter extends PagerAdapter implements DayClickListener{
     private static final String[] days = new String[]{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     private Context context;
     private EventCalendar eventCalendar;
     private DayClickListener dayClickListener;
     private RecyclerView weekHolder;
-    List<Calendar> daysOfWeek;
-    List<List<Event>> eventsList;
+    private List<Calendar> daysOfWeek;
+    private List<List<Event>> eventsList;
+    private Day selectedDay;
 
     public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
         this.context = context;
@@ -57,7 +59,9 @@ public class CalendarAdapter extends PagerAdapter {
     public Object instantiateItem(ViewGroup container, int position) {
         Week current = getWeek(position);
         weekHolder = (RecyclerView) LayoutInflater.from(context).inflate(R.layout.calendar_week, container, false);
-        WeekAdapter weekAdapter = new WeekAdapter(context, current, dayClickListener);
+        WeekAdapter weekAdapter = new WeekAdapter(context, current,selectedDay);
+        weekAdapter.addDayClickListener(dayClickListener);
+        weekAdapter.addDayClickListener(this);
         weekHolder.setAdapter(weekAdapter);
         container.addView(weekHolder);
         return weekHolder;
@@ -135,5 +139,10 @@ public class CalendarAdapter extends PagerAdapter {
 
     public List<Event> getEventsForDay(int dayPosition){
         return eventsList.get(dayPosition);
+    }
+
+    @Override
+    public void onDayClicked(Day day) {
+        selectedDay = day;
     }
 }

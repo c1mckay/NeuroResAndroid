@@ -8,14 +8,29 @@ import java.util.List;
  * Created by trevor on 4/25/18.
  */
 
-public interface Day {
+public abstract class Day {
     static final String[] days = new String[]{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
-    List<Event> getEvents();
-    void addEvent(Event event);
-    String getDayOfWeek();
-    int getDayInMonth();
-    void deselect();
-    void select();
-    void setView(View view);
+    public abstract List<Event> getEvents();
+    public abstract void addEvent(Event event);
+    public abstract String getDayOfWeek();
+    public abstract int getDayInMonth();
+    public abstract int getMonth();
+    public abstract int getYear();
+    public abstract void deselect();
+    public abstract void select();
+    public abstract void setView(View view);
+
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof Day)){
+            return false;
+        }
+        Day day = (Day) obj;
+        boolean sameYear = getYear() == day.getYear();
+        boolean sameMonth = getMonth() == day.getMonth();
+        boolean sameDay = getDayInMonth() == day.getDayInMonth();
+
+        return sameDay && sameMonth && sameYear;
+    }
 }
