@@ -42,7 +42,7 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
 
     public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickHandler dayClickHandler, ArrayList<Event> events){
         this.context = context;
-        eventCalendar = new CalendarBackedEventCalendar(start,end);
+        eventCalendar = new CalendarBackedEventCalendar(start,end, events);
         this.dayClickHandler = dayClickHandler;
         selectedDay = new CalendarBackedDay(Calendar.getInstance(), filterByDay(events, new Date()));
     }
