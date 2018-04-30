@@ -67,19 +67,6 @@ public class JSONConverter {
     }
 
     public static List<Event> toEventList(String json){
-//        List<Event> events = new ArrayList<>();
-//        try{
-//            JSONArray jsonArray = new JSONArray(json);
-//
-//            for(int i = 0; i < jsonArray.length(); i++){
-//                JSONObject jsonObject = jsonArray.getJSONObject(i);
-//            }
-//
-//            return events;
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-
         Gson gson = createGson(true);
         Type listType = new TypeToken<List<Event>>() {}.getType();
         List<Event> events =  gson.fromJson(json, listType);
@@ -276,10 +263,14 @@ public class JSONConverter {
                 String title = jsonObject.get("title").getAsString();
                 String location = jsonObject.get("location").getAsString();
                 String description = jsonObject.get("description").getAsString();
+                String start = jsonObject.get("start").getAsString();
+                start = parseTime(start);
+                String end = jsonObject.get("end").getAsString();
+                end = parseTime(end);
 
                 Date date = formatter.parse(jsonObject.get("date").getAsString());
 
-                return new Event(title,date,location, description);
+                return new Event(title,date, start, end, location, description);
             } catch (ParseException e) {
                 e.printStackTrace();
             } catch (UnsupportedOperationException e){
@@ -288,6 +279,24 @@ public class JSONConverter {
 
             return null;
         }
+    }
+
+    private static String parseTime(String time){
+        String[] timeArray = time.split(":");
+
+        String hour = timeArray[0];
+        String min = timeArray[1];
+
+        int hourAsInt = Integer.parseInt(hour);
+
+        if(hourAsInt < 12) {
+            return hourAsInt + ":" + min + "a";
+        }else if(hourAsInt == 12){
+            return hourAsInt + ":" + min + "p";
+        }else{
+            return (hourAsInt -12) + ":" + min + "p";
+        }
+
     }
 
 }

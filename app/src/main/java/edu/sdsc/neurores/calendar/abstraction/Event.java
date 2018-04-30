@@ -12,11 +12,13 @@ public class Event {
     private Date date;
     private String location;
     private String description;
-    private String timeRange;
+    private String startTime, endTime;
 
-    public Event(String title, Date date, String location, String description){
+    public Event(String title, Date date, String startTime, String endTime, String location, String description){
         this.title = title;
         this.date = date;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.location = location;
         this.description = description;
     }
@@ -26,7 +28,7 @@ public class Event {
     }
 
     public String getTimeRange(){
-        return "TODO";
+        return startTime + "-" + endTime;
     }
 
     public boolean isDayOfWeek(int day){
