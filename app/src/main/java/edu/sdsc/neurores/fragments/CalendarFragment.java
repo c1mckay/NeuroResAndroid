@@ -21,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Calendar;
+import java.util.List;
+
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.activities.LoginActivity;
 import edu.sdsc.neurores.calendar.CalendarController;
@@ -28,9 +30,11 @@ import edu.sdsc.neurores.calendar.DayClickListener;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedWeek;
 import edu.sdsc.neurores.calendar.abstraction.Day;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
+import edu.sdsc.neurores.helper.JSONConverter;
 import edu.sdsc.neurores.network.HTTPRequestCompleteListener;
 import edu.sdsc.neurores.network.RequestWrapper;
 
@@ -76,7 +80,7 @@ public class CalendarFragment extends Fragment {
         calendarController = new CalendarController(v.getContext(), start, end, dayClickListener);
 
         viewPager = (ViewPager) v.findViewById(R.id.calendar);
-        viewPager.setAdapter(calendarController.getPagerAdapter());
+        //viewPager.setAdapter(calendarController.getPagerAdapter());
         viewPager.addOnPageChangeListener(calendarController.getOnPageChangeListener());
         alignLeftToolbarTitle();
 
@@ -99,7 +103,7 @@ public class CalendarFragment extends Fragment {
                 selected.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
                 Log.v("calendar", "Selected " + selected.get(Calendar.WEEK_OF_YEAR) + " " + selected.get(Calendar.YEAR));
-                moveToSelectedWeek(new CalendarBackedWeek(selected));
+                moveToSelectedWeek(new CalendarBackedWeek(selected, null));
             }
 
         };
@@ -135,6 +139,10 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onComplete(String s) {
                 Log.v("event", s);
+
+                List<Event> events = JSONConverter.toEventList(s);
+                calendarController.setEvents(events);
+                viewPager.setAdapter(calendarController.getPagerAdapter());
             }
 
             @Override
@@ -145,7 +153,7 @@ public class CalendarFragment extends Fragment {
         };
 
         RequestWrapper.getEvents(getContext(), getToken(),httpRequestCompleteListener);
-        moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance()));
+        moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance(),null));
     }
 
     @Override

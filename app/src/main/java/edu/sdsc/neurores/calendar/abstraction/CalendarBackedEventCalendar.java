@@ -3,6 +3,7 @@ package edu.sdsc.neurores.calendar.abstraction;
 import android.util.Log;
 
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * Created by trevor on 4/25/18.
@@ -10,8 +11,9 @@ import java.util.Calendar;
 
 public class CalendarBackedEventCalendar implements EventCalendar {
     Calendar start, end;
+    List<Event> events;
 
-    public CalendarBackedEventCalendar(Calendar start, Calendar end){
+    public CalendarBackedEventCalendar(Calendar start, Calendar end, List<Event> events){
         start.set(Calendar.DAY_OF_WEEK, 0);
         end.set(Calendar.DAY_OF_WEEK, 0);
 
@@ -24,6 +26,7 @@ public class CalendarBackedEventCalendar implements EventCalendar {
 
         this.start = start;
         this.end = end;
+        this.events = events;
     }
 
 
@@ -31,7 +34,7 @@ public class CalendarBackedEventCalendar implements EventCalendar {
     public CalendarBackedWeek getWeek(int position) {
         Calendar current = Calendar.getInstance();
         current.setTimeInMillis((long)((1000L * 60L * 60L * 24L * 7L) * position) + start.getTimeInMillis());
-        return new CalendarBackedWeek(current);
+        return new CalendarBackedWeek(current, events);
     }
 
     @Override

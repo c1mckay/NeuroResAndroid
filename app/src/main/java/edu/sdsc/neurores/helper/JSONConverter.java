@@ -16,10 +16,14 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +32,7 @@ import edu.sdsc.neurores.abstraction.Conversation;
 import edu.sdsc.neurores.activities.MainActivity;
 import edu.sdsc.neurores.abstraction.Message;
 import edu.sdsc.neurores.abstraction.User;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
 
@@ -59,6 +64,31 @@ public class JSONConverter {
         }
 
         return messages;
+    }
+
+    public static List<Event> toEventList(String json){
+//        List<Event> events = new ArrayList<>();
+//        try{
+//            JSONArray jsonArray = new JSONArray(json);
+//
+//            for(int i = 0; i < jsonArray.length(); i++){
+//                JSONObject jsonObject = jsonArray.getJSONObject(i);
+//            }
+//
+//            return events;
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+
+        Gson gson = createGson(true);
+        Type listType = new TypeToken<List<Event>>() {}.getType();
+        List<Event> events =  gson.fromJson(json, listType);
+
+        while(events.contains(null)){
+            events.remove(null);
+        }
+
+        return events;
     }
 
     public static List<User> toUserList(String json, Context context){
@@ -167,6 +197,7 @@ public class JSONConverter {
 
         builder.registerTypeAdapter(User.class, new UserSerializer());
         builder.registerTypeAdapter(Message.class, new MessageSerializer());
+        builder.registerTypeAdapter(Event.class, new EventSerializer());
 
         builder.setFieldNamingPolicy(LOWER_CASE_WITH_UNDERSCORES);
         if (serializeNulls) {
@@ -229,6 +260,33 @@ public class JSONConverter {
             boolean isOnline = jsonObject.get("isOnline").getAsBoolean();
 
             return new User(null,userID,email,userType,isOnline);
+        }
+    }
+
+    private static class EventSerializer implements JsonDeserializer<Event> {
+
+        @Override
+        public Event deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            try{
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+
+
+                JsonObject jsonObject = (JsonObject) json;
+                String title = jsonObject.get("title").getAsString();
+                String location = jsonObject.get("location").getAsString();
+                String description = jsonObject.get("description").getAsString();
+
+                Date date = formatter.parse(jsonObject.get("date").getAsString());
+
+                return new Event(title,date,location, description);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            } catch (UnsupportedOperationException e){
+
+            }
+
+            return null;
         }
     }
 

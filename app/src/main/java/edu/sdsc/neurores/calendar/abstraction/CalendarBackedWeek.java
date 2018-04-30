@@ -3,7 +3,9 @@ package edu.sdsc.neurores.calendar.abstraction;
 import android.util.Log;
 
 import java.text.DateFormatSymbols;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * Created by trevor on 4/25/18.
@@ -12,8 +14,15 @@ import java.util.Calendar;
 public class CalendarBackedWeek implements Week {
     private Calendar calendar;
     private Day[] days;
+    private List<Event> events;
 
-    public CalendarBackedWeek(Calendar calendar){
+    public CalendarBackedWeek(Calendar calendar, List<Event> events){
+        this.events = events;
+
+        if(events == null){
+            events = new ArrayList<>();
+        }
+
         this.calendar = (Calendar) calendar.clone();
 
         this.calendar.set(Calendar.DAY_OF_WEEK, 0);
@@ -29,7 +38,20 @@ public class CalendarBackedWeek implements Week {
         for(int i = 0; i < 7; i++){
             Calendar temp = (Calendar) calendar.clone();
             temp.add(Calendar.DAY_OF_MONTH, i);
-            days[i] =  new CalendarBackedDay(temp);
+
+            List<Event> eventsForDay = new ArrayList<>();
+            for(Event event : events){
+                Calendar calForEvent = Calendar.getInstance();
+                calForEvent.setTime(event.getDate());
+
+                boolean sameYear = temp.get(Calendar.YEAR) == calForEvent.get(Calendar.YEAR);
+                boolean sameDay = temp.get(Calendar.DAY_OF_YEAR) == calForEvent.get(Calendar.DAY_OF_YEAR);
+
+                if(sameDay && sameYear){
+                    eventsForDay.add(event);
+                }
+            }
+            days[i] =  new CalendarBackedDay(temp, eventsForDay);
         }
     }
 

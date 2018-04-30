@@ -18,15 +18,10 @@ public class CalendarBackedDay extends Day {
     private List<Event> events;
     View view;
 
-    public CalendarBackedDay(Calendar calendar){
+    public CalendarBackedDay(Calendar calendar, List<Event> events){
         this.calendar = calendar;
-        events = new ArrayList<>();
+        this.events = events;
         view = null;
-
-        Random random = new Random();
-        for(int i = 0; i < random.nextInt(5); i++){
-            events.add(new Event("Meeting", "11a-12p", "Room Num", "This is an important meeting"));
-        }
     }
 
     @Override

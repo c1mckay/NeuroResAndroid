@@ -7,10 +7,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Day;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
@@ -28,6 +31,7 @@ public class CalendarController {
     private ViewPager.OnPageChangeListener onPageChangeListener;
     private EventCalendar eventCalendar;
     private DayClickHandler dayClickHandler;
+    private List<Event> events;
 
     public CalendarController(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
         start = (Calendar) start.clone();
@@ -46,15 +50,16 @@ public class CalendarController {
         this.context = context;
         this.start = start;
         this.end = end;
+        this.events = new ArrayList<>();
 
-        eventCalendar = new CalendarBackedEventCalendar(start,end);
+        eventCalendar = new CalendarBackedEventCalendar(start,end, events);
         dayClickHandler = new DayClickHandler();
         dayClickHandler.registerDayClickListener(dayClickListener);
 
         CalendarClickListener calendarClickListener = new CalendarClickListener();
         this.onClickListener = calendarClickListener;
         this.onItemClickListener = calendarClickListener;
-        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler);
+        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events);
         calendarClickListener.setCalendarAdapter(pagerAdapter);
         onPageChangeListener = new CalendarPageChangeListener(context, eventCalendar);
     }
@@ -81,5 +86,10 @@ public class CalendarController {
 
     public Week getWeekAtPosition(int position){
         return eventCalendar.getWeek(position);
+    }
+
+    public void setEvents(List<Event> events) {
+        this.events = events;
+        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events);
     }
 }
