@@ -15,8 +15,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.calendar.DayClickHandler;

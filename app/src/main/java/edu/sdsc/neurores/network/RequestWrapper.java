@@ -19,6 +19,8 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import edu.sdsc.neurores.calendar.abstraction.Event;
+
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {

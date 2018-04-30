@@ -5,7 +5,6 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Random;
 
 import edu.sdsc.neurores.R;
 

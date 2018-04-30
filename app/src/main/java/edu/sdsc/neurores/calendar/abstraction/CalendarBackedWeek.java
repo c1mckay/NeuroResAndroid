@@ -1,7 +1,5 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
-import android.util.Log;
-
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -22,7 +20,6 @@ public class CalendarBackedWeek implements Week {
         if(events == null){
             events = new ArrayList<>();
         }
-
         this.calendar = (Calendar) calendar.clone();
 
         this.calendar.set(Calendar.DAY_OF_WEEK, 0);
@@ -53,6 +50,16 @@ public class CalendarBackedWeek implements Week {
             }
             days[i] =  new CalendarBackedDay(temp, eventsForDay);
         }
+    }
+
+    private ArrayList<Event> filterEventsByDay(ArrayList<Event> events, int day){
+        ArrayList<Event> ret = new ArrayList<>();
+        for(Event e: events){
+            if(e.isDayOfWeek(day))
+                ret.add(e);
+        }
+
+        return ret;
     }
 
     @Override
