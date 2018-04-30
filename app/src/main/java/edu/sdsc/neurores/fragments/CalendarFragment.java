@@ -20,6 +20,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -48,6 +49,7 @@ public class CalendarFragment extends Fragment {
     CalendarController calendarController;
     Week selectedWeek;
     Day selectedDay;
+    ListView detailedEventListView;
 
     public CalendarFragment() {
         // required empty constructor
@@ -59,7 +61,7 @@ public class CalendarFragment extends Fragment {
                              final Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         final View v = inflater.inflate(R.layout.calendar_root, container, false);
-        final ListView detailedEventListView = (ListView) v.findViewById(R.id.detailed_event_list_view);
+        detailedEventListView = (ListView) v.findViewById(R.id.detailed_event_list_view);
         setHasOptionsMenu(true);
 
         Calendar start = Calendar.getInstance();
@@ -143,6 +145,23 @@ public class CalendarFragment extends Fragment {
                 List<Event> events = JSONConverter.toEventList(s);
                 calendarController.setEvents(events);
                 viewPager.setAdapter(calendarController.getPagerAdapter());
+                moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance(),null));
+
+
+                List<Event> eventsForDay = new ArrayList<>();
+                Calendar today = Calendar.getInstance();
+                for(Event event : events){
+                    Calendar calForEvent = Calendar.getInstance();
+                    calForEvent.setTime(event.getDate());
+
+                    boolean sameYear = today.get(Calendar.YEAR) == calForEvent.get(Calendar.YEAR);
+                    boolean sameDay = today.get(Calendar.DAY_OF_YEAR) == calForEvent.get(Calendar.DAY_OF_YEAR);
+
+                    if(sameDay && sameYear){
+                        eventsForDay.add(event);
+                    }
+                }
+                detailedEventListView.setAdapter(new DetailedEventAdapter(getContext(), eventsForDay));
             }
 
             @Override
