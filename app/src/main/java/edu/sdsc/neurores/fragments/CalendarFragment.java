@@ -1,6 +1,8 @@
 package edu.sdsc.neurores.fragments;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -20,6 +22,7 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.activities.LoginActivity;
 import edu.sdsc.neurores.calendar.CalendarController;
 import edu.sdsc.neurores.calendar.DayClickListener;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
@@ -28,6 +31,8 @@ import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
+import edu.sdsc.neurores.network.HTTPRequestCompleteListener;
+import edu.sdsc.neurores.network.RequestWrapper;
 
 /**
  * Created by tbpetersen on 4/13/2018.
@@ -126,6 +131,20 @@ public class CalendarFragment extends Fragment {
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        HTTPRequestCompleteListener httpRequestCompleteListener = new HTTPRequestCompleteListener() {
+            @Override
+            public void onComplete(String s) {
+                Log.v("event", s);
+            }
+
+            @Override
+            public void onError(int i) {
+                Log.v("event", i + "");
+
+            }
+        };
+
+        RequestWrapper.getEvents(getContext(), getToken(),httpRequestCompleteListener);
         moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance()));
     }
 
@@ -141,5 +160,10 @@ public class CalendarFragment extends Fragment {
         Toolbar.LayoutParams params =  (Toolbar.LayoutParams)toolbarTitle.getLayoutParams();
         params.gravity = Gravity.START;
         toolbarTitle.setLayoutParams(params);
+    }
+
+    public String getToken(){
+        SharedPreferences sPref = getContext().getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
+        return sPref.getString(LoginActivity.TOKEN, null);
     }
 }

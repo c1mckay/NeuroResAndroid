@@ -32,6 +32,7 @@ public class RequestWrapper {
     private static final String CREATE_CONVERSATION = "/start_conversation";
     private static final String WIPE_CONVERSATION = "/wipe_conversation";
     private static final String MARK_SEEN_ENDPOINT = "/mark_seen";
+    private static final String GET_EVENTS_ENDPOINT = "/get_events";
     private static final String SERVER_CHECK_ENDPOINT = "/privacy.html";
 
     private static final String AUTH_HEADER_KEY = "auth";
@@ -77,6 +78,10 @@ public class RequestWrapper {
 
     public static void WipeConversation(Context context, long id, String token, HTTPRequestCompleteListener ocl) {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(WIPE_CONVERSATION);
+    }
+
+    public static void getEvents(Context context, String token, HTTPRequestCompleteListener ocl) {
+        new HTTPRequestThread(context, token, POST_REQUEST, ocl).execute(GET_EVENTS_ENDPOINT);
     }
 
     public static String getFirebaseTokenData() {
@@ -201,7 +206,7 @@ public class RequestWrapper {
 
                 in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String inputLine;
-                StringBuffer response = new StringBuffer();
+                StringBuilder response = new StringBuilder();
 
                 while ((inputLine = in.readLine()) != null) {
                     response.append(inputLine);
