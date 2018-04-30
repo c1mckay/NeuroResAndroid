@@ -19,6 +19,8 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import edu.sdsc.neurores.calendar.abstraction.Event;
+
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {
@@ -80,7 +82,7 @@ public class RequestWrapper {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).setData(Long.toString(id)).execute(WIPE_CONVERSATION);
     }
 
-    public static void getEvents(Context context, String token, HTTPRequestCompleteListener ocl) {
+    public static void getEsvents(Context context, String token, HTTPRequestCompleteListener ocl) {
         new HTTPRequestThread(context, token, POST_REQUEST, ocl).execute(GET_EVENTS_ENDPOINT);
     }
 

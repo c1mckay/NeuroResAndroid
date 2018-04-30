@@ -7,10 +7,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Day;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
@@ -47,14 +49,16 @@ public class CalendarController {
         this.start = start;
         this.end = end;
 
-        eventCalendar = new CalendarBackedEventCalendar(start,end);
+        ArrayList<Event> events = null;
+
+        eventCalendar = new CalendarBackedEventCalendar(start,end, events);
         dayClickHandler = new DayClickHandler();
         dayClickHandler.registerDayClickListener(dayClickListener);
 
         CalendarClickListener calendarClickListener = new CalendarClickListener();
         this.onClickListener = calendarClickListener;
         this.onItemClickListener = calendarClickListener;
-        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler);
+        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events);
         calendarClickListener.setCalendarAdapter(pagerAdapter);
         onPageChangeListener = new CalendarPageChangeListener(context, eventCalendar);
     }

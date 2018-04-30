@@ -15,8 +15,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
-import java.util.Random;
+import java.util.Date;
 
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.calendar.DayClickHandler;
@@ -41,11 +40,22 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
     private RecyclerView weekHolder;
     private Day selectedDay;
 
-    public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickHandler dayClickHandler){
+    public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickHandler dayClickHandler, ArrayList<Event> events){
         this.context = context;
         eventCalendar = new CalendarBackedEventCalendar(start,end);
         this.dayClickHandler = dayClickHandler;
-        selectedDay = new CalendarBackedDay(Calendar.getInstance());
+        selectedDay = new CalendarBackedDay(Calendar.getInstance(), filterByDay(events, new Date()));
+    }
+
+    private ArrayList<Event> filterByDay(ArrayList<Event> events, Date date){
+        ArrayList<Event> ret = new ArrayList<>();
+
+        for(Event e: events){
+            if(e.isDate(date))
+                ret.add(e);
+        }
+
+        return ret;
     }
 
     @Override

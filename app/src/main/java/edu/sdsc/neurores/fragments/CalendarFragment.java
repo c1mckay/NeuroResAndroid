@@ -20,6 +20,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Calendar;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.activities.LoginActivity;
@@ -28,6 +33,7 @@ import edu.sdsc.neurores.calendar.DayClickListener;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedWeek;
 import edu.sdsc.neurores.calendar.abstraction.Day;
+import edu.sdsc.neurores.calendar.abstraction.Event;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
@@ -99,7 +105,8 @@ public class CalendarFragment extends Fragment {
                 selected.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
                 Log.v("calendar", "Selected " + selected.get(Calendar.WEEK_OF_YEAR) + " " + selected.get(Calendar.YEAR));
-                moveToSelectedWeek(new CalendarBackedWeek(selected));
+                Log.v("calendar", selected.toString());
+                moveToSelectedWeek(new CalendarBackedWeek(selected, new ArrayList<Event>()));
             }
 
         };
@@ -135,6 +142,21 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onComplete(String s) {
                 Log.v("event", s);
+
+                try {
+                    JSONArray jList = new JSONArray(s);
+                    ArrayList<Event> events = new ArrayList<>();
+
+                    JSONObject jDate;
+                    for(int i = 0; i < jList.length(); i++) {
+                        jDate = jList.getJSONObject(i);
+                        events.add(new Event(jDate));
+                    }
+
+                    moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance(), events));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -145,7 +167,7 @@ public class CalendarFragment extends Fragment {
         };
 
         RequestWrapper.getEvents(getContext(), getToken(),httpRequestCompleteListener);
-        moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance()));
+        System.err.print(Calendar.getInstance().toString());
     }
 
     @Override

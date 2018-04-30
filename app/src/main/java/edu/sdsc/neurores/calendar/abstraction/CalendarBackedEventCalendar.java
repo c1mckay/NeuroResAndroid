@@ -2,7 +2,9 @@ package edu.sdsc.neurores.calendar.abstraction;
 
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by trevor on 4/25/18.
@@ -11,7 +13,8 @@ import java.util.Calendar;
 public class CalendarBackedEventCalendar implements EventCalendar {
     Calendar start, end;
 
-    public CalendarBackedEventCalendar(Calendar start, Calendar end){
+    ArrayList<Event> events;
+    public CalendarBackedEventCalendar(Calendar start, Calendar end, ArrayList<Event> events){
         start.set(Calendar.DAY_OF_WEEK, 0);
         end.set(Calendar.DAY_OF_WEEK, 0);
 
@@ -24,14 +27,28 @@ public class CalendarBackedEventCalendar implements EventCalendar {
 
         this.start = start;
         this.end = end;
+        this.events = events;
     }
 
 
     @Override
     public CalendarBackedWeek getWeek(int position) {
         Calendar current = Calendar.getInstance();
-        current.setTimeInMillis((long)((1000L * 60L * 60L * 24L * 7L) * position) + start.getTimeInMillis());
-        return new CalendarBackedWeek(current);
+        long startTime = (long)((1000L * 60L * 60L * 24L * 7L) * position) + start.getTimeInMillis();
+        long endTime = (long)((1000L * 60L * 60L * 24L * 7L) * (position + 1)) + start.getTimeInMillis();
+        current.setTimeInMillis((long)(startTime));
+        return new CalendarBackedWeek(current, filterByWeekRange(events, new Date(startTime), new Date(endTime)));
+    }
+
+    private ArrayList<Event> filterByWeekRange(ArrayList<Event> events, Date startDate, Date endDate){
+        ArrayList<Event> ret = new ArrayList<>();
+
+        for(Event e: events){
+            if(e.isBetween(startDate, endDate))
+                ret.add(e);
+        }
+
+        return ret;
     }
 
     @Override
