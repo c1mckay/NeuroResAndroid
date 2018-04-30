@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -75,6 +76,7 @@ public class JSONConverter {
             events.remove(null);
         }
 
+        Collections.sort(events);
         return events;
     }
 
@@ -255,49 +257,40 @@ public class JSONConverter {
         @Override
         public Event deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try{
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                SimpleDateFormat formatter = FormatHelper.getLocalDateFormatter();
 
 
 
                 JsonObject jsonObject = (JsonObject) json;
-                String title = jsonObject.get("title").getAsString();
-                String location = jsonObject.get("location").getAsString();
-                String description = jsonObject.get("description").getAsString();
-                String start = jsonObject.get("start").getAsString();
-                start = parseTime(start);
-                String end = jsonObject.get("end").getAsString();
-                end = parseTime(end);
+                String title = getJSONValueAsString(jsonObject, "title");
+                String location = getJSONValueAsString(jsonObject, "location");
+                String description = getJSONValueAsString(jsonObject, "description");
+                String start = getJSONValueAsString(jsonObject, "start");
+                String end = getJSONValueAsString(jsonObject, "end");
+                Date date = formatter.parse(getJSONValueAsString(jsonObject, "date"));
 
-                Date date = formatter.parse(jsonObject.get("date").getAsString());
+                if(title == null){
+                    title = "";
+                }
 
                 return new Event(title,date, start, end, location, description);
             } catch (ParseException e) {
                 e.printStackTrace();
-            } catch (UnsupportedOperationException e){
-
             }
 
             return null;
         }
-    }
 
-    private static String parseTime(String time){
-        String[] timeArray = time.split(":");
-
-        String hour = timeArray[0];
-        String min = timeArray[1];
-
-        int hourAsInt = Integer.parseInt(hour);
-
-        if(hourAsInt < 12) {
-            return hourAsInt + ":" + min + "a";
-        }else if(hourAsInt == 12){
-            return hourAsInt + ":" + min + "p";
-        }else{
-            return (hourAsInt -12) + ":" + min + "p";
+        private static String getJSONValueAsString(JsonObject jsonObject, String field){
+            try{
+                return jsonObject.get(field).getAsString();
+            }catch (UnsupportedOperationException e){
+                return null;
+            }
         }
-
     }
+
+
 
 }
 

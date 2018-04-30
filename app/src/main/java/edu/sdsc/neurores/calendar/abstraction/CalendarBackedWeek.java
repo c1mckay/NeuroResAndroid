@@ -52,16 +52,6 @@ public class CalendarBackedWeek implements Week {
         }
     }
 
-    private ArrayList<Event> filterEventsByDay(ArrayList<Event> events, int day){
-        ArrayList<Event> ret = new ArrayList<>();
-        for(Event e: events){
-            if(e.isDayOfWeek(day))
-                ret.add(e);
-        }
-
-        return ret;
-    }
-
     @Override
     public Day getDay(int position) {
         return days[position];

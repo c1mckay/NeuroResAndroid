@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import edu.sdsc.neurores.helper.FormatHelper;
+
 /**
  * Represents a message from a user. Contains a user's name, message text
  * and the time that the message was sent.
@@ -122,22 +124,16 @@ public class Message {
     }
 
     public static String getTimeStringFormattedForDB(long time){
-        SimpleDateFormat formatter = getFormatter();
+        SimpleDateFormat formatter = FormatHelper.getDatabaseDateFormatter();
         return formatter.format(new Date(time));
     }
 
     public String getTimeStringFormattedForDB(){
-        return getFormatter().format(new Date(getTime()));
-    }
-
-    public static SimpleDateFormat getFormatter() {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return formatter;
+        return FormatHelper.getDatabaseDateFormatter().format(new Date(getTime()));
     }
 
     public static long getMillisecondsFromTimeString(String timeString){
-        SimpleDateFormat formatter = getFormatter();
+        SimpleDateFormat formatter = FormatHelper.getDatabaseDateFormatter();
         try{
             return formatter.parse(timeString).getTime();
         }catch (ParseException e){
