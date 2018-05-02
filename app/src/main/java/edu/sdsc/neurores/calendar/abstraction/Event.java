@@ -1,8 +1,10 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by trevor on 4/21/18.
@@ -10,29 +12,16 @@ import java.util.Date;
 
 public class Event implements Comparable<Event>{
     private String title;
-    private Date date;
     private String location;
     private String description;
-    private String startTime, endTime;
-    private int startHour, startMinute;
+    private Calendar start, end;
 
-    public Event(String title, Date date, String startTime, String endTime, String location, String description){
+    public Event(String title, Calendar start, Calendar end, String location, String description){
         this.title = title;
-        this.date = date;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.start = start;
+        this.end = end;
         this.location = location;
         this.description = description;
-
-        if(startTime != null){
-            String[] startTimeSplit = startTime.split(":");
-            startHour = Integer.parseInt(startTimeSplit[0]);
-            startMinute = Integer.parseInt(startTimeSplit[1]);
-        }else{
-            startHour = -1;
-            startMinute = -1;
-        }
-
     }
 
     public String getTitle(){
@@ -40,15 +29,43 @@ public class Event implements Comparable<Event>{
     }
 
     public String getTimeRange(){
-        if(startTime == null && endTime == null){
+        if(!hasStartTime()){
             return "";
         }
 
-        if(hasNoEndTime()){
-            return "Starts at " + parseTime(startTime);
+        if(!hasEndTime()){
+            return startTimeOnly();
+        }else if(isSingleDayEvent()){
+            return singleDayTime();
         }else{
-            return parseTime(startTime) + "-" + parseTime(endTime);
+            return multiDayTime();
         }
+    }
+
+    private String singleDayTime() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
+
+        String startTime = simpleDateFormat.format(start.getTime());
+        String endTime = simpleDateFormat.format(end.getTime());
+
+        return startTime + " - " + endTime;
+    }
+
+    private String multiDayTime() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("M'/'d h:mma", Locale.getDefault());
+
+        String startTime = simpleDateFormat.format(start.getTime());
+        String endTime = simpleDateFormat.format(end.getTime());
+
+        return startTime + " - " + endTime;
+    }
+
+    private String startTimeOnly() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
+        String startTime = simpleDateFormat.format(start.getTime());
+
+
+        return "Starts at " + startTime;
     }
 
     public String getLocation() {
@@ -67,69 +84,55 @@ public class Event implements Comparable<Event>{
         this.description = description;
     }
 
-    public Date getDate(){
-        return date;
+    public Calendar getStart(){
+        return start;
     }
 
-    public String getStartTime(){
-        return startTime;
+    public Calendar getEnd(){
+        return end;
     }
 
-    public String getEndTime(){
-        return endTime;
+    private boolean hasStartTime(){
+        return start != null;
     }
 
-    private int getStartHour(){
-        return startHour;
+    private boolean hasEndTime(){
+        return end != null;
     }
 
-    private int getStartMinute(){
-        return startMinute;
+    private boolean isSingleDayEvent() {
+        int startYear = start.get(Calendar.YEAR);
+        int startDay = start.get(Calendar.DAY_OF_YEAR);
+
+        int endYear = end.get(Calendar.YEAR);
+        int endDay = end.get(Calendar.DAY_OF_YEAR);
+
+        boolean sameYear = startYear == endYear;
+        boolean sameDay = startDay == endDay;
+
+        return sameDay && sameYear;
     }
 
-    private static String parseTime(String time){
-        String[] timeArray = time.split(":");
+    public boolean timeOverlaps(Calendar time){
+        boolean sameYear, sameDay, withinStartAndEndTime;
 
-        String hour = timeArray[0];
-        String min = timeArray[1];
-
-        int hourAsInt = Integer.parseInt(hour);
-
-        if(hourAsInt < 12) {
-            return hourAsInt + ":" + min + "a";
-        }else if(hourAsInt == 12){
-            return hourAsInt + ":" + min + "p";
+        if(hasEndTime()){
+            sameYear = time.get(Calendar.YEAR) == start.get(Calendar.YEAR) ||
+                       time.get(Calendar.YEAR) == end.get(Calendar.YEAR);
+            sameDay = time.get(Calendar.DAY_OF_YEAR) == start.get(Calendar.DAY_OF_YEAR) ||
+                      time.get(Calendar.DAY_OF_YEAR) == end.get(Calendar.DAY_OF_YEAR);
+            withinStartAndEndTime = start.getTime().before(time.getTime()) && end.getTime().after(time.getTime());
         }else{
-            return (hourAsInt -12) + ":" + min + "p";
+            sameYear = time.get(Calendar.YEAR) == start.get(Calendar.YEAR);
+            sameDay = time.get(Calendar.DAY_OF_YEAR) == start.get(Calendar.DAY_OF_YEAR);
+            withinStartAndEndTime = false;
         }
 
-    }
-
-    private boolean hasNoEndTime(){
-        return endTime == null;
+        return (sameYear && sameDay) || withinStartAndEndTime;
     }
 
     @Override
     public int compareTo(Event event) {
-        Date date1 = getDate();
-        Date date2 = event.getDate();
-
-        int dateCompare = date1.compareTo(date2);
-        if(dateCompare == 0){
-            return compareStartTimes(event);
-        }else{
-            return dateCompare;
-        }
+        return getStart().compareTo(event.getStart());
     }
-
-    private int compareStartTimes(Event event) {
-        if(getStartHour() < event.getStartHour()){
-            return -1;
-        }else if(getStartHour() > event.getStartHour()){
-            return 1;
-        }else{
-            return 0;
-        }
-    }
-
 }

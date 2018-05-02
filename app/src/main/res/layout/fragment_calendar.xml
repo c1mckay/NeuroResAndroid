@@ -13,7 +13,7 @@
         android:layout_weight="1"
         android:textSize="30sp"
         android:background="@color/colorPrimary"
-        android:textColor="@color/selected"
+        android:textColor="@color/calendarBackground"
         android:layout_width="match_parent"
         android:layout_height="0dp" />
 
@@ -28,6 +28,7 @@
 
     <ListView
         android:id="@+id/detailed_event_list_view"
+        android:background="@color/calendarBackground"
         android:layout_weight="5"
         android:layout_marginStart="5dp"
         android:layout_marginEnd="5dp"

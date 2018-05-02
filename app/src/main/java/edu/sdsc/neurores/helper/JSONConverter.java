@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -259,21 +260,33 @@ public class JSONConverter {
             try{
                 SimpleDateFormat formatter = FormatHelper.getLocalDateFormatter();
 
-
-
                 JsonObject jsonObject = (JsonObject) json;
                 String title = getJSONValueAsString(jsonObject, "title");
                 String location = getJSONValueAsString(jsonObject, "location");
                 String description = getJSONValueAsString(jsonObject, "description");
-                String start = getJSONValueAsString(jsonObject, "start");
-                String end = getJSONValueAsString(jsonObject, "end");
-                Date date = formatter.parse(getJSONValueAsString(jsonObject, "date"));
+
+                String startString = getJSONValueAsString(jsonObject, "start");
+                String endString = getJSONValueAsString(jsonObject, "end");
+
+                Calendar start = null;
+                Calendar end = null;
+
+                if(startString != null){
+                    Date startDate = formatter.parse(startString);
+                    start = Calendar.getInstance();
+                    start.setTime(startDate);
+                }
+                if(endString != null){
+                    Date endDate = formatter.parse(endString);
+                    end = Calendar.getInstance();
+                    end.setTime(endDate);
+                }
 
                 if(title == null){
                     title = "";
                 }
 
-                return new Event(title,date, start, end, location, description);
+                return new Event(title,start, end, location, description);
             } catch (ParseException e) {
                 e.printStackTrace();
             }

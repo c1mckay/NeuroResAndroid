@@ -28,12 +28,10 @@ import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.activities.LoginActivity;
 import edu.sdsc.neurores.calendar.CalendarController;
 import edu.sdsc.neurores.calendar.DayClickListener;
-import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedWeek;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Event;
 import edu.sdsc.neurores.calendar.abstraction.Week;
-import edu.sdsc.neurores.calendar.adapter.CalendarAdapter;
 import edu.sdsc.neurores.calendar.adapter.DetailedEventAdapter;
 import edu.sdsc.neurores.helper.JSONConverter;
 import edu.sdsc.neurores.network.HTTPRequestCompleteListener;
@@ -60,7 +58,7 @@ public class CalendarFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              final Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        final View v = inflater.inflate(R.layout.calendar_root, container, false);
+        final View v = inflater.inflate(R.layout.fragment_calendar, container, false);
         detailedEventListView = (ListView) v.findViewById(R.id.detailed_event_list_view);
         setHasOptionsMenu(true);
 
@@ -151,8 +149,7 @@ public class CalendarFragment extends Fragment {
                 List<Event> eventsForDay = new ArrayList<>();
                 Calendar today = Calendar.getInstance();
                 for(Event event : events){
-                    Calendar calForEvent = Calendar.getInstance();
-                    calForEvent.setTime(event.getDate());
+                    Calendar calForEvent = event.getStart();
 
                     boolean sameYear = today.get(Calendar.YEAR) == calForEvent.get(Calendar.YEAR);
                     boolean sameDay = today.get(Calendar.DAY_OF_YEAR) == calForEvent.get(Calendar.DAY_OF_YEAR);

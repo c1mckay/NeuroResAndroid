@@ -10,4 +10,9 @@
     <color name="selected">#006A96</color>
     <color name="warning_background">#CC0000</color>
     <color name="warning_text">#FFFFFF</color>
+
+    <color name="calendarBackground">#F0F3FF</color>
+    <color name="calendarSelected">#D1D1D1</color>
+    <color name="calendarToday">#FFED80</color>
+    <color name="eventBanner">#747678</color>
 </resources>

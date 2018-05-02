@@ -3,6 +3,7 @@ package edu.sdsc.neurores.calendar.abstraction;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,13 +39,7 @@ public class CalendarBackedWeek implements Week {
 
             List<Event> eventsForDay = new ArrayList<>();
             for(Event event : events){
-                Calendar calForEvent = Calendar.getInstance();
-                calForEvent.setTime(event.getDate());
-
-                boolean sameYear = temp.get(Calendar.YEAR) == calForEvent.get(Calendar.YEAR);
-                boolean sameDay = temp.get(Calendar.DAY_OF_YEAR) == calForEvent.get(Calendar.DAY_OF_YEAR);
-
-                if(sameDay && sameYear){
+                if(event.timeOverlaps(temp)){
                     eventsForDay.add(event);
                 }
             }

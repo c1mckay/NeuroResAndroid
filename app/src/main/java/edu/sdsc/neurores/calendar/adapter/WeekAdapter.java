@@ -11,13 +11,9 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import edu.sdsc.neurores.R;
-import edu.sdsc.neurores.adapters.MessageAdapter;
 import edu.sdsc.neurores.calendar.DayClickHandler;
-import edu.sdsc.neurores.calendar.DayClickListener;
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 
@@ -32,17 +28,20 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
     private Week week;
     private Day selectedDay;
     private DayClickHandler dayClickHandler;
+    private int daysCreated;
 
     WeekAdapter(Context context, Week week, Day selectedDay, DayClickHandler dayClickHandler){
         this.context = context;
         this.week = week;
         this.selectedDay = selectedDay;
         this.dayClickHandler = dayClickHandler;
+        daysCreated = 0;
     }
 
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView dayInMonthTextView, dayOfWeekTextView;
+        View backgroundHolder;
         ListView eventListView;
         View root;
         MyViewHolder(View itemView) {
@@ -50,6 +49,7 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
             root = itemView;
             dayInMonthTextView = (TextView) itemView.findViewById(R.id.day_of_month_text_view);
             dayOfWeekTextView = (TextView) itemView.findViewById(R.id.day_of_week_text_view);
+            backgroundHolder = itemView.findViewById(R.id.day_background_holder);
             eventListView = (ListView) itemView.findViewById(R.id.event_list_view);
         }
 
@@ -67,18 +67,26 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.calendar_day, parent, false);
 
+        /* Make each day 1/7 of the screen. If the screen width is not divisible by 7,
+        * add an extra pixel to each day as needed*/
         ViewGroup.LayoutParams layoutParams = itemView.getLayoutParams();
         layoutParams.width = parent.getMeasuredWidth() / getItemCount();
+        
+        if(daysCreated < (parent.getMeasuredWidth() % getItemCount()) ){
+            layoutParams.width++;
+        }
+        daysCreated++;
         return new WeekAdapter.MyViewHolder(itemView);
     }
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        final Day day = week.getDay(position);
+        final CalendarBackedDay day = (CalendarBackedDay) week.getDay(position);
         day.setView(holder.getRoot());
 
         holder.dayOfWeekTextView.setText(day.getDayOfWeek());
         holder.dayInMonthTextView.setText(String.valueOf(day.getDayInMonth()));
+        holder.backgroundHolder.setBackgroundDrawable(holder.getRoot().getContext().getResources().getDrawable(day.getUnselectedBackgroundDrawable()));
 
         BaseAdapter eventAdapter = new EventAdapter(context, day.getEvents());
         holder.eventListView.setAdapter(eventAdapter);

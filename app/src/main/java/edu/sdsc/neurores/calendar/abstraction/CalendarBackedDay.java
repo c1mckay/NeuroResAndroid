@@ -23,6 +23,10 @@ public class CalendarBackedDay extends Day {
         view = null;
     }
 
+    public CalendarBackedDay(Calendar calendar){
+        this(calendar, new ArrayList<Event>());
+    }
+
     @Override
     public List<Event> getEvents() {
         return events;
@@ -58,7 +62,7 @@ public class CalendarBackedDay extends Day {
     public void deselect() {
         if(view != null){
             View backgroundHolder = view.findViewById(R.id.day_background_holder);
-            backgroundHolder.setBackgroundDrawable(view.getContext().getResources().getDrawable(R.drawable.calendar_day_unselected));
+            backgroundHolder.setBackgroundDrawable(view.getContext().getResources().getDrawable(getUnselectedBackgroundDrawable()));
         }
     }
 
@@ -73,5 +77,14 @@ public class CalendarBackedDay extends Day {
     @Override
     public void setView(View view) {
         this.view = view;
+    }
+
+    public int getUnselectedBackgroundDrawable() {
+        Day today = new CalendarBackedDay(Calendar.getInstance());
+        if(this.equals(today)){
+            return R.drawable.calendar_day_today;
+        }else{
+            return R.drawable.calendar_day_unselected;
+        }
     }
 }

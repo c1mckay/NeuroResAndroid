@@ -46,8 +46,6 @@ public class NavDrawerAdapter extends BaseExpandableListAdapter{
         groups.add(new Group<NavDrawerItem>(UNREAD_GROUP));
         groups.add(new Group<NavDrawerItem>(STAFF_GROUP));
         groups.add(new Group<NavDrawerItem>(PRIVATE_GROUP));
-
-
     }
 
     @Override
