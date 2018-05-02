@@ -750,11 +750,11 @@ public class MainActivity extends AppCompatActivity
             if(nonMessageType == TYPE_PDF){
                 Log.v("taggy", "Showing pdf");
                 currentFragment = startPDFFragment();
-                toolbarTitle.setText("PDF");
+                toolbarTitle.setText(getString(R.string.handbook));
             }else{
                 Log.v("taggy", "Showing cal");
                 currentFragment = startCalendarFragment();
-                toolbarTitle.setText("Calendar");
+                toolbarTitle.setText(getString(R.string.calendar));
             }
 
             android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();

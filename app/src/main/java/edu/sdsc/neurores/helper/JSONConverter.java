@@ -283,7 +283,10 @@ public class JSONConverter {
                 }
 
                 if(title == null){
-                    title = "";
+                    title = "Untitled Event";
+                }
+                if(description == null){
+                    description = "-No Description Available-";
                 }
 
                 return new Event(title,start, end, location, description);

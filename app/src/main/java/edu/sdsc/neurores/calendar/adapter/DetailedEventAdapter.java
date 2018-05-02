@@ -53,7 +53,7 @@ public class DetailedEventAdapter extends BaseAdapter {
         TextView eventDescTextView = (TextView) root.findViewById(R.id.event_desc);
 
         eventTitleTextView.setText(event.getTitle());
-        eventTimeTextView.setText(event.getTimeRange());
+        eventTimeTextView.setText(event.getTimeRange(Event.LONG));
         eventLocationTextView.setText(event.getLocation());
         eventDescTextView.setText(event.getDescription());
 

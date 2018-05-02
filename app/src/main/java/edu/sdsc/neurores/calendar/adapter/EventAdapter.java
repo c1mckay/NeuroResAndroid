@@ -50,7 +50,7 @@ public class EventAdapter extends BaseAdapter {
         TextView time = (TextView) root.findViewById(R.id.time);
 
         title.setText(event.getTitle());
-        time.setText(event.getTimeRange());
+        time.setText(event.getTimeRange(Event.SHORT));
 
         return root;
     }

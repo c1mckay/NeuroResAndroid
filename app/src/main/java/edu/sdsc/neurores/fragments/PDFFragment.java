@@ -47,7 +47,6 @@ public class PDFFragment extends Fragment{
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        Log.v("taggy","hiding trash");
         MenuItem item = menu.findItem(R.id.action_wipe_thread);
         item.setEnabled(false);
         item.setVisible(false);

@@ -1,16 +1,23 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
 
+import android.content.Context;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+
+import edu.sdsc.neurores.R;
 
 /**
  * Created by trevor on 4/21/18.
  */
 
 public class Event implements Comparable<Event>{
+    public static final int SHORT = 0;
+    public static final int LONG = 1;
+
     private String title;
     private String location;
     private String description;
@@ -28,30 +35,34 @@ public class Event implements Comparable<Event>{
         return title;
     }
 
-    public String getTimeRange(){
+    public String getTimeRange(int lengthType){
         if(!hasStartTime()){
             return "";
         }
 
         if(!hasEndTime()){
-            return startTimeOnly();
+            return startTimeOnly(lengthType);
         }else if(isSingleDayEvent()){
-            return singleDayTime();
+            return singleDayTime(lengthType);
         }else{
-            return multiDayTime();
+            return multiDayTime(lengthType);
         }
     }
 
-    private String singleDayTime() {
+    private String singleDayTime(int lengthType) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
 
         String startTime = simpleDateFormat.format(start.getTime());
         String endTime = simpleDateFormat.format(end.getTime());
 
-        return startTime + " - " + endTime;
+        if(lengthType == SHORT){
+            return startTime;
+        }else{
+            return startTime + " - " + endTime;
+        }
     }
 
-    private String multiDayTime() {
+    private String multiDayTime(int lengthType) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("M'/'d h:mma", Locale.getDefault());
 
         String startTime = simpleDateFormat.format(start.getTime());
@@ -60,10 +71,13 @@ public class Event implements Comparable<Event>{
         return startTime + " - " + endTime;
     }
 
-    private String startTimeOnly() {
+    private String startTimeOnly(int lengthType) {
+        if(lengthType == SHORT){
+            return "All Day";
+        }
+
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
         String startTime = simpleDateFormat.format(start.getTime());
-
 
         return "Starts at " + startTime;
     }

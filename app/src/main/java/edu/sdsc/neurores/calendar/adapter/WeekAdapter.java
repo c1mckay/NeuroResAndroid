@@ -71,7 +71,7 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
         * add an extra pixel to each day as needed*/
         ViewGroup.LayoutParams layoutParams = itemView.getLayoutParams();
         layoutParams.width = parent.getMeasuredWidth() / getItemCount();
-        
+
         if(daysCreated < (parent.getMeasuredWidth() % getItemCount()) ){
             layoutParams.width++;
         }
@@ -86,6 +86,10 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
 
         holder.dayOfWeekTextView.setText(day.getDayOfWeek());
         holder.dayInMonthTextView.setText(String.valueOf(day.getDayInMonth()));
+        if(day.getDayInMonth() - position < 0){
+            holder.dayInMonthTextView.setTextColor(holder.getRoot().getResources().getColor(R.color.light_grey));
+        }
+
         holder.backgroundHolder.setBackgroundDrawable(holder.getRoot().getContext().getResources().getDrawable(day.getUnselectedBackgroundDrawable()));
 
         BaseAdapter eventAdapter = new EventAdapter(context, day.getEvents());
