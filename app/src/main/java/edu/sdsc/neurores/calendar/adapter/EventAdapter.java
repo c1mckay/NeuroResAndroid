@@ -19,6 +19,7 @@ import edu.sdsc.neurores.calendar.abstraction.Event;
 public class EventAdapter extends BaseAdapter {
     Context context;
     List<Event> events;
+    // TODO Add a day to this event so that I can check if the event starts/spans/ends on this day
 
     public EventAdapter(Context context, List<Event> events){
         this.context = context;

@@ -112,6 +112,8 @@ public class CalendarFragment extends Fragment {
 
             @Override
             public void onClick(View v) {
+                // Removed feature for now
+                /*
                 Week week = calendarController.getWeekAtPosition(viewPager.getCurrentItem());
                 Calendar myCalendar = Calendar.getInstance();
                 myCalendar.setTimeInMillis(week.getStartOfWeek());
@@ -119,6 +121,8 @@ public class CalendarFragment extends Fragment {
                 new DatePickerDialog(root.getContext(), date, myCalendar
                         .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
                         myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+
+                 */
             }
         });
     }

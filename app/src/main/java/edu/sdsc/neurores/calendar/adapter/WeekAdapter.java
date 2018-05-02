@@ -86,7 +86,7 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
 
         holder.dayOfWeekTextView.setText(day.getDayOfWeek());
         holder.dayInMonthTextView.setText(String.valueOf(day.getDayInMonth()));
-        if(day.getDayInMonth() - position < 0){
+        if(day.getDayInMonth() - position <= 0){
             holder.dayInMonthTextView.setTextColor(holder.getRoot().getResources().getColor(R.color.light_grey));
         }
 
