@@ -64,14 +64,17 @@ public class CalendarBackedWeek implements Week {
 
     @Override
     public String getMonthName() {
-        SimpleDateFormat simpleDateFormat = FormatHelper.getDatabaseDateFormatter();
-        Log.v("taggy", simpleDateFormat.format(calendar.getTime()));
         return intMonthToString(calendar.get(Calendar.MONTH));
     }
 
     @Override
     public int getYear() {
         return calendar.get(Calendar.YEAR);
+    }
+
+    @Override
+    public int getMonth() {
+        return calendar.get(Calendar.MONTH);
     }
 
     @Override

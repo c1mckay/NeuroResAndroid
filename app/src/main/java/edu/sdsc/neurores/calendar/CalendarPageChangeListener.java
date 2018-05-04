@@ -6,8 +6,6 @@ import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.widget.TextView;
 
-import java.text.DateFormatSymbols;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -23,10 +21,14 @@ import edu.sdsc.neurores.calendar.abstraction.Week;
 public class CalendarPageChangeListener implements ViewPager.OnPageChangeListener {
     Context context;
     EventCalendar eventCalendar;
+    int previousMonthNum;
+    int previousYearNum;
 
     CalendarPageChangeListener(Context context, EventCalendar eventCalendar){
         this.context = context;
         this.eventCalendar = eventCalendar;
+        previousMonthNum = -1;
+        previousYearNum = -1;
     }
 
 
@@ -37,16 +39,22 @@ public class CalendarPageChangeListener implements ViewPager.OnPageChangeListene
 
     @Override
     public void onPageSelected(int position) {
+
         Week selectedWeek = eventCalendar.getWeek(position);
         TextView textView = (TextView)((Activity)context).findViewById(R.id.calendar_title);
         Calendar today = Calendar.getInstance();
 
+        // TODO Keep current month consistent when scrolling backwards (also grayed Days)
+
         if(selectedWeek.isWithinWeek(new CalendarBackedDay(today))){
             String monthName = today.getDisplayName(Calendar.MONTH,Calendar.LONG, Locale.getDefault());
             textView.setText(monthName + " " + today.get(Calendar.YEAR));
+            previousMonthNum = today.get(Calendar.MONTH);
+            previousYearNum = today.get(Calendar.YEAR);
         }else{
-            Log.v("taggy", "Getting selected " + selectedWeek.getMonthName());
             textView.setText(selectedWeek.getMonthName() + " " + selectedWeek.getYear());
+            previousMonthNum = selectedWeek.getMonth();
+            previousYearNum = selectedWeek.getYear();
         }
     }
 

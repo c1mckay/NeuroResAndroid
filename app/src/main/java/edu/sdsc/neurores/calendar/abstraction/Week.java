@@ -8,6 +8,7 @@ public interface Week {
     Day getDay(int position);
     String getMonthName();
     int getYear();
+    int getMonth();
     long getStartOfWeek();
     int getNumWeekInYear();
     boolean isWithinWeek(Day day);
