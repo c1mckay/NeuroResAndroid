@@ -11,6 +11,8 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.Calendar;
+
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.calendar.DayClickHandler;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
@@ -86,9 +88,8 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
 
         holder.dayOfWeekTextView.setText(day.getDayOfWeek());
         holder.dayInMonthTextView.setText(String.valueOf(day.getDayInMonth()));
-        if(day.getDayInMonth() - position <= 0){
-            holder.dayInMonthTextView.setTextColor(holder.getRoot().getResources().getColor(R.color.light_grey));
-        }
+
+        setDayOfMonthTextColor(holder, position, day);
 
         holder.backgroundHolder.setBackgroundDrawable(holder.getRoot().getContext().getResources().getDrawable(day.getUnselectedBackgroundDrawable()));
 
@@ -114,6 +115,23 @@ public class WeekAdapter extends RecyclerView.Adapter<WeekAdapter.MyViewHolder>{
             dayClickHandler.notifyListenersOfDayClicked(day);
         }
     }
+
+    private void setDayOfMonthTextColor(MyViewHolder holder, int position, CalendarBackedDay day) {
+        Calendar today = Calendar.getInstance();
+        //Log.v("event", week.getNumWeekInYear() + "");
+        if(week.isWithinWeek(new CalendarBackedDay(today))){
+            int monthOfDay = day.getMonth();
+            int monthOfToday = today.get(Calendar.MONTH);
+           if(monthOfDay != monthOfToday){
+               holder.dayInMonthTextView.setTextColor(holder.getRoot().getResources().getColor(R.color.light_grey));
+           }
+        }else{
+            if(day.getDayInMonth() - position <= 0){
+                holder.dayInMonthTextView.setTextColor(holder.getRoot().getResources().getColor(R.color.light_grey));
+            }
+        }
+    }
+
 
     @Override
     public int getItemCount() {

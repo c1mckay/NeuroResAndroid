@@ -1,11 +1,16 @@
 package edu.sdsc.neurores.calendar.abstraction;
 
+import android.util.Log;
+
 import java.text.DateFormatSymbols;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+
+import edu.sdsc.neurores.helper.FormatHelper;
 
 /**
  * Created by trevor on 4/25/18.
@@ -59,6 +64,8 @@ public class CalendarBackedWeek implements Week {
 
     @Override
     public String getMonthName() {
+        SimpleDateFormat simpleDateFormat = FormatHelper.getDatabaseDateFormatter();
+        Log.v("taggy", simpleDateFormat.format(calendar.getTime()));
         return intMonthToString(calendar.get(Calendar.MONTH));
     }
 
@@ -75,6 +82,23 @@ public class CalendarBackedWeek implements Week {
     @Override
     public int getNumWeekInYear() {
         return calendar.get(Calendar.WEEK_OF_YEAR);
+    }
+
+    @Override
+    public boolean isWithinWeek(Day day) {
+        Calendar endOfWeek = (Calendar) calendar.clone();
+        endOfWeek.add(Calendar.DAY_OF_YEAR, 7);
+
+        int yearOfDay = day.getYear();
+        int monthOfDay = day.getMonth();
+        int dayOfMonthOfDay = day.getDayInMonth();
+
+        Calendar dayCal = Calendar.getInstance();
+        dayCal.set(Calendar.YEAR, yearOfDay);
+        dayCal.set(Calendar.MONTH, monthOfDay);
+        dayCal.set(Calendar.DAY_OF_MONTH, dayOfMonthOfDay);
+
+        return calendar.before(dayCal) && endOfWeek.after(dayCal);
     }
 
     private String intMonthToString(int month){

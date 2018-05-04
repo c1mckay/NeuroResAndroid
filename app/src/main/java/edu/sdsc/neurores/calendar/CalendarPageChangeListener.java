@@ -3,12 +3,16 @@ package edu.sdsc.neurores.calendar;
 import android.app.Activity;
 import android.content.Context;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.text.DateFormatSymbols;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 import edu.sdsc.neurores.R;
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.EventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Week;
 
@@ -34,14 +38,16 @@ public class CalendarPageChangeListener implements ViewPager.OnPageChangeListene
     @Override
     public void onPageSelected(int position) {
         Week selectedWeek = eventCalendar.getWeek(position);
-
-        //Calendar calendar = getWeek(position);
-        //calendar.add(Calendar.DAY_OF_MONTH, 6);
-        //String month = intMonthToString(calendar.get(Calendar.MONTH));
-        //String year = String.valueOf(calendar.get(Calendar.YEAR));
-
         TextView textView = (TextView)((Activity)context).findViewById(R.id.calendar_title);
-        textView.setText(selectedWeek.getMonthName() + " " + selectedWeek.getYear());
+        Calendar today = Calendar.getInstance();
+
+        if(selectedWeek.isWithinWeek(new CalendarBackedDay(today))){
+            String monthName = today.getDisplayName(Calendar.MONTH,Calendar.LONG, Locale.getDefault());
+            textView.setText(monthName + " " + today.get(Calendar.YEAR));
+        }else{
+            Log.v("taggy", "Getting selected " + selectedWeek.getMonthName());
+            textView.setText(selectedWeek.getMonthName() + " " + selectedWeek.getYear());
+        }
     }
 
     @Override

@@ -10,4 +10,5 @@ public interface Week {
     int getYear();
     long getStartOfWeek();
     int getNumWeekInYear();
+    boolean isWithinWeek(Day day);
 }

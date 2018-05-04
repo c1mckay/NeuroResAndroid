@@ -30,11 +30,10 @@ public class CalendarBackedEventCalendar implements EventCalendar {
         this.events = events;
     }
 
-
     @Override
     public CalendarBackedWeek getWeek(int position) {
-        Calendar current = Calendar.getInstance();
-        current.setTimeInMillis((long)((1000L * 60L * 60L * 24L * 7L) * position) + start.getTimeInMillis());
+        Calendar current = (Calendar) start.clone();
+        current.add(Calendar.WEEK_OF_YEAR, position);
         return new CalendarBackedWeek(current, events);
     }
 
