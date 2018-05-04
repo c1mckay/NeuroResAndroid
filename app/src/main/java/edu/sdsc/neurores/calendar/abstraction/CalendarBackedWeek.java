@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by trevor on 4/25/18.
@@ -40,10 +41,14 @@ public class CalendarBackedWeek implements Week {
             List<Event> eventsForDay = new ArrayList<>();
             for(Event event : events){
                 if(event.timeOverlaps(temp)){
-                    eventsForDay.add(event);
+                    Event eventClone = (Event) event.clone();
+                    eventsForDay.add(eventClone);
                 }
             }
             days[i] =  new CalendarBackedDay(temp, eventsForDay);
+            for(Event event : days[i].getEvents()){
+                event.setDay(days[i]);
+            }
         }
     }
 

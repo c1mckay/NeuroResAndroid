@@ -22,6 +22,7 @@ public class Event implements Comparable<Event>{
     private String location;
     private String description;
     private Calendar start, end;
+    private Day day;
 
     public Event(String title, Calendar start, Calendar end, String location, String description){
         this.title = title;
@@ -29,6 +30,7 @@ public class Event implements Comparable<Event>{
         this.end = end;
         this.location = location;
         this.description = description;
+        day = null;
     }
 
     public String getTitle(){
@@ -63,12 +65,30 @@ public class Event implements Comparable<Event>{
     }
 
     private String multiDayTime(int lengthType) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("M'/'d h:mma", Locale.getDefault());
+        SimpleDateFormat simpleDateFormat;
+        if(day != null &&lengthType == SHORT){
+            int dayStart = day.getDayInMonth();
+            int eventStart = start.get(Calendar.DAY_OF_MONTH);
+            int eventEnd = end.get(Calendar.DAY_OF_MONTH);
 
-        String startTime = simpleDateFormat.format(start.getTime());
-        String endTime = simpleDateFormat.format(end.getTime());
+            simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
+            String startTime = simpleDateFormat.format(start.getTime());
+            String endTime = simpleDateFormat.format(end.getTime());
 
-        return startTime + " - " + endTime;
+            if(dayStart != eventStart && dayStart != eventEnd){
+                return "All Day";
+            }else if(dayStart == eventStart){
+                return startTime;
+            }else{
+                return " - " + endTime;
+            }
+        }else{
+            simpleDateFormat = new SimpleDateFormat("M'/'d h:mma", Locale.getDefault());
+            String startTime = simpleDateFormat.format(start.getTime());
+            String endTime = simpleDateFormat.format(end.getTime());
+
+            return startTime + " - " + endTime;
+        }
     }
 
     private String startTimeOnly(int lengthType) {
@@ -96,6 +116,10 @@ public class Event implements Comparable<Event>{
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setDay(Day day){
+        this.day = day;
     }
 
     public Calendar getStart(){
@@ -148,5 +172,27 @@ public class Event implements Comparable<Event>{
     @Override
     public int compareTo(Event event) {
         return getStart().compareTo(event.getStart());
+    }
+
+    @Override
+    public Object clone(){
+        Calendar startClone;
+        Calendar endClone;
+
+        if(start == null){
+            startClone = null;
+        }else{
+            startClone = (Calendar) start.clone();
+        }
+
+        if(end == null){
+            endClone = null;
+        }else{
+            endClone = (Calendar) end.clone();
+        }
+
+        Event event = new Event(title, startClone, endClone, location, description);
+        event.setDay(day);
+        return event;
     }
 }

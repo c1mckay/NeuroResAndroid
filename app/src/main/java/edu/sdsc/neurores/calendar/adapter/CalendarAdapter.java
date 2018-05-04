@@ -40,14 +40,12 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
     private DayClickHandler dayClickHandler;
     private RecyclerView weekHolder;
     private Day selectedDay;
-    private List<Event> events;
 
     public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickHandler dayClickHandler, List<Event> events){
         this.context = context;
         eventCalendar = new CalendarBackedEventCalendar(start,end, events);
         this.dayClickHandler = dayClickHandler;
         selectedDay = new CalendarBackedDay(Calendar.getInstance(), null);
-        this.events = events;
     }
 
     @Override

@@ -18,8 +18,8 @@ import edu.sdsc.neurores.calendar.abstraction.Event;
  */
 
 public class DetailedEventAdapter extends BaseAdapter {
-    Context context;
-    List<Event> events;
+    private Context context;
+    private List<Event> events;
 
     public DetailedEventAdapter(Context context, List<Event> events){
         this.context = context;

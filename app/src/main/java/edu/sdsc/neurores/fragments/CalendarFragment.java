@@ -28,6 +28,7 @@ import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.activities.LoginActivity;
 import edu.sdsc.neurores.calendar.CalendarController;
 import edu.sdsc.neurores.calendar.DayClickListener;
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedWeek;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Event;
@@ -143,15 +144,15 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onComplete(String s) {
                 Log.v("event", s);
+                Calendar today = Calendar.getInstance();
+
 
                 List<Event> events = JSONConverter.toEventList(s);
                 calendarController.setEvents(events);
                 viewPager.setAdapter(calendarController.getPagerAdapter());
-                moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance(),null));
-
+                moveToSelectedWeek(new CalendarBackedWeek(today, null));
 
                 List<Event> eventsForDay = new ArrayList<>();
-                Calendar today = Calendar.getInstance();
                 for(Event event : events){
                     Calendar calForEvent = event.getStart();
 
