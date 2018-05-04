@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import edu.sdsc.neurores.R;
 
@@ -53,6 +54,7 @@ public class Event implements Comparable<Event>{
 
     private String singleDayTime(int lengthType) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
+        simpleDateFormat.setTimeZone(TimeZone.getDefault());
 
         String startTime = simpleDateFormat.format(start.getTime());
         String endTime = simpleDateFormat.format(end.getTime());
@@ -72,6 +74,8 @@ public class Event implements Comparable<Event>{
             int eventEnd = end.get(Calendar.DAY_OF_MONTH);
 
             simpleDateFormat = new SimpleDateFormat("h:mma", Locale.getDefault());
+            simpleDateFormat.setTimeZone(TimeZone.getDefault());
+
             String startTime = simpleDateFormat.format(start.getTime());
             String endTime = simpleDateFormat.format(end.getTime());
 
@@ -84,6 +88,8 @@ public class Event implements Comparable<Event>{
             }
         }else{
             simpleDateFormat = new SimpleDateFormat("M'/'d h:mma", Locale.getDefault());
+            simpleDateFormat.setTimeZone(TimeZone.getDefault());
+
             String startTime = simpleDateFormat.format(start.getTime());
             String endTime = simpleDateFormat.format(end.getTime());
 

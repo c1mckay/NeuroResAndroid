@@ -258,7 +258,7 @@ public class JSONConverter {
         @Override
         public Event deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try{
-                SimpleDateFormat formatter = FormatHelper.getLocalDateFormatter();
+                SimpleDateFormat formatter = FormatHelper.getDatabaseDateFormatter();
 
                 JsonObject jsonObject = (JsonObject) json;
                 String title = getJSONValueAsString(jsonObject, "title");
