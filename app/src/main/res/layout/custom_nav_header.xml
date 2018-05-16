@@ -110,70 +110,12 @@
         </LinearLayout>
 
 
-
     <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_width="wrap_content"
+        android:id="@+id/nav_drawer_link_holder"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="viewPDF"
-        >
-
-
-
-        <ImageView
-            android:contentDescription="@string/handbook"
-            android:src="@drawable/open_book"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10sp"
-            android:layout_marginStart="10sp"
-            />
-
-        <TextView
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="20sp"
-            android:layout_marginRight="20sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:gravity="end"
-            android:textSize="20sp"
-            android:text="@string/handbook"/>
+        android:orientation="vertical">
 
     </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="viewCalendar"
-        >
-
-        <ImageView
-            android:contentDescription="@string/calendar"
-            android:src="@drawable/calendar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10sp"
-            android:layout_marginStart="10sp"
-            />
-
-        <TextView
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="20sp"
-            android:layout_marginRight="20sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:gravity="end"
-            android:textSize="20sp"
-            android:text="@string/calendar"/>
-
-    </LinearLayout>
-
 
 </LinearLayout>

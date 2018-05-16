@@ -21,9 +21,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
@@ -131,7 +133,51 @@ public class MainActivity extends AppCompatActivity
         registerReceiverForScreen();
         setupToolbar();
         initializeDrawer();
+        addDrawerLinks();
         loadData();
+    }
+
+    private void addDrawerLinks() {
+        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
+
+        //TODO add more pdfs once they are on the server
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+
+        ViewGroup handbookLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+        ViewGroup calendarLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+
+        ImageView handbookImageView = (ImageView) handbookLinkGroup.findViewById(R.id.link_image_view);
+        ImageView calendarImageView = (ImageView) calendarLinkGroup.findViewById(R.id.link_image_view);
+
+        TextView handbookTextView = (TextView) handbookLinkGroup.findViewById(R.id.link_text_view);
+        TextView calendarTextView = (TextView) calendarLinkGroup.findViewById(R.id.link_text_view);
+
+        handbookImageView.setImageDrawable(getResources().getDrawable(R.drawable.open_book));
+        handbookImageView.setContentDescription(getResources().getString(R.string.handbook));
+
+        calendarImageView.setImageDrawable(getResources().getDrawable(R.drawable.calendar));
+        calendarImageView.setContentDescription(getResources().getString(R.string.calendar));
+
+        handbookTextView.setText(getResources().getString(R.string.handbook));
+
+        calendarTextView.setText(getResources().getString(R.string.calendar));
+
+        navDrawerLinkHolder.addView(handbookLinkGroup);
+        navDrawerLinkHolder.addView(calendarLinkGroup);
+
+        handbookLinkGroup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewPDF(v);
+            }
+        });
+
+        calendarLinkGroup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewCalendar(v);
+            }
+        });
     }
 
     private void initializeDrawer() {
@@ -855,8 +901,10 @@ public class MainActivity extends AppCompatActivity
         if(getIntent().hasExtra(CONVERSATION_ID)){
             long lastConversationID = getIntent().getLongExtra(CONVERSATION_ID, -1);
             setPreviousConversationID(lastConversationID);
-            Log.v("taggy", "previous set to: " + lastConversationID);
+            Log.v("mynotif", "previous set to: " + lastConversationID);
         }
+        Log.v("mynotif", "Could not find ID in intent");
+
 
         if(hasPreviousConversation()){
             return getPreviousConversationID();
