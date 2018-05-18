@@ -71,7 +71,8 @@ public class MainActivity extends AppCompatActivity
     public static final int PRIVATE_MENU_GROUP = 2;
 
     public static final String PREV_CONVERSATION_ID = "previousConversationID";
-    public static final String CONVERSATION_ID = "conversationID";
+    public static final String CONVERSATION_ID = "conv_id";
+    public static final String CALENDAR_FLAG = "event_id";
 
     private static final int TYPE_PDF = 0;
     private static final int TYPE_CAL = 1;
@@ -473,6 +474,7 @@ public class MainActivity extends AppCompatActivity
         if(requestCode == SEARCH_USER_REQUEST && resultCode == Activity.RESULT_OK){
 
             // Get the username and id of the newly searched user
+            // TODO Change this string to be a constant in the search activity
             long searchedID = data.getLongExtra("CONVERSATION_ID", -1);
             long[] userIDs = data.getLongArrayExtra("USERS_IDS");
             if(searchedID != -1 && userIDs.length > 0){
@@ -856,6 +858,23 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        Intent intent = getIntent();
+
+        if(intent != null && intent.getExtras() != null){
+            Log.v("taggy", "Looking at intent");
+            for(String key : intent.getExtras().keySet()){
+                Log.v("taggy", "Key: " + key);
+            }
+            Log.v("taggy", "End looking at intent");
+        }
+
+
+
+        if(getIntent().hasExtra(CALENDAR_FLAG)){
+            viewCalendar(null);
+            return;
+        }
+
         long conversationID = getConversationIDForInitialLoad();
 
 
@@ -899,7 +918,8 @@ public class MainActivity extends AppCompatActivity
 
     private long getConversationIDForInitialLoad(){
         if(getIntent().hasExtra(CONVERSATION_ID)){
-            long lastConversationID = getIntent().getLongExtra(CONVERSATION_ID, -1);
+            //long lastConversationID = getIntent().getLongExtra(CONVERSATION_ID, -1);
+            long lastConversationID = Long.valueOf(getIntent().getStringExtra(CONVERSATION_ID));
             setPreviousConversationID(lastConversationID);
             Log.v("mynotif", "previous set to: " + lastConversationID);
         }

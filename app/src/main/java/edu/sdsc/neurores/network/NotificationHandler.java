@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -32,8 +33,24 @@ public class NotificationHandler extends FirebaseMessagingService {
             Map<String, String> map = remoteMessage.getData();
             String title = map.get("title");
             String message = map.get("message");
-            String conversationID = map.get("conv_id");
-            sendNotification(title, message, Long.parseLong(conversationID));
+
+            Intent intent = new Intent(this, MainActivity.class);
+            int notificationID = 1;
+            if(map.containsKey("conv_id")){
+                String conversationID = map.get("conv_id");
+
+                notificationID = Integer.valueOf(conversationID);
+                intent.putExtra(MainActivity.CONVERSATION_ID, conversationID);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            }else{
+
+                intent.putExtra(MainActivity.CALENDAR_FLAG, "");
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                notificationID = (title + message).hashCode();
+            }
+
+            sendNotification(title,message,intent, notificationID);
+
         }
 
         // Check if message contains a notification payload.
@@ -51,13 +68,10 @@ public class NotificationHandler extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String title, String messageBody, long conversationID) {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra(MainActivity.CONVERSATION_ID, conversationID);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    private void sendNotification(String title, String messageBody, Intent intent, int notificationID) {
         //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
-                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT );
+                PendingIntent.FLAG_ONE_SHOT /*| PendingIntent.FLAG_UPDATE_CURRENT*/ );
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
@@ -72,7 +86,7 @@ public class NotificationHandler extends FirebaseMessagingService {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        notificationManager.notify((int)conversationID /* ID of notification */, notificationBuilder.build());
+        notificationManager.notify(notificationID, notificationBuilder.build());
         wakeScreen();
     }
 
