@@ -14,3 +14,4 @@ local.properties
 app/google-services.json
 *.rawproto
 app/app-release.apk
+app/release/app-release.apk
