@@ -24,11 +24,21 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:layout_weight="9"
+            android:layout_weight="8"
             android:textSize="30sp"
             android:textColor="@color/white"
             android:layout_marginLeft="15dp"
             android:layout_marginStart="15dp"/>
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/zoom"
+            android:layout_marginRight="11dp"
+            android:layout_marginEnd="11dp"
+            android:onClick="openZoom"
+            android:layout_gravity="center_vertical"/>
 
         <ImageView
             android:layout_width="0dp"

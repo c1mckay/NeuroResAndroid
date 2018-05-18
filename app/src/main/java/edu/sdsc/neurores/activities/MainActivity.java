@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -1524,6 +1525,11 @@ public class MainActivity extends AppCompatActivity
         }else{
             dropdown.setVisibility(View.GONE);
         }
+    }
+
+    public void openZoom(View view) {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://uchealth.zoom.us/j/3329671357"));
+        startActivity(browserIntent);
     }
 
     public void printNavDrawer(){
