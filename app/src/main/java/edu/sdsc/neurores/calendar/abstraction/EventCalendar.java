@@ -11,4 +11,6 @@ public interface EventCalendar {
     public int getNumWeeksInCalendar();
     public long getStartTimeMillis();
     public int getWeekPosition(Week week);
+    public void setSelectedDay();
+    public Day getSelectedDay();
 }

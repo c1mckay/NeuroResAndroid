@@ -73,4 +73,14 @@ public class CalendarBackedEventCalendar implements EventCalendar {
         }
         return -1;
     }
+
+    @Override
+    public void setSelectedDay() {
+
+    }
+
+    @Override
+    public Day getSelectedDay() {
+        return null;
+    }
 }

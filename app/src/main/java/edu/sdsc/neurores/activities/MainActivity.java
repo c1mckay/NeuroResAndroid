@@ -41,9 +41,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 
 import edu.sdsc.neurores.abstraction.Conversation;
@@ -54,6 +58,7 @@ import edu.sdsc.neurores.fragments.CalendarFragment;
 import edu.sdsc.neurores.fragments.PDFFragment;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.abstraction.User;
+import edu.sdsc.neurores.helper.FormatHelper;
 import edu.sdsc.neurores.network.WebSocket;
 import edu.sdsc.neurores.data.MessageDatabaseHelper;
 import edu.sdsc.neurores.fragments.MainFragment;
@@ -73,7 +78,7 @@ public class MainActivity extends AppCompatActivity
 
     public static final String PREV_CONVERSATION_ID = "previousConversationID";
     public static final String CONVERSATION_ID = "conv_id";
-    public static final String CALENDAR_FLAG = "event_id";
+    public static final String CALENDAR_FLAG = "start_time";
 
     private static final int TYPE_PDF = 0;
     private static final int TYPE_CAL = 1;
@@ -113,6 +118,7 @@ public class MainActivity extends AppCompatActivity
     String queuedToastMessage;
     private TextView toolbarTitle;
     private LinearLayout warningBanner;
+    private int calendarDayOffset;
 
     MessageDatabaseHelper messageDatabaseHelper;
 
@@ -217,6 +223,7 @@ public class MainActivity extends AppCompatActivity
         isPaused = false;
         screenIsOn = true;
         queuedToastMessage = null;
+        calendarDayOffset = -5;
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
         messageDatabaseHelper = new MessageDatabaseHelper(this);
@@ -403,6 +410,8 @@ public class MainActivity extends AppCompatActivity
         CalendarFragment calendarFragment = new CalendarFragment();
         Bundle i = new Bundle();
         i.putString("token", getToken());
+        i.putInt(CalendarFragment.CALENDAR_DAY_OFFSET, calendarDayOffset);
+        calendarDayOffset = 0;
         calendarFragment.setArguments(i);
         return calendarFragment;
     }
@@ -846,6 +855,10 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public int daysBetween(Date d1, Date d2){
+        return (int)( (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
     /**
      * Change the messages in the fragment to be the messages of selectedUser
      */
@@ -872,6 +885,17 @@ public class MainActivity extends AppCompatActivity
 
 
         if(getIntent().hasExtra(CALENDAR_FLAG)){
+            String eventStartTime = getIntent().getStringExtra(CALENDAR_FLAG);
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            try{
+                Date startDate = simpleDateFormat.parse(eventStartTime);
+                Date today = new Date();
+                calendarDayOffset = daysBetween(today, startDate);
+            } catch (ParseException e) {
+                e.printStackTrace();
+                Log.v("calendar", "Failed to parse date: " + eventStartTime);
+            }
+
             viewCalendar(null);
             return;
         }
@@ -923,8 +947,9 @@ public class MainActivity extends AppCompatActivity
             long lastConversationID = Long.valueOf(getIntent().getStringExtra(CONVERSATION_ID));
             setPreviousConversationID(lastConversationID);
             Log.v("mynotif", "previous set to: " + lastConversationID);
+        }else{
+            Log.v("mynotif", "Could not find ID in intent");
         }
-        Log.v("mynotif", "Could not find ID in intent");
 
 
         if(hasPreviousConversation()){
@@ -1183,7 +1208,7 @@ public class MainActivity extends AppCompatActivity
     public void populateStaff(List<User> users){
         TreeSet<String> departments = new TreeSet<String>();
         for(User u : users){
-            // Do not include the dev department
+            // Do not include the dev department, unless you are dev or super user
             if(!u.getUserType().equals("dev")){
                 departments.add(u.getUserType());
             }

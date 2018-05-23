@@ -75,6 +75,6 @@ public class CalendarController {
 
     public void setEvents(List<Event> events) {
         this.events = events;
-        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events);
+        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events, );
     }
 }
