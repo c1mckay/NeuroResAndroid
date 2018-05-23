@@ -13,9 +13,10 @@ import edu.sdsc.neurores.helper.FormatHelper;
  * Created by trevor on 4/25/18.
  */
 
-public class CalendarBackedEventCalendar implements EventCalendar {
-    Calendar start, end;
-    List<Event> events;
+public class CalendarBackedEventCalendar extends EventCalendar {
+    private Calendar start, end;
+    private List<Event> events;
+    private Day selectedDay;
 
     public CalendarBackedEventCalendar(Calendar start, Calendar end, List<Event> events){
         start.set(Calendar.DAY_OF_WEEK, 0);
@@ -31,6 +32,7 @@ public class CalendarBackedEventCalendar implements EventCalendar {
         this.start = start;
         this.end = end;
         this.events = events;
+        this.selectedDay = null;
     }
 
     @Override
@@ -75,12 +77,17 @@ public class CalendarBackedEventCalendar implements EventCalendar {
     }
 
     @Override
-    public void setSelectedDay() {
-
+    public void setSelectedDay(Day day) {
+        selectedDay = day;
     }
 
     @Override
     public Day getSelectedDay() {
-        return null;
+        return selectedDay;
+    }
+
+    @Override
+    public void setEvents(List<Event> events) {
+        this.events = events;
     }
 }

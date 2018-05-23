@@ -20,6 +20,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,6 +45,7 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -223,7 +225,7 @@ public class MainActivity extends AppCompatActivity
         isPaused = false;
         screenIsOn = true;
         queuedToastMessage = null;
-        calendarDayOffset = -5;
+        calendarDayOffset = 0;
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
         messageDatabaseHelper = new MessageDatabaseHelper(this);
@@ -856,7 +858,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     public int daysBetween(Date d1, Date d2){
-        return (int)( (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(d1);
+        c1.set(Calendar.HOUR_OF_DAY,0);
+
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(d2);
+        c2.set(Calendar.HOUR_OF_DAY, 0);
+
+        return (int)( (c2.getTime().getTime() -  c1.getTime().getTime()) / (1000 * 60 * 60 * 24));
     }
 
     /**
@@ -886,7 +896,8 @@ public class MainActivity extends AppCompatActivity
 
         if(getIntent().hasExtra(CALENDAR_FLAG)){
             String eventStartTime = getIntent().getStringExtra(CALENDAR_FLAG);
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat simpleDateFormat = FormatHelper.getDatabaseDateFormatter();
             try{
                 Date startDate = simpleDateFormat.parse(eventStartTime);
                 Date today = new Date();

@@ -84,7 +84,12 @@ public class CalendarFragment extends Fragment {
             }
         };
 
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_YEAR, getDayOffset());
+        Day selectedDay = new CalendarBackedDay(cal);
+
         calendarController = new CalendarController(v.getContext(), start, end, dayClickListener);
+        calendarController.setSelectedDay(selectedDay);
 
         viewPager = (ViewPager) v.findViewById(R.id.calendar);
         //viewPager.setAdapter(calendarController.getPagerAdapter());
@@ -155,7 +160,6 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onComplete(String s) {
                 Log.v("event", s);
-                // TODO This may need to turn back to Calendar.getInstance()
                 Calendar dayToMoveTo = Calendar.getInstance();
                 dayToMoveTo.add(Calendar.DAY_OF_YEAR, getDayOffset());
 
@@ -177,10 +181,7 @@ public class CalendarFragment extends Fragment {
                 }
                 detailedEventListView.setAdapter(new DetailedEventAdapter(getContext(), eventsForDay));
 
-
                 moveToSelectedWeek(new CalendarBackedWeek(dayToMoveTo, null));
-                // TODO Add color when clicked (this day does not have a view. Add a way to get days from the Calendar controller)
-                dayClickListener.onDayClicked(new CalendarBackedDay(dayToMoveTo));
             }
 
             @Override

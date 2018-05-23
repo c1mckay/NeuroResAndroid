@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import edu.sdsc.neurores.calendar.abstraction.CalendarBackedDay;
 import edu.sdsc.neurores.calendar.abstraction.CalendarBackedEventCalendar;
 import edu.sdsc.neurores.calendar.abstraction.Day;
 import edu.sdsc.neurores.calendar.abstraction.Event;
@@ -29,7 +30,6 @@ public class CalendarController {
     private ViewPager.OnPageChangeListener onPageChangeListener;
     private EventCalendar eventCalendar;
     private DayClickHandler dayClickHandler;
-    private List<Event> events;
 
     public CalendarController(Context context, Calendar start, Calendar end, DayClickListener dayClickListener){
         start = (Calendar) start.clone();
@@ -48,12 +48,15 @@ public class CalendarController {
         this.context = context;
         this.start = start;
         this.end = end;
-        this.events = new ArrayList<>();
 
-        eventCalendar = new CalendarBackedEventCalendar(start,end, events);
+        eventCalendar = new CalendarBackedEventCalendar(start,end, new ArrayList<Event>());
+        //Calendar cal = Calendar.getInstance();
+        //cal.add(Calendar.DAY_OF_YEAR, -5);
+        //Day sDay = new CalendarBackedDay(cal);
+        //eventCalendar.setSelectedDay(sDay);
         dayClickHandler = new DayClickHandler();
         dayClickHandler.registerDayClickListener(dayClickListener);
-        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events);
+        pagerAdapter = new CalendarAdapter(context, eventCalendar, dayClickHandler);
         onPageChangeListener = new CalendarPageChangeListener(context, eventCalendar);
     }
 
@@ -74,7 +77,15 @@ public class CalendarController {
     }
 
     public void setEvents(List<Event> events) {
-        this.events = events;
-        pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler, events, );
+        eventCalendar.setEvents(events);
+        //pagerAdapter = new CalendarAdapter(context, start,end, dayClickHandler);
+    }
+
+    public void setSelectedDay(Day day){
+        eventCalendar.setSelectedDay(day);
+    }
+
+    public Day getSelectedDay() {
+        return eventCalendar.getSelectedDay();
     }
 }
