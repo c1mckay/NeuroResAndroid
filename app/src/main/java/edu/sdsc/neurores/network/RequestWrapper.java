@@ -24,7 +24,7 @@ import edu.sdsc.neurores.calendar.abstraction.Event;
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {
-    public static final String BASE_URL = "neurores.ucsd.edu";
+    public static final String BASE_URL = "neurores-dev.ucsd.edu";
     private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/firebase_notif";
 
     private static final String GET_USERS_ENDPOINT = "/users_list";
@@ -218,7 +218,9 @@ public class RequestWrapper {
 
                 Log.v("requestt", con.getRequestMethod() + ": https://" + hostName + endpoint);
                 Log.v("requestt", "Server returned status code: " + con.getResponseCode());
+                Log.v("requestt", "Server returned body length: " + response.toString().length());
                 Log.v("requestt", "Server returned body: " + response.toString());
+
 
                 return response.toString();
 

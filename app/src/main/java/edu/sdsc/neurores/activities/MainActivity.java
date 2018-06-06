@@ -902,11 +902,13 @@ public class MainActivity extends AppCompatActivity
                 Date startDate = simpleDateFormat.parse(eventStartTime);
                 Date today = new Date();
                 calendarDayOffset = daysBetween(today, startDate);
+                Log.v("calendar", "Calendar offset set to " + calendarDayOffset);
             } catch (ParseException e) {
                 e.printStackTrace();
                 Log.v("calendar", "Failed to parse date: " + eventStartTime);
             }
 
+            Log.v("calendar", "Viewing cal");
             viewCalendar(null);
             return;
         }
@@ -1220,7 +1222,7 @@ public class MainActivity extends AppCompatActivity
         TreeSet<String> departments = new TreeSet<String>();
         for(User u : users){
             // Do not include the dev department, unless you are dev or super user
-            if(!u.getUserType().equals("dev")){
+            if(u.getUserType() != null &&!u.getUserType().equals("dev")){
                 departments.add(u.getUserType());
             }
         }

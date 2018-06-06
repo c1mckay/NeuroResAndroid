@@ -29,7 +29,7 @@ import edu.sdsc.neurores.helper.OnCompleteListener;
 
 public class WebSocket extends WebSocketClient {
 
-    public static final String WEBSOCKET_URI_STRING = "wss://neurores.ucsd.edu:3001";
+    public static final String WEBSOCKET_URI_STRING = "wss://" + RequestWrapper.BASE_URL +":3001";
 
     Fragment currentFragment;
     MainActivity mainActivity;
