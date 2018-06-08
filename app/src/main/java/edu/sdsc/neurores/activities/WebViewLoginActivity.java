@@ -23,9 +23,9 @@ import edu.sdsc.neurores.network.HTTPRequestCompleteListener;
 import edu.sdsc.neurores.network.RequestWrapper;
 
 public class WebViewLoginActivity extends AppCompatActivity {
-    String loginURL = "https://neurores.ucsd.edu/token/tokenGenerator.php";
-    String tokenURL = "https://neurores.ucsd.edu/key/";
-    String unauthorizedURL = "https://neurores.ucsd.edu/token/unathorized";
+    final String loginURL = "https://" + RequestWrapper.BASE_URL + "/token/tokenGenerator.php";
+    final String tokenURL = "https://" + RequestWrapper.BASE_URL + "/key/";
+    final String unauthorizedURL = "https://" + RequestWrapper.BASE_URL + "/token/unathorized"; // Known mis-spelling. Fix must be made here, on server and ios
 
     WebView webView;
     LinearLayout unauthorizedErrorLinearLayout;

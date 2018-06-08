@@ -244,8 +244,13 @@ public class JSONConverter {
         @Override
         public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = (JsonObject) json;
+            Log.v("json", jsonObject.toString());
             String email = jsonObject.get("email").getAsString();
-            String userType = jsonObject.get("user_type").getAsString();
+            String userType = null;
+            if(!jsonObject.get("user_type").isJsonNull()){
+                userType = jsonObject.get("user_type").getAsString();
+            }
+
             long userID = jsonObject.get("user_id").getAsLong();
             boolean isOnline = jsonObject.get("isOnline").getAsBoolean();
 

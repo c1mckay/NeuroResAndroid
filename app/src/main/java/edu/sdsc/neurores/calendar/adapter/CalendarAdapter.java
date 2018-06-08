@@ -33,19 +33,17 @@ import edu.sdsc.neurores.calendar.abstraction.Week;
  * Created by trevor on 4/21/18.
  */
 
-public class CalendarAdapter extends PagerAdapter implements DayClickListener{
+public class CalendarAdapter extends PagerAdapter{
     private static final String[] days = new String[]{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
     private Context context;
     private EventCalendar eventCalendar;
     private DayClickHandler dayClickHandler;
     private RecyclerView weekHolder;
-    private Day selectedDay;
 
-    public CalendarAdapter(Context context, Calendar start, Calendar end, DayClickHandler dayClickHandler, List<Event> events){
+    public CalendarAdapter(Context context, EventCalendar eventCalendar ,DayClickHandler dayClickHandler){
         this.context = context;
-        eventCalendar = new CalendarBackedEventCalendar(start,end, events);
+        this.eventCalendar = eventCalendar;
         this.dayClickHandler = dayClickHandler;
-        selectedDay = new CalendarBackedDay(Calendar.getInstance(), null);
     }
 
     @Override
@@ -57,8 +55,8 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
     public Object instantiateItem(ViewGroup container, int position) {
         Week current = getWeek(position);
         weekHolder = (RecyclerView) LayoutInflater.from(context).inflate(R.layout.calendar_week, container, false);
-        WeekAdapter weekAdapter = new WeekAdapter(context, current,selectedDay, dayClickHandler);
-        dayClickHandler.registerDayClickListener(this);
+        WeekAdapter weekAdapter = new WeekAdapter(context, current, eventCalendar.getSelectedDay(), dayClickHandler);
+        dayClickHandler.registerDayClickListener(eventCalendar);
         weekHolder.setAdapter(weekAdapter);
         container.addView(weekHolder);
         return weekHolder;
@@ -76,14 +74,5 @@ public class CalendarAdapter extends PagerAdapter implements DayClickListener{
 
     public Week getWeek(int position){
         return eventCalendar.getWeek(position);
-    }
-
-    @Override
-    public void onDayClicked(Day day) {
-        if(selectedDay != null){
-            selectedDay.deselect();
-        }
-        day.select();
-        selectedDay = day;
     }
 }

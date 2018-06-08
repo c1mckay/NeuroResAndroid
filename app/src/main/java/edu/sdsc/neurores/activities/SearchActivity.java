@@ -65,18 +65,28 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void onComplete(String s) {
                 try {
+                    //TODO use json converter class
                     // An array of all users
                     JSONArray jArray = new JSONArray(s);
                     //Iterate over all users and create user objects and add to users
                     for(int i = 0; i < jArray.length(); i++){
                         JSONObject jObject = (jArray.getJSONObject(i));
                         String name = (String) jObject.get("email");
-                        String depart = (String) jObject.get("user_type");
+                        String depart = null;
+                        if(!jObject.isNull("user_type")){
+                            depart = (String) jObject.get("user_type");
+                        }
                         long id = jObject.getLong("user_id");
-                        String displayInfo = name + " (" + depart + ")";
+                        String displayInfo = (depart != null) ? name + " (" + depart + ")" : name;
                         userArrayList.add(displayInfo);
                         users.put(displayInfo, new User(id, name, depart));
                     }
+                }catch(Exception e){
+                    Log.v("search", e.getMessage());
+
+                    userArrayList.clear();
+                    userArrayList.add("Server Error");
+                }
 
                     //Sort alphabetically and add search adapter
                     Collections.sort(userArrayList, String.CASE_INSENSITIVE_ORDER);
@@ -141,16 +151,7 @@ public class SearchActivity extends AppCompatActivity {
 
                         }
                     });
-                }catch(Exception e){
-                    userArrayList.add("There was an error loading data from the server");
 
-                    Collections.sort(userArrayList, String.CASE_INSENSITIVE_ORDER);
-                    contactSearchAdapter = new ContactSearchAdapter(SearchActivity.this,
-                            android.R.layout.simple_list_item_1,
-                            userArrayList);
-
-                    listView.setAdapter(contactSearchAdapter);
-                }
             }
 
             @Override

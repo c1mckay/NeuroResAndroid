@@ -20,6 +20,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -41,9 +42,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 
 import edu.sdsc.neurores.abstraction.Conversation;
@@ -54,6 +60,10 @@ import edu.sdsc.neurores.fragments.CalendarFragment;
 import edu.sdsc.neurores.fragments.PDFFragment;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.abstraction.User;
+import edu.sdsc.neurores.helper.ActionOpenPDF;
+import edu.sdsc.neurores.helper.ActionViewCalendar;
+import edu.sdsc.neurores.helper.FormatHelper;
+import edu.sdsc.neurores.helper.NavigationDrawerLinkAction;
 import edu.sdsc.neurores.network.WebSocket;
 import edu.sdsc.neurores.data.MessageDatabaseHelper;
 import edu.sdsc.neurores.fragments.MainFragment;
@@ -73,7 +83,7 @@ public class MainActivity extends AppCompatActivity
 
     public static final String PREV_CONVERSATION_ID = "previousConversationID";
     public static final String CONVERSATION_ID = "conv_id";
-    public static final String CALENDAR_FLAG = "event_id";
+    public static final String CALENDAR_FLAG = "start_time";
 
     private static final int TYPE_PDF = 0;
     private static final int TYPE_CAL = 1;
@@ -113,6 +123,8 @@ public class MainActivity extends AppCompatActivity
     String queuedToastMessage;
     private TextView toolbarTitle;
     private LinearLayout warningBanner;
+    private int calendarDayOffset;
+    String pdfFilename = PDFFragment.HANDBOOK_FILE_NAME;
 
     MessageDatabaseHelper messageDatabaseHelper;
 
@@ -139,47 +151,73 @@ public class MainActivity extends AppCompatActivity
         loadData();
     }
 
+    //TODO
     private void addDrawerLinks() {
-        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
+        addDrawerLink(R.drawable.calendar, "Calendar", new ActionViewCalendar(this));
+        addDrawerLink(R.drawable.open_book, "Handbook", new ActionOpenPDF(this, PDFFragment.HANDBOOK_FILE_NAME));
+        addDrawerLink(R.drawable.clipboard, "Open Clinics", new ActionOpenPDF(this, PDFFragment.CLINIC_FILE_NAME));
+//        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
+//
+//        //TODO add more pdfs once they are on the server
+//        LayoutInflater layoutInflater = LayoutInflater.from(this);
+//
+//        ViewGroup handbookLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+//        ViewGroup calendarLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+//
+//        ImageView handbookImageView = (ImageView) handbookLinkGroup.findViewById(R.id.link_image_view);
+//        ImageView calendarImageView = (ImageView) calendarLinkGroup.findViewById(R.id.link_image_view);
+//
+//        TextView handbookTextView = (TextView) handbookLinkGroup.findViewById(R.id.link_text_view);
+//        TextView calendarTextView = (TextView) calendarLinkGroup.findViewById(R.id.link_text_view);
+//
+//        handbookImageView.setImageDrawable(getResources().getDrawable(R.drawable.open_book));
+//        handbookImageView.setContentDescription(getResources().getString(R.string.handbook));
+//
+//        calendarImageView.setImageDrawable(getResources().getDrawable(R.drawable.calendar));
+//        calendarImageView.setContentDescription(getResources().getString(R.string.calendar));
+//
+//        handbookTextView.setText(getResources().getString(R.string.handbook));
+//
+//        calendarTextView.setText(getResources().getString(R.string.calendar));
+//
+//        navDrawerLinkHolder.addView(handbookLinkGroup);
+//        navDrawerLinkHolder.addView(calendarLinkGroup);
+//
+//        handbookLinkGroup.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                viewPDF(v);
+//            }
+//        });
+//
+//        calendarLinkGroup.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                viewCalendar(v);
+//            }
+//        });
+    }
 
-        //TODO add more pdfs once they are on the server
+    private void addDrawerLink(int drawableID, String linkText, final NavigationDrawerLinkAction action){
+        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
         LayoutInflater layoutInflater = LayoutInflater.from(this);
 
-        ViewGroup handbookLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
-        ViewGroup calendarLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+        ViewGroup linkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+        ImageView imageView = (ImageView) linkGroup.findViewById(R.id.link_image_view);
+        TextView textView = (TextView) linkGroup.findViewById(R.id.link_text_view);
 
-        ImageView handbookImageView = (ImageView) handbookLinkGroup.findViewById(R.id.link_image_view);
-        ImageView calendarImageView = (ImageView) calendarLinkGroup.findViewById(R.id.link_image_view);
+        imageView.setImageDrawable(getResources().getDrawable(drawableID));
+        imageView.setContentDescription(linkText);
+        textView.setText(linkText);
 
-        TextView handbookTextView = (TextView) handbookLinkGroup.findViewById(R.id.link_text_view);
-        TextView calendarTextView = (TextView) calendarLinkGroup.findViewById(R.id.link_text_view);
-
-        handbookImageView.setImageDrawable(getResources().getDrawable(R.drawable.open_book));
-        handbookImageView.setContentDescription(getResources().getString(R.string.handbook));
-
-        calendarImageView.setImageDrawable(getResources().getDrawable(R.drawable.calendar));
-        calendarImageView.setContentDescription(getResources().getString(R.string.calendar));
-
-        handbookTextView.setText(getResources().getString(R.string.handbook));
-
-        calendarTextView.setText(getResources().getString(R.string.calendar));
-
-        navDrawerLinkHolder.addView(handbookLinkGroup);
-        navDrawerLinkHolder.addView(calendarLinkGroup);
-
-        handbookLinkGroup.setOnClickListener(new View.OnClickListener() {
+        linkGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                viewPDF(v);
+                action.act();
             }
         });
 
-        calendarLinkGroup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                viewCalendar(v);
-            }
-        });
+        navDrawerLinkHolder.addView(linkGroup);
     }
 
     private void initializeDrawer() {
@@ -217,6 +255,7 @@ public class MainActivity extends AppCompatActivity
         isPaused = false;
         screenIsOn = true;
         queuedToastMessage = null;
+        calendarDayOffset = 0;
         currentConversations = new HashMap<>();
         userList = new HashMap<>();
         messageDatabaseHelper = new MessageDatabaseHelper(this);
@@ -391,10 +430,11 @@ public class MainActivity extends AppCompatActivity
         return mFrag;
     }
 
-    private PDFFragment startPDFFragment(){
+    private PDFFragment startPDFFragment(String pdfFileName){
         PDFFragment pdfFrag = new PDFFragment();
         Bundle i = new Bundle();
-        i.putString("token", getToken());
+        i.putString(PDFFragment.KEY_TOKEN, getToken());
+        i.putString(PDFFragment.KEY_FILE_NAME, pdfFileName);
         pdfFrag.setArguments(i);
         return pdfFrag;
     }
@@ -403,6 +443,8 @@ public class MainActivity extends AppCompatActivity
         CalendarFragment calendarFragment = new CalendarFragment();
         Bundle i = new Bundle();
         i.putString("token", getToken());
+        i.putInt(CalendarFragment.CALENDAR_DAY_OFFSET, calendarDayOffset);
+        calendarDayOffset = 0;
         calendarFragment.setArguments(i);
         return calendarFragment;
     }
@@ -798,7 +840,7 @@ public class MainActivity extends AppCompatActivity
         }else{
             if(nonMessageType == TYPE_PDF){
                 Log.v("taggy", "Showing pdf");
-                currentFragment = startPDFFragment();
+                currentFragment = startPDFFragment(pdfFilename);
                 toolbarTitle.setText(getString(R.string.handbook));
             }else{
                 Log.v("taggy", "Showing cal");
@@ -815,6 +857,19 @@ public class MainActivity extends AppCompatActivity
 
         closeDrawer();
         updateFrag();
+    }
+
+    // TODO Implement (not this Charles)
+    private void changeFragment(Fragment newFragment){
+        currentFragment = newFragment;
+
+
+
+
+        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+        fragmentTransaction.commitAllowingStateLoss();
+        showMainElements();
     }
 
     private void closeDrawer() {
@@ -846,6 +901,28 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public int daysBetween(Date d1, Date d2){
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(d1);
+        c1.set(Calendar.HOUR_OF_DAY,0);
+        c1.set(Calendar.HOUR,0);
+        c1.set(Calendar.MINUTE,0);
+        c1.set(Calendar.SECOND,0);
+
+
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(d2);
+        c2.set(Calendar.HOUR_OF_DAY, 0);
+        c2.set(Calendar.HOUR, 0);
+        c2.set(Calendar.MINUTE, 0);
+        c2.set(Calendar.SECOND, 0);
+
+
+        Log.v("calendar", c1.toString() + " " + c2.toString());
+
+        return (int)( (c2.getTime().getTime() -  c1.getTime().getTime()) / (1000 * 60 * 60 * 24));
+    }
+
     /**
      * Change the messages in the fragment to be the messages of selectedUser
      */
@@ -872,6 +949,20 @@ public class MainActivity extends AppCompatActivity
 
 
         if(getIntent().hasExtra(CALENDAR_FLAG)){
+            String eventStartTime = getIntent().getStringExtra(CALENDAR_FLAG);
+            //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat simpleDateFormat = FormatHelper.getDatabaseDateFormatter();
+            try{
+                Date startDate = simpleDateFormat.parse(eventStartTime);
+                Date today = new Date();
+                calendarDayOffset = daysBetween(today, startDate);
+                Log.v("calendar", "Calendar offset set to " + calendarDayOffset);
+            } catch (ParseException e) {
+                e.printStackTrace();
+                Log.v("calendar", "Failed to parse date: " + eventStartTime);
+            }
+
+            Log.v("calendar", "Viewing cal");
             viewCalendar(null);
             return;
         }
@@ -923,8 +1014,9 @@ public class MainActivity extends AppCompatActivity
             long lastConversationID = Long.valueOf(getIntent().getStringExtra(CONVERSATION_ID));
             setPreviousConversationID(lastConversationID);
             Log.v("mynotif", "previous set to: " + lastConversationID);
+        }else{
+            Log.v("mynotif", "Could not find ID in intent");
         }
-        Log.v("mynotif", "Could not find ID in intent");
 
 
         if(hasPreviousConversation()){
@@ -1183,8 +1275,8 @@ public class MainActivity extends AppCompatActivity
     public void populateStaff(List<User> users){
         TreeSet<String> departments = new TreeSet<String>();
         for(User u : users){
-            // Do not include the dev department
-            if(!u.getUserType().equals("dev")){
+            // Do not include the dev department, unless you are dev or super user
+            if(u.getUserType() != null &&!u.getUserType().equals("dev")){
                 departments.add(u.getUserType());
             }
         }
@@ -1335,11 +1427,13 @@ public class MainActivity extends AppCompatActivity
         goToLogin();
     }
 
-    public  void viewPDF(View v){
+    public  void viewPDF(String pdfFilename){
         if(currentFragment instanceof PDFFragment){
             closeDrawer();
             return;
         }
+
+        this.pdfFilename = pdfFilename;
 
         if(selectedConversation != null){
             previousConversation = selectedConversation;

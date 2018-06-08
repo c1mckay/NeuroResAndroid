@@ -2,6 +2,7 @@ package edu.sdsc.neurores.fragments;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import edu.sdsc.neurores.R;
@@ -44,11 +46,14 @@ import edu.sdsc.neurores.network.RequestWrapper;
 
 
 public class CalendarFragment extends Fragment {
+    public static final String CALENDAR_DAY_OFFSET = "calendarDayOffset";
+
     ViewPager viewPager;
     CalendarController calendarController;
     Week selectedWeek;
     Day selectedDay;
     ListView detailedEventListView;
+    DayClickListener dayClickListener;
 
     public CalendarFragment() {
         // required empty constructor
@@ -68,17 +73,23 @@ public class CalendarFragment extends Fragment {
         Calendar end = Calendar.getInstance();
         end.add(Calendar.YEAR, 5);
 
-        DayClickListener dayClickListener = new DayClickListener() {
+        dayClickListener = new DayClickListener() {
             @Override
             public void onDayClicked(Day day) {
                 if(selectedDay == null || !selectedDay.equals(day)){
+                    Log.v("taggy", day.getEvents().toString());
                     detailedEventListView.setAdapter(new DetailedEventAdapter(v.getContext(),day.getEvents()));
                     selectedDay = day;
                 }
             }
         };
 
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_YEAR, getDayOffset());
+        Day selectedDay = new CalendarBackedDay(cal);
+
         calendarController = new CalendarController(v.getContext(), start, end, dayClickListener);
+        calendarController.setSelectedDay(selectedDay);
 
         viewPager = (ViewPager) v.findViewById(R.id.calendar);
         //viewPager.setAdapter(calendarController.getPagerAdapter());
@@ -87,6 +98,10 @@ public class CalendarFragment extends Fragment {
 
         setupDatePicker(v);
         return v;
+    }
+
+    private void moveToToday(){
+        moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance(), null));
     }
 
     private void setupDatePicker(final View root) {
@@ -128,13 +143,15 @@ public class CalendarFragment extends Fragment {
         });
     }
 
-    private void moveToSelectedWeek(Week week) {
+    private boolean moveToSelectedWeek(Week week) {
         int pos = calendarController.getPositionOfWeek(week);
         if(pos == -1){
             Toast.makeText(getContext(), "Date out of available range", Toast.LENGTH_SHORT).show();
+            return false;
         }else{
             selectedWeek = week;
             viewPager.setCurrentItem(pos);
+            return true;
         }
     }
 
@@ -144,26 +161,31 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onComplete(String s) {
                 Log.v("event", s);
-                Calendar today = Calendar.getInstance();
+                Calendar dayToMoveTo = Calendar.getInstance();
+                dayToMoveTo.add(Calendar.DAY_OF_YEAR, getDayOffset());
 
 
                 List<Event> events = JSONConverter.toEventList(s);
                 calendarController.setEvents(events);
                 viewPager.setAdapter(calendarController.getPagerAdapter());
-                moveToSelectedWeek(new CalendarBackedWeek(today, null));
 
                 List<Event> eventsForDay = new ArrayList<>();
                 for(Event event : events){
                     Calendar calForEvent = event.getStart();
 
-                    boolean sameYear = today.get(Calendar.YEAR) == calForEvent.get(Calendar.YEAR);
-                    boolean sameDay = today.get(Calendar.DAY_OF_YEAR) == calForEvent.get(Calendar.DAY_OF_YEAR);
+                    boolean sameYear = dayToMoveTo.get(Calendar.YEAR) == calForEvent.get(Calendar.YEAR);
+                    boolean sameDay = dayToMoveTo.get(Calendar.DAY_OF_YEAR) == calForEvent.get(Calendar.DAY_OF_YEAR);
 
                     if(sameDay && sameYear){
                         eventsForDay.add(event);
                     }
                 }
                 detailedEventListView.setAdapter(new DetailedEventAdapter(getContext(), eventsForDay));
+
+                boolean isInRange = moveToSelectedWeek(new CalendarBackedWeek(dayToMoveTo, null));
+                if(!isInRange){
+                    moveToToday();
+                }
             }
 
             @Override
@@ -194,5 +216,18 @@ public class CalendarFragment extends Fragment {
     public String getToken(){
         SharedPreferences sPref = getContext().getSharedPreferences(LoginActivity.PREFS, Context.MODE_PRIVATE);
         return sPref.getString(LoginActivity.TOKEN, null);
+    }
+
+    public int getDayOffset(){
+        Bundle bundle = getArguments();
+
+        if(bundle != null && bundle.containsKey(CALENDAR_DAY_OFFSET)){
+            int dayOffset = bundle.getInt(CALENDAR_DAY_OFFSET);
+            Log.v("calendar", "Offset is " + dayOffset);
+            return dayOffset;
+        }else{
+            Log.v("calendar", "Offset is not in bundle, returning 0");
+            return 0;
+        }
     }
 }
