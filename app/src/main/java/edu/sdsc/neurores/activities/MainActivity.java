@@ -861,10 +861,20 @@ public class MainActivity extends AppCompatActivity
         Calendar c1 = Calendar.getInstance();
         c1.setTime(d1);
         c1.set(Calendar.HOUR_OF_DAY,0);
+        c1.set(Calendar.HOUR,0);
+        c1.set(Calendar.MINUTE,0);
+        c1.set(Calendar.SECOND,0);
+
 
         Calendar c2 = Calendar.getInstance();
         c2.setTime(d2);
         c2.set(Calendar.HOUR_OF_DAY, 0);
+        c2.set(Calendar.HOUR, 0);
+        c2.set(Calendar.MINUTE, 0);
+        c2.set(Calendar.SECOND, 0);
+
+
+        Log.v("calendar", c1.toString() + " " + c2.toString());
 
         return (int)( (c2.getTime().getTime() -  c1.getTime().getTime()) / (1000 * 60 * 60 * 24));
     }
