@@ -97,12 +97,11 @@ public class CalendarFragment extends Fragment {
         alignLeftToolbarTitle();
 
         setupDatePicker(v);
-        //moveToInitialDay();
         return v;
     }
 
-    private void moveToInitialDay() {
-
+    private void moveToToday(){
+        moveToSelectedWeek(new CalendarBackedWeek(Calendar.getInstance(), null));
     }
 
     private void setupDatePicker(final View root) {
@@ -144,13 +143,15 @@ public class CalendarFragment extends Fragment {
         });
     }
 
-    private void moveToSelectedWeek(Week week) {
+    private boolean moveToSelectedWeek(Week week) {
         int pos = calendarController.getPositionOfWeek(week);
         if(pos == -1){
             Toast.makeText(getContext(), "Date out of available range", Toast.LENGTH_SHORT).show();
+            return false;
         }else{
             selectedWeek = week;
             viewPager.setCurrentItem(pos);
+            return true;
         }
     }
 
@@ -181,7 +182,10 @@ public class CalendarFragment extends Fragment {
                 }
                 detailedEventListView.setAdapter(new DetailedEventAdapter(getContext(), eventsForDay));
 
-                moveToSelectedWeek(new CalendarBackedWeek(dayToMoveTo, null));
+                boolean isInRange = moveToSelectedWeek(new CalendarBackedWeek(dayToMoveTo, null));
+                if(!isInRange){
+                    moveToToday();
+                }
             }
 
             @Override
@@ -222,7 +226,7 @@ public class CalendarFragment extends Fragment {
             Log.v("calendar", "Offset is " + dayOffset);
             return dayOffset;
         }else{
-            Log.v("calendar", "Offset is no available: 0");
+            Log.v("calendar", "Offset is not in bundle, returning 0");
             return 0;
         }
     }

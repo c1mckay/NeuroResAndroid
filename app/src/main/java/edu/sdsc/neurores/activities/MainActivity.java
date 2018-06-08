@@ -60,7 +60,10 @@ import edu.sdsc.neurores.fragments.CalendarFragment;
 import edu.sdsc.neurores.fragments.PDFFragment;
 import edu.sdsc.neurores.R;
 import edu.sdsc.neurores.abstraction.User;
+import edu.sdsc.neurores.helper.ActionOpenPDF;
+import edu.sdsc.neurores.helper.ActionViewCalendar;
 import edu.sdsc.neurores.helper.FormatHelper;
+import edu.sdsc.neurores.helper.NavigationDrawerLinkAction;
 import edu.sdsc.neurores.network.WebSocket;
 import edu.sdsc.neurores.data.MessageDatabaseHelper;
 import edu.sdsc.neurores.fragments.MainFragment;
@@ -121,6 +124,7 @@ public class MainActivity extends AppCompatActivity
     private TextView toolbarTitle;
     private LinearLayout warningBanner;
     private int calendarDayOffset;
+    String pdfFilename = PDFFragment.HANDBOOK_FILE_NAME;
 
     MessageDatabaseHelper messageDatabaseHelper;
 
@@ -147,47 +151,73 @@ public class MainActivity extends AppCompatActivity
         loadData();
     }
 
+    //TODO
     private void addDrawerLinks() {
-        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
+        addDrawerLink(R.drawable.calendar, "Calendar", new ActionViewCalendar(this));
+        addDrawerLink(R.drawable.open_book, "Handbook", new ActionOpenPDF(this, PDFFragment.HANDBOOK_FILE_NAME));
+        addDrawerLink(R.drawable.clipboard, "Open Clinics", new ActionOpenPDF(this, PDFFragment.CLINIC_FILE_NAME));
+//        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
+//
+//        //TODO add more pdfs once they are on the server
+//        LayoutInflater layoutInflater = LayoutInflater.from(this);
+//
+//        ViewGroup handbookLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+//        ViewGroup calendarLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+//
+//        ImageView handbookImageView = (ImageView) handbookLinkGroup.findViewById(R.id.link_image_view);
+//        ImageView calendarImageView = (ImageView) calendarLinkGroup.findViewById(R.id.link_image_view);
+//
+//        TextView handbookTextView = (TextView) handbookLinkGroup.findViewById(R.id.link_text_view);
+//        TextView calendarTextView = (TextView) calendarLinkGroup.findViewById(R.id.link_text_view);
+//
+//        handbookImageView.setImageDrawable(getResources().getDrawable(R.drawable.open_book));
+//        handbookImageView.setContentDescription(getResources().getString(R.string.handbook));
+//
+//        calendarImageView.setImageDrawable(getResources().getDrawable(R.drawable.calendar));
+//        calendarImageView.setContentDescription(getResources().getString(R.string.calendar));
+//
+//        handbookTextView.setText(getResources().getString(R.string.handbook));
+//
+//        calendarTextView.setText(getResources().getString(R.string.calendar));
+//
+//        navDrawerLinkHolder.addView(handbookLinkGroup);
+//        navDrawerLinkHolder.addView(calendarLinkGroup);
+//
+//        handbookLinkGroup.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                viewPDF(v);
+//            }
+//        });
+//
+//        calendarLinkGroup.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                viewCalendar(v);
+//            }
+//        });
+    }
 
-        //TODO add more pdfs once they are on the server
+    private void addDrawerLink(int drawableID, String linkText, final NavigationDrawerLinkAction action){
+        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
         LayoutInflater layoutInflater = LayoutInflater.from(this);
 
-        ViewGroup handbookLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
-        ViewGroup calendarLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+        ViewGroup linkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
+        ImageView imageView = (ImageView) linkGroup.findViewById(R.id.link_image_view);
+        TextView textView = (TextView) linkGroup.findViewById(R.id.link_text_view);
 
-        ImageView handbookImageView = (ImageView) handbookLinkGroup.findViewById(R.id.link_image_view);
-        ImageView calendarImageView = (ImageView) calendarLinkGroup.findViewById(R.id.link_image_view);
+        imageView.setImageDrawable(getResources().getDrawable(drawableID));
+        imageView.setContentDescription(linkText);
+        textView.setText(linkText);
 
-        TextView handbookTextView = (TextView) handbookLinkGroup.findViewById(R.id.link_text_view);
-        TextView calendarTextView = (TextView) calendarLinkGroup.findViewById(R.id.link_text_view);
-
-        handbookImageView.setImageDrawable(getResources().getDrawable(R.drawable.open_book));
-        handbookImageView.setContentDescription(getResources().getString(R.string.handbook));
-
-        calendarImageView.setImageDrawable(getResources().getDrawable(R.drawable.calendar));
-        calendarImageView.setContentDescription(getResources().getString(R.string.calendar));
-
-        handbookTextView.setText(getResources().getString(R.string.handbook));
-
-        calendarTextView.setText(getResources().getString(R.string.calendar));
-
-        navDrawerLinkHolder.addView(handbookLinkGroup);
-        navDrawerLinkHolder.addView(calendarLinkGroup);
-
-        handbookLinkGroup.setOnClickListener(new View.OnClickListener() {
+        linkGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                viewPDF(v);
+                action.act();
             }
         });
 
-        calendarLinkGroup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                viewCalendar(v);
-            }
-        });
+        navDrawerLinkHolder.addView(linkGroup);
     }
 
     private void initializeDrawer() {
@@ -400,10 +430,11 @@ public class MainActivity extends AppCompatActivity
         return mFrag;
     }
 
-    private PDFFragment startPDFFragment(){
+    private PDFFragment startPDFFragment(String pdfFileName){
         PDFFragment pdfFrag = new PDFFragment();
         Bundle i = new Bundle();
-        i.putString("token", getToken());
+        i.putString(PDFFragment.KEY_TOKEN, getToken());
+        i.putString(PDFFragment.KEY_FILE_NAME, pdfFileName);
         pdfFrag.setArguments(i);
         return pdfFrag;
     }
@@ -809,7 +840,7 @@ public class MainActivity extends AppCompatActivity
         }else{
             if(nonMessageType == TYPE_PDF){
                 Log.v("taggy", "Showing pdf");
-                currentFragment = startPDFFragment();
+                currentFragment = startPDFFragment(pdfFilename);
                 toolbarTitle.setText(getString(R.string.handbook));
             }else{
                 Log.v("taggy", "Showing cal");
@@ -826,6 +857,19 @@ public class MainActivity extends AppCompatActivity
 
         closeDrawer();
         updateFrag();
+    }
+
+    // TODO Implement (not this Charles)
+    private void changeFragment(Fragment newFragment){
+        currentFragment = newFragment;
+
+
+
+
+        android.support.v4.app.FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, currentFragment);
+        fragmentTransaction.commitAllowingStateLoss();
+        showMainElements();
     }
 
     private void closeDrawer() {
@@ -1383,11 +1427,13 @@ public class MainActivity extends AppCompatActivity
         goToLogin();
     }
 
-    public  void viewPDF(View v){
+    public  void viewPDF(String pdfFilename){
         if(currentFragment instanceof PDFFragment){
             closeDrawer();
             return;
         }
+
+        this.pdfFilename = pdfFilename;
 
         if(selectedConversation != null){
             previousConversation = selectedConversation;

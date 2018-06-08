@@ -21,8 +21,13 @@ import edu.sdsc.neurores.R;
  * A simple {@link Fragment} subclass.
  */
 public class PDFFragment extends Fragment{
+    public static final String KEY_FILE_NAME = "filename";
+    public static final String KEY_TOKEN = "token";
+
+    public static final String HANDBOOK_FILE_NAME = "ucsdreshandbook_2017_2018.pdf";
+    public static final String CLINIC_FILE_NAME = "Open_Rooms.pdf";
+
     PDFView pdfView;
-    private static String PDF_FILE_NAME = "ucsdreshandbook_2017_2018.pdf";
 
 
     public PDFFragment() {
@@ -37,8 +42,13 @@ public class PDFFragment extends Fragment{
         View v = inflater.inflate(R.layout.fragment_pdf, container, false);
         setHasOptionsMenu(true);
 
+        String fileName = HANDBOOK_FILE_NAME;
+        if(getArguments() !=  null){
+            fileName = getArguments().getString(KEY_FILE_NAME);
+        }
+
         pdfView = (PDFView) v.findViewById(R.id.pdf_view);
-        pdfView.fromAsset(PDF_FILE_NAME).load();
+        pdfView.fromAsset(fileName).load();
 
         alignLeftToolbarTitle();
         return v;
