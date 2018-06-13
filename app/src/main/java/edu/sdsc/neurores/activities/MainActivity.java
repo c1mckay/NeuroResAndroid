@@ -810,7 +810,6 @@ public class MainActivity extends AppCompatActivity
         updateFrag();
     }
 
-    // TODO Implement (not this Charles)
     private void changeFragment(Fragment newFragment){
         currentFragment = newFragment;
 
@@ -1379,7 +1378,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public  void viewPDF(String pdfFilename){
-        if(currentFragment instanceof PDFFragment){
+        if(currentFragment instanceof PDFFragment && this.pdfFilename.equals(pdfFilename)){
             closeDrawer();
             return;
         }
