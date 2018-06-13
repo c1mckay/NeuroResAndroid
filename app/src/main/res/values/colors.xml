@@ -15,4 +15,6 @@
     <color name="calendarSelected">#D1D1D1</color>
     <color name="calendarToday">#FFED80</color>
     <color name="eventBanner">#747678</color>
+    <color name="offWhite">#F5F5F5</color>
+
 </resources>

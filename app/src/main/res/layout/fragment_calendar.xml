@@ -30,7 +30,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:background="@color/calendarBackground"
+        android:background="@color/offWhite"
         android:orientation="vertical"
         android:layout_height="0dp"
         android:layout_weight="5">

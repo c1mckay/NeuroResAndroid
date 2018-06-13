@@ -20,7 +20,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -49,7 +48,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.TreeSet;
 
 import edu.sdsc.neurores.abstraction.Conversation;
@@ -63,7 +61,6 @@ import edu.sdsc.neurores.abstraction.User;
 import edu.sdsc.neurores.helper.ActionOpenPDF;
 import edu.sdsc.neurores.helper.ActionViewCalendar;
 import edu.sdsc.neurores.helper.FormatHelper;
-import edu.sdsc.neurores.helper.NavigationDrawerLinkAction;
 import edu.sdsc.neurores.network.WebSocket;
 import edu.sdsc.neurores.data.MessageDatabaseHelper;
 import edu.sdsc.neurores.fragments.MainFragment;
@@ -151,54 +148,13 @@ public class MainActivity extends AppCompatActivity
         loadData();
     }
 
-    //TODO
     private void addDrawerLinks() {
         addDrawerLink(R.drawable.calendar, "Calendar", new ActionViewCalendar(this));
         addDrawerLink(R.drawable.open_book, "Handbook", new ActionOpenPDF(this, PDFFragment.HANDBOOK_FILE_NAME));
         addDrawerLink(R.drawable.clipboard, "Open Clinics", new ActionOpenPDF(this, PDFFragment.CLINIC_FILE_NAME));
-//        ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
-//
-//        //TODO add more pdfs once they are on the server
-//        LayoutInflater layoutInflater = LayoutInflater.from(this);
-//
-//        ViewGroup handbookLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
-//        ViewGroup calendarLinkGroup = (ViewGroup) layoutInflater.inflate(R.layout.nav_drawer_link_group, navDrawerLinkHolder, false);
-//
-//        ImageView handbookImageView = (ImageView) handbookLinkGroup.findViewById(R.id.link_image_view);
-//        ImageView calendarImageView = (ImageView) calendarLinkGroup.findViewById(R.id.link_image_view);
-//
-//        TextView handbookTextView = (TextView) handbookLinkGroup.findViewById(R.id.link_text_view);
-//        TextView calendarTextView = (TextView) calendarLinkGroup.findViewById(R.id.link_text_view);
-//
-//        handbookImageView.setImageDrawable(getResources().getDrawable(R.drawable.open_book));
-//        handbookImageView.setContentDescription(getResources().getString(R.string.handbook));
-//
-//        calendarImageView.setImageDrawable(getResources().getDrawable(R.drawable.calendar));
-//        calendarImageView.setContentDescription(getResources().getString(R.string.calendar));
-//
-//        handbookTextView.setText(getResources().getString(R.string.handbook));
-//
-//        calendarTextView.setText(getResources().getString(R.string.calendar));
-//
-//        navDrawerLinkHolder.addView(handbookLinkGroup);
-//        navDrawerLinkHolder.addView(calendarLinkGroup);
-//
-//        handbookLinkGroup.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                viewPDF(v);
-//            }
-//        });
-//
-//        calendarLinkGroup.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                viewCalendar(v);
-//            }
-//        });
     }
 
-    private void addDrawerLink(int drawableID, String linkText, final NavigationDrawerLinkAction action){
+    private void addDrawerLink(int drawableID, String linkText, View.OnClickListener clickListener){
         ViewGroup navDrawerLinkHolder = (ViewGroup) findViewById(R.id.nav_drawer_link_holder);
         LayoutInflater layoutInflater = LayoutInflater.from(this);
 
@@ -210,12 +166,7 @@ public class MainActivity extends AppCompatActivity
         imageView.setContentDescription(linkText);
         textView.setText(linkText);
 
-        linkGroup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                action.act();
-            }
-        });
+        linkGroup.setOnClickListener(clickListener);
 
         navDrawerLinkHolder.addView(linkGroup);
     }
