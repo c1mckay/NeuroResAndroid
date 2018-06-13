@@ -24,7 +24,7 @@ import edu.sdsc.neurores.calendar.abstraction.Event;
 // Stops complaints that "<Foo> can be replaced with <>"
 @SuppressWarnings("Convert2Diamond")
 public class RequestWrapper {
-    public static final String BASE_URL = "neurores-dev.ucsd.edu";
+    public static final String BASE_URL = "neurores.ucsd.edu";
     private static final String REGISTER_ANDROID_TOKEN_ENDPOINT = "/firebase_notif";
 
     private static final String GET_USERS_ENDPOINT = "/users_list";
