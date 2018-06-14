@@ -792,7 +792,11 @@ public class MainActivity extends AppCompatActivity
             if(nonMessageType == TYPE_PDF){
                 Log.v("taggy", "Showing pdf");
                 currentFragment = startPDFFragment(pdfFilename);
-                toolbarTitle.setText(getString(R.string.handbook));
+                if(pdfFilename.equals(PDFFragment.HANDBOOK_FILE_NAME)){
+                    toolbarTitle.setText(getString(R.string.handbook));
+                }else{
+                    toolbarTitle.setText(getString(R.string.open_clinics));
+                }
             }else{
                 Log.v("taggy", "Showing cal");
                 currentFragment = startCalendarFragment();
