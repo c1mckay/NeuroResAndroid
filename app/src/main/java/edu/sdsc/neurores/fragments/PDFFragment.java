@@ -25,7 +25,7 @@ public class PDFFragment extends Fragment{
     public static final String KEY_TOKEN = "token";
 
     public static final String HANDBOOK_FILE_NAME = "ucsdreshandbook_2017_2018.pdf";
-    public static final String CLINIC_FILE_NAME = "Open_Rooms.pdf";
+    public static final String CLINIC_SESSIONS_FILE_NAME = "Open_Rooms.pdf";
 
     PDFView pdfView;
 

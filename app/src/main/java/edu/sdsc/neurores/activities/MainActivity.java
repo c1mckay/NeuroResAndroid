@@ -149,9 +149,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void addDrawerLinks() {
-        addDrawerLink(R.drawable.calendar, "Calendar", new ActionViewCalendar(this));
-        addDrawerLink(R.drawable.open_book, "Handbook", new ActionOpenPDF(this, PDFFragment.HANDBOOK_FILE_NAME));
-        addDrawerLink(R.drawable.clipboard, "Open Clinics", new ActionOpenPDF(this, PDFFragment.CLINIC_FILE_NAME));
+        addDrawerLink(R.drawable.calendar, getResources().getString(R.string.calendar), new ActionViewCalendar(this));
+        addDrawerLink(R.drawable.open_book, getResources().getString(R.string.handbook), new ActionOpenPDF(this, PDFFragment.HANDBOOK_FILE_NAME));
+        addDrawerLink(R.drawable.clipboard, getResources().getString(R.string.clinics_sessions), new ActionOpenPDF(this, PDFFragment.CLINIC_SESSIONS_FILE_NAME));
     }
 
     private void addDrawerLink(int drawableID, String linkText, View.OnClickListener clickListener){
@@ -795,7 +795,7 @@ public class MainActivity extends AppCompatActivity
                 if(pdfFilename.equals(PDFFragment.HANDBOOK_FILE_NAME)){
                     toolbarTitle.setText(getString(R.string.handbook));
                 }else{
-                    toolbarTitle.setText(getString(R.string.open_clinics));
+                    toolbarTitle.setText(getString(R.string.clinics_sessions));
                 }
             }else{
                 Log.v("taggy", "Showing cal");
