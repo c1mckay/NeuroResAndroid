@@ -7,9 +7,12 @@ import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -23,45 +26,55 @@ public class NotificationHandler extends FirebaseMessagingService {
 
     private static final String TAG = "MyFirebaseMsgService";
 
+    // This gets called every time a message comes in
+    @Override
+    public void handleIntent(Intent intent) {
+        super.handleIntent(intent);
+    }
 
-    public void onMessageReceived(RemoteMessage remoteMessage) {
-        Log.d(TAG, "From: " + remoteMessage.getFrom());
-
+    // Called when:
+    //  A message is received and the app is in the foreground
+    //  A message is received that is not explicitly a notification
+    public void onMessageReceived(final RemoteMessage remoteMessage) {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             Map<String, String> map = remoteMessage.getData();
-            String title = map.get("title");
-            String message = map.get("message");
 
-            Intent intent = new Intent(this, MainActivity.class);
-            int notificationID = 1;
             if(map.containsKey("conv_id")){
-                String conversationID = map.get("conv_id");
-
-                notificationID = Integer.valueOf(conversationID);
-                intent.putExtra(MainActivity.CONVERSATION_ID, conversationID);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            }else{
-
-                intent.putExtra(MainActivity.CALENDAR_FLAG, "");
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                notificationID = (title + message).hashCode();
+                handleConversationNotification(remoteMessage);
+            }else if(map.containsKey("event_id")){
+                handleEventNotification(remoteMessage);
             }
 
-            sendNotification(title,message,intent, notificationID);
-
         }
-
-        // Check if message contains a notification payload.
-        if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
-        }
-
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
     }
-    // [END receive_message]
+
+    private void handleEventNotification(RemoteMessage remoteMessage){
+        Intent intent = new Intent(this, MainActivity.class);
+
+        Map map = remoteMessage.getData();
+
+        String title = remoteMessage.getNotification().getTitle();
+        String message = remoteMessage.getNotification().getBody();
+
+        intent.putExtra(MainActivity.CALENDAR_FLAG, "");
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra(MainActivity.CALENDAR_FLAG, map.get("start_time").toString());
+        int notificationID = (title + message).hashCode();
+        sendNotification(title,message,intent, notificationID);
+    }
+
+    private void handleConversationNotification(RemoteMessage remoteMessage){
+        final String senderName = remoteMessage.getNotification().getTitle();
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getBaseContext(), "New message from " + senderName, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     /**
      * Create and show a simple notification containing the received FCM message.
@@ -75,7 +88,7 @@ public class NotificationHandler extends FirebaseMessagingService {
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.notif)
+                .setSmallIcon(R.drawable.logo)
                 .setContentTitle(title)
                 .setContentText(messageBody)
                 .setAutoCancel(true)

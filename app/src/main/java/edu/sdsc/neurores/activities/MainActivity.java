@@ -862,6 +862,7 @@ public class MainActivity extends AppCompatActivity
         c1.set(Calendar.HOUR,0);
         c1.set(Calendar.MINUTE,0);
         c1.set(Calendar.SECOND,0);
+        c1.set(Calendar.AM_PM, Calendar.AM);
 
 
         Calendar c2 = Calendar.getInstance();
@@ -870,11 +871,15 @@ public class MainActivity extends AppCompatActivity
         c2.set(Calendar.HOUR, 0);
         c2.set(Calendar.MINUTE, 0);
         c2.set(Calendar.SECOND, 0);
+        c2.set(Calendar.AM_PM, Calendar.AM);
 
+        Log.v("calendar", "Original Date: " + d2);
+        Log.v("calendar", "Dates: " + c1.getTime() + " " + c2.getTime());
 
-        Log.v("calendar", c1.toString() + " " + c2.toString());
+        long differenceInMilliseconds = c2.getTime().getTime() -  c1.getTime().getTime();
 
-        return (int)( (c2.getTime().getTime() -  c1.getTime().getTime()) / (1000 * 60 * 60 * 24));
+        Log.v("calendar", "Float: " + ((float)(differenceInMilliseconds) / (1000 * 60 * 60 * 24)));
+        return Math.round(((float)(differenceInMilliseconds) / (1000 * 60 * 60 * 24)));
     }
 
     /**
@@ -891,16 +896,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         Intent intent = getIntent();
-
-        if(intent != null && intent.getExtras() != null){
-            Log.v("taggy", "Looking at intent");
-            for(String key : intent.getExtras().keySet()){
-                Log.v("taggy", "Key: " + key);
-            }
-            Log.v("taggy", "End looking at intent");
-        }
-
-
 
         if(getIntent().hasExtra(CALENDAR_FLAG)){
             String eventStartTime = getIntent().getStringExtra(CALENDAR_FLAG);
